@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { DailyAdventureResult } from "@/components/adventure-engine/daily-adventure-result";
 import { LocationContextFields } from "@/components/location-context-fields";
 import { MarkCompleteCard } from "@/components/mark-complete-card";
-import { dailyAdventurePresets, type DailyAdventurePresetKey } from "@/lib/daily-adventure-presets";
+import {
+  dailyAdventurePresets,
+  type DailyAdventurePresetKey,
+} from "@/lib/daily-adventure-presets";
 import type { DailyAdventureOutput, GenerationRecord } from "@/lib/generations";
 import type { StudentRecord } from "@/lib/students";
 
@@ -34,7 +37,14 @@ type SelectedTarget =
 
 function JournalIcon() {
   return (
-    <svg aria-hidden="true" className="guide-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <svg
+      aria-hidden="true"
+      className="guide-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
       <path d="M7 4h9a2 2 0 0 1 2 2v14H9a2 2 0 0 0-2 2V4Z" />
       <path d="M7 4H6a2 2 0 0 0-2 2v14h3" />
       <path d="M10 8h5" />
@@ -58,29 +68,41 @@ export function DailyAdventureGenerator({
   initialWeatherCondition = "clear",
   initialLatitude,
   initialLongitude,
-  weatherHelperText = ""
+  weatherHelperText = "",
 }: DailyAdventureGeneratorProps) {
   const [result, setResult] = useState<DailyAdventureOutput | null>(null);
   const [latestGenerationId, setLatestGenerationId] = useState("");
   const [selectedTarget, setSelectedTarget] = useState<SelectedTarget>(
     preselectedStudentId
       ? { targetType: "student", targetId: preselectedStudentId }
-      : { targetType: "household", targetId: userId }
+      : { targetType: "household", targetId: userId },
   );
-  const [selectedPreset, setSelectedPreset] = useState<DailyAdventurePresetKey | "">(preselectedPreset ?? "");
+  const [selectedPreset, setSelectedPreset] = useState<
+    DailyAdventurePresetKey | ""
+  >(preselectedPreset ?? "");
   const [locationLabel, setLocationLabel] = useState(initialLocationLabel);
   const [radiusMiles, setRadiusMiles] = useState(String(initialRadiusMiles));
-  const [weatherCondition, setWeatherCondition] = useState(initialWeatherCondition);
-  const [latitude, setLatitude] = useState<number | undefined>(typeof initialLatitude === "number" ? initialLatitude : undefined);
-  const [longitude, setLongitude] = useState<number | undefined>(typeof initialLongitude === "number" ? initialLongitude : undefined);
-  const [forecastHelperText, setForecastHelperText] = useState(weatherHelperText);
+  const [weatherCondition, setWeatherCondition] = useState(
+    initialWeatherCondition,
+  );
+  const [latitude, setLatitude] = useState<number | undefined>(
+    typeof initialLatitude === "number" ? initialLatitude : undefined,
+  );
+  const [longitude, setLongitude] = useState<number | undefined>(
+    typeof initialLongitude === "number" ? initialLongitude : undefined,
+  );
+  const [forecastHelperText, setForecastHelperText] =
+    useState(weatherHelperText);
   const [error, setError] = useState("");
   const [viewState, setViewState] = useState<ViewState>("idle");
   const [isWeatherResolving, setIsWeatherResolving] = useState(false);
 
   useEffect(() => {
     if (preselectedStudentId) {
-      setSelectedTarget({ targetType: "student", targetId: preselectedStudentId });
+      setSelectedTarget({
+        targetType: "student",
+        targetId: preselectedStudentId,
+      });
     }
   }, [preselectedStudentId]);
 
@@ -92,12 +114,18 @@ export function DailyAdventureGenerator({
 
   const selectedStudent =
     selectedTarget.targetType === "student"
-      ? students.find((student) => student.id === selectedTarget.targetId) ?? null
+      ? (students.find((student) => student.id === selectedTarget.targetId) ??
+        null)
       : null;
   const canGenerate =
     !isWeatherResolving &&
-    (selectedTarget.targetType === "household" || selectedStudent !== null || students.length === 0);
-
+    (selectedTarget.targetType === "household" ||
+      selectedStudent !== null ||
+      students.length === 0);
+  const [timeAvailable, setTimeAvailable] = useState("1-2 hours");
+  const [budget, setBudget] = useState("free");
+  const [energyLevel, setEnergyLevel] = useState("medium");
+  const [travelDistance, setTravelDistance] = useState("local");
   return (
     <section className="stack daily-adventure-flow">
       {viewState === "idle" ? (
@@ -109,10 +137,16 @@ export function DailyAdventureGenerator({
               </span>
               <div>
                 <p className="eyebrow">Daily Adventure</p>
-                <div className="wood-banner wood-banner-small">Adventure Planner</div>
-                <h3 className="planner-title">Plan today's field-guide mission</h3>
+                <div className="wood-banner wood-banner-small">
+                  Adventure Planner
+                </div>
+                <h3 className="planner-title">
+                  Plan today's field-guide mission
+                </h3>
                 <p className="panel-copy">
-                  Build one calm, practical outdoor homeschool mission with a clear observation target, conversation prompt, and family-friendly challenge.
+                  Build one calm, practical outdoor homeschool mission with a
+                  clear observation target, conversation prompt, and
+                  family-friendly challenge.
                 </p>
               </div>
             </div>
@@ -122,15 +156,25 @@ export function DailyAdventureGenerator({
             <label>
               Student
               <select
-                value={selectedTarget.targetType === "household" ? "household" : selectedTarget.targetId}
+                value={
+                  selectedTarget.targetType === "household"
+                    ? "household"
+                    : selectedTarget.targetId
+                }
                 onChange={(event) => {
                   const nextValue = event.target.value;
                   if (nextValue === "household") {
-                    setSelectedTarget({ targetType: "household", targetId: userId });
+                    setSelectedTarget({
+                      targetType: "household",
+                      targetId: userId,
+                    });
                     return;
                   }
 
-                  setSelectedTarget({ targetType: "student", targetId: nextValue });
+                  setSelectedTarget({
+                    targetType: "student",
+                    targetId: nextValue,
+                  });
                 }}
               >
                 <option value="household">Household</option>
@@ -142,12 +186,22 @@ export function DailyAdventureGenerator({
               </select>
             </label>
           ) : (
-            <p className="panel-copy">Add a student profile to connect adventures to a specific child from the dashboard.</p>
+            <p className="panel-copy">
+              Add a student profile to connect adventures to a specific child
+              from the dashboard.
+            </p>
           )}
 
           <label>
             Quick-start preset
-            <select value={selectedPreset} onChange={(event) => setSelectedPreset(event.target.value as DailyAdventurePresetKey | "")}>
+            <select
+              value={selectedPreset}
+              onChange={(event) =>
+                setSelectedPreset(
+                  event.target.value as DailyAdventurePresetKey | "",
+                )
+              }
+            >
               <option value="">Balanced daily adventure</option>
               {Object.values(dailyAdventurePresets).map((preset) => (
                 <option key={preset.key} value={preset.key}>
@@ -165,15 +219,23 @@ export function DailyAdventureGenerator({
             onLocationLabelChange={(value) => setLocationLabel(value)}
             onRadiusMilesChange={(value) => setRadiusMiles(value)}
             onWeatherConditionChange={(value) => setWeatherCondition(value)}
-            onCoordinatesResolved={({ latitude: nextLat, longitude: nextLng, locationLabel: nextLabel }) => {
+            onCoordinatesResolved={({
+              latitude: nextLat,
+              longitude: nextLng,
+              locationLabel: nextLabel,
+            }) => {
               setLatitude(nextLat);
               setLongitude(nextLng);
               setLocationLabel(nextLabel);
               setIsWeatherResolving(true);
               void (async () => {
                 try {
-                  const response = await fetch(`/api/planner-weather?latitude=${nextLat}&longitude=${nextLng}`);
-                  const payload = (await response.json()) as { weatherCondition?: string };
+                  const response = await fetch(
+                    `/api/planner-weather?latitude=${nextLat}&longitude=${nextLng}`,
+                  );
+                  const payload = (await response.json()) as {
+                    weatherCondition?: string;
+                  };
                   if (response.ok && payload.weatherCondition) {
                     setWeatherCondition(payload.weatherCondition);
                     setForecastHelperText("Auto-filled from today's forecast");
@@ -184,7 +246,58 @@ export function DailyAdventureGenerator({
               })();
             }}
           />
+          <div className="stack">
+            <label>
+              Time Available
+              <select
+                value={timeAvailable}
+                onChange={(e) => setTimeAvailable(e.target.value)}
+              >
+                <option value="30 min">30 min</option>
+                <option value="1-2 hours">1–2 hours</option>
+                <option value="half day">Half day</option>
+                <option value="full day">Full day</option>
+              </select>
+            </label>
 
+            <label>
+              Budget
+              <select
+                value={budget}
+                onChange={(e) => setBudget(e.target.value)}
+              >
+                <option value="free">Free</option>
+                <option value="low">$0–$20</option>
+                <option value="medium">$20–$75</option>
+                <option value="high">$75+</option>
+              </select>
+            </label>
+
+            <label>
+              Energy Level
+              <select
+                value={energyLevel}
+                onChange={(e) => setEnergyLevel(e.target.value)}
+              >
+                <option value="low">Low (easy)</option>
+                <option value="medium">Medium</option>
+                <option value="high">High (adventure)</option>
+              </select>
+            </label>
+
+            <label>
+              Travel Distance
+              <select
+                value={travelDistance}
+                onChange={(e) => setTravelDistance(e.target.value)}
+              >
+                <option value="backyard">Backyard</option>
+                <option value="local">Local (10–15 min)</option>
+                <option value="regional">30–60 min</option>
+                <option value="far">Day trip</option>
+              </select>
+            </label>
+          </div>
           <button
             type="button"
             disabled={!canGenerate}
@@ -197,30 +310,46 @@ export function DailyAdventureGenerator({
                   fetch("/api/generate-daily-adventure", {
                     method: "POST",
                     headers: {
-                      "Content-Type": "application/json"
+                      "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
                       requestDate: new Date().toISOString().slice(0, 10),
                       targetType: selectedTarget.targetType,
                       targetId: selectedTarget.targetId,
                       householdMode: selectedTarget.targetType === "household",
-                      studentId: selectedTarget.targetType === "student" ? selectedStudent?.id : undefined,
-                      studentName: selectedTarget.targetType === "student" ? selectedStudent?.name : undefined,
+                      studentId:
+                        selectedTarget.targetType === "student"
+                          ? selectedStudent?.id
+                          : undefined,
+                      studentName:
+                        selectedTarget.targetType === "student"
+                          ? selectedStudent?.name
+                          : undefined,
                       preset: selectedPreset || undefined,
                       locationLabel,
                       radiusMiles: Number(radiusMiles),
                       weatherCondition,
                       latitude,
-                      longitude
-                    })
+                      longitude,
+                      timeAvailable,
+                      budget,
+                      energyLevel,
+                      travelDistance,
+                    }),
                   }),
-                  wait(700)
+                  wait(700),
                 ]);
 
-                const payload = (await response.json()) as DailyAdventureResponse | { error: string };
+                const payload = (await response.json()) as
+                  | DailyAdventureResponse
+                  | { error: string };
 
                 if (!response.ok || "error" in payload) {
-                  setError("error" in payload ? payload.error : "Daily adventure generation failed.");
+                  setError(
+                    "error" in payload
+                      ? payload.error
+                      : "Daily adventure generation failed.",
+                  );
                   setViewState("idle");
                   return;
                 }
@@ -231,7 +360,7 @@ export function DailyAdventureGenerator({
               })();
             }}
           >
-            Generate daily adventure
+            Plan Today’s Missionnpm
           </button>
 
           {error ? <p className="error">{error}</p> : null}
@@ -243,17 +372,27 @@ export function DailyAdventureGenerator({
           <div className="adventure-awaits">
             <p className="eyebrow">Field Guide Loading</p>
             <h3>Adventure awaits</h3>
-            <p className="panel-copy">Charting today's trail, weather, and mission details for your next outing.</p>
+            <p className="panel-copy">
+              Charting today's trail, weather, and mission details for your next
+              outing.
+            </p>
           </div>
         </article>
       ) : null}
 
       {viewState === "result" && result ? (
         <div className="stack adventure-stage-panel">
-          <DailyAdventureResult result={result} generationId={latestGenerationId || undefined} />
+          <DailyAdventureResult
+            result={result}
+            generationId={latestGenerationId || undefined}
+          />
           {latestGenerationId ? (
             <MarkCompleteCard
-              studentId={selectedTarget.targetType === "student" ? selectedTarget.targetId : null}
+              studentId={
+                selectedTarget.targetType === "student"
+                  ? selectedTarget.targetId
+                  : null
+              }
               generationId={latestGenerationId}
             />
           ) : null}
