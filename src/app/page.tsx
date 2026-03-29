@@ -13,60 +13,47 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="min-h-screen relative flex items-center justify-center overflow-hidden">
-      {/* Background image */}
-      <div
-        className="absolute inset-0 bg-center bg-cover"
-        style={{ backgroundImage: "url('/images/wsa-login-bg.jpg')" }}
-      />
+    <main
+      className="min-h-screen w-full flex items-center justify-center px-4 py-6"
+      style={{
+        backgroundColor: "#a49382",
+        backgroundImage: "url('/background.jpeg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/30" />
 
-      {/* Dark overlay */}
-      <div
-        className="absolute inset-0"
-        style={{ backgroundColor: "rgba(20,28,24,0.45)" }}
-      />
-
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(circle at center, rgba(245,235,214,0.10), rgba(20,28,24,0.35))",
-        }}
-      />
-
-      {/* Login card */}
+      {/* Login Card */}
       <section
-        className="auth-card relative z-10"
+        className="relative z-10 w-full max-w-md rounded-[32px] bg-[#f3ecdd]/95 shadow-2xl px-6 py-6 sm:px-7 sm:py-7"
         style={{
-          width: "min(100%, 460px)",
-          backdropFilter: "blur(2px)",
+          backdropFilter: "blur(4px)",
         }}
       >
-        <p className="eyebrow">Wild Stallion Academy</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.15em] text-[#5b735b]">
+          Wild Stallion Academy
+        </p>
 
-        <div className="wood-banner wood-banner-small">Parent Portal</div>
+        <div className="inline-flex rounded-full bg-[#5a3720] px-5 py-2 text-lg font-bold text-[#f6ead8] mt-2">
+          Parent Portal
+        </div>
 
-        <h1
-          className="page-title"
-          style={{
-            margin: 0,
-            fontSize: "clamp(3rem, 6vw, 5rem)",
-            lineHeight: 0.92,
-            color: "#2f2417",
-            textShadow: "0 2px 0 rgba(0,0,0,0.28)",
-          }}
-        >
+        <h1 className="font-serif font-black leading-[0.9] text-[3.5rem] sm:text-[5rem] text-[#2f2417] mt-3">
           Wild Stallion
           <br />
           Academy
         </h1>
 
-        <p className="panel-copy" style={{ margin: 0 }}>
-          Sign in to access your family dashboard, planner, badges, and Wild
-          Stallion Academy tools.
+        <p className="mt-3 text-base text-[#4e4339]">
+          Sign in to access your family dashboard, planner, badges, and tools.
         </p>
 
-        <LoginForm />
+        <div className="mt-5">
+          <LoginForm />
+        </div>
       </section>
     </main>
   );

@@ -6,25 +6,36 @@ const nunito = Nunito({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
-  weight: ["400", "600", "700", "800"]
+  weight: ["400", "600", "700", "800"],
 });
 
 const merriweather = Merriweather({
   subsets: ["latin"],
   variable: "--font-serif",
   display: "swap",
-  weight: ["400", "700"]
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
   title: "Wild Stallion Academy AI",
-  description: "AI-powered homeschool and outdoor education planning for families."
+  description:
+    "AI-powered homeschool and outdoor education planning for families.",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${nunito.variable} ${merriweather.variable}`}>{children}</body>
+      <body className={`${nunito.variable} ${merriweather.variable}`}>
+        {children}
+      </body>
     </html>
   );
 }
+import type { Viewport } from "next";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
