@@ -144,7 +144,7 @@ export async function POST(request: Request) {
     }
 
     const publicUrl = uploadedPath
-      ? supabase.storage.from("leaf-photos").getPublicUrl(uploadedPath).data.publicUrl
+      ? (await supabase.storage.from("leaf-photos").createSignedUrl(uploadedPath, 3600)).data?.signedUrl
       : undefined;
 
     return NextResponse.json({

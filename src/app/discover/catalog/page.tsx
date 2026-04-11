@@ -2,6 +2,7 @@ import { DiscoveryCatalogView } from "@/components/discovery-catalog-view";
 import { PageShell } from "@/components/page-shell";
 import { requireUser } from "@/lib/auth";
 import { discoveryCatalogCategorySchema, type DiscoveryRecord } from "@/lib/discoveries";
+import { createSignedStorageUrl, extractStoragePathFromLegacyUrl } from "@/lib/storage";
 import type { StudentRecord } from "@/lib/students";
 
 export default async function DiscoverCatalogPage({
@@ -18,7 +19,7 @@ export default async function DiscoverCatalogPage({
   const [{ data: discoveries }, { data: students }] = await Promise.all([
     supabase
       .from("discoveries")
-      .select("id, user_id, student_id, category, common_name, scientific_name, confidence_level, image_url, image_alt, notes, result_json, location_label, latitude, longitude, observed_at, created_at")
+      .select("id, user_id, student_id, category, image_path, common_name, scientific_name, confidence_level, image_url, image_alt, notes, result_json, location_label, latitude, longitude, observed_at, created_at")
       .eq("user_id", user.id)
       .order("observed_at", { ascending: false }),
     supabase
@@ -28,6 +29,18 @@ export default async function DiscoverCatalogPage({
   ]);
 
   const studentNames = new Map(((students ?? []) as StudentRecord[]).map((student) => [student.id, student.name]));
+  const items = await Promise.all(
+    ((discoveries ?? []) as DiscoveryRecord[]).map(async (item) => {
+      const imagePath = item.image_path ?? extractStoragePathFromLegacyUrl(item.image_url, "leaf-photos");
+      const signedUrl = await createSignedStorageUrl(supabase, "leaf-photos", imagePath);
+
+      return {
+        ...item,
+        image_path: imagePath,
+        image_url: signedUrl ?? item.image_url
+      } satisfies DiscoveryRecord;
+    })
+  );
 
   return (
     <PageShell
@@ -37,7 +50,7 @@ export default async function DiscoverCatalogPage({
       description="A growing field notebook of saved discoveries across animals, bugs, trees, birds, fish, plants, and mushrooms."
     >
       <DiscoveryCatalogView
-        items={(discoveries ?? []) as DiscoveryRecord[]}
+        items={items}
         selectedCategory={selectedCategory}
         studentNames={studentNames}
       />

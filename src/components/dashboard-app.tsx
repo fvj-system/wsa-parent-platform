@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { PhotoAsset, Profile, TreeIdentification, Waiver } from "@/lib/types";
@@ -23,6 +23,38 @@ export function DashboardApp({ initialProfile, initialWaiver, initialPhotos, ini
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadSignedUrls() {
+      const nextPhotos = await Promise.all(
+        initialPhotos.map(async (photo) => {
+          if (!photo.image_path) return photo;
+          const signedUrl = (await supabase.storage.from("class-photos").createSignedUrl(photo.image_path, 3600)).data?.signedUrl;
+          return { ...photo, public_url: signedUrl };
+        })
+      );
+
+      const nextTreeNotes = await Promise.all(
+        initialTreeNotes.map(async (tree) => {
+          if (!tree.image_path) return tree;
+          const signedUrl = (await supabase.storage.from("leaf-photos").createSignedUrl(tree.image_path, 3600)).data?.signedUrl;
+          return { ...tree, public_url: signedUrl };
+        })
+      );
+
+      if (ignore) return;
+      setPhotos(nextPhotos);
+      setTreeNotes(nextTreeNotes);
+    }
+
+    void loadSignedUrls();
+
+    return () => {
+      ignore = true;
+    };
+  }, [initialPhotos, initialTreeNotes, supabase]);
 
   const stats = [
     { label: "Waiver", value: waiver ? "Signed" : "Pending" },
@@ -105,8 +137,8 @@ export function DashboardApp({ initialProfile, initialWaiver, initialPhotos, ini
           return;
         }
 
-        const { data: publicUrlData } = supabase.storage.from("class-photos").getPublicUrl(path);
-        setPhotos((current) => [{ ...data, public_url: publicUrlData.publicUrl }, ...current]);
+        const signedUrl = (await supabase.storage.from("class-photos").createSignedUrl(path, 3600)).data?.signedUrl;
+        setPhotos((current) => [{ ...data, public_url: signedUrl }, ...current]);
       }
 
       setStatus("Photo upload complete.");

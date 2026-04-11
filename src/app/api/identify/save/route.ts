@@ -5,6 +5,7 @@ import { completeDiscovery } from "@/lib/activity-completions";
 import { getDiscoveryLocationMeta } from "@/lib/discover/location";
 import { buildMushroomSafetyNote, mapDiscoverModeToCatalogCategory } from "@/lib/discoveries";
 import { discoverCategorySchema, identifyResponseSchema } from "@/lib/identify";
+import { createSignedStorageUrl } from "@/lib/storage";
 import { getRankForCompletedAdventures } from "@/lib/students";
 import { createClient } from "@/lib/supabase/server";
 
@@ -24,6 +25,7 @@ type SavedDiscoveryRecord = {
   user_id: string;
   student_id: string | null;
   category: string;
+  image_path?: string | null;
   common_name: string;
   scientific_name: string | null;
   confidence_level: "low" | "medium" | "high";
@@ -74,7 +76,7 @@ function buildDiscoveryRequestFingerprint(input: {
 }
 
 function getDiscoverySelect() {
-  return "id, user_id, student_id, category, common_name, scientific_name, confidence_level, image_url, image_alt, notes, result_json, location_label, latitude, longitude, observed_at, created_at";
+  return "id, user_id, student_id, category, image_path, common_name, scientific_name, confidence_level, image_url, image_alt, notes, result_json, location_label, latitude, longitude, observed_at, created_at";
 }
 
 async function loadDiscoveryByFingerprint(supabase: Awaited<ReturnType<typeof createClient>>, userId: string, requestFingerprint: string) {
@@ -215,6 +217,9 @@ export async function POST(request: Request) {
 
       imageUrl = supabase.storage.from("leaf-photos").getPublicUrl(filePath).data.publicUrl;
 
+      const signedImageUrl = await createSignedStorageUrl(supabase, "leaf-photos", filePath);
+      imageUrl = signedImageUrl ?? "";
+
       const { data: insertedDiscovery, error: discoveryError } = await supabase
         .from("discoveries")
         .insert({
@@ -222,6 +227,7 @@ export async function POST(request: Request) {
           student_id: parsed.data.studentId ?? null,
           request_fingerprint: requestFingerprint,
           category: catalogCategory,
+          image_path: filePath,
           common_name: result.possible_identification,
           scientific_name: result.scientific_name || null,
           confidence_level: result.confidence_level,
@@ -260,6 +266,14 @@ export async function POST(request: Request) {
 
     if (!discovery) {
       throw new Error("Discovery could not be saved.");
+    }
+
+    if (discovery.image_path) {
+      const signedImageUrl = await createSignedStorageUrl(supabase, "leaf-photos", discovery.image_path);
+      if (signedImageUrl) {
+        imageUrl = signedImageUrl;
+        discovery.image_url = signedImageUrl;
+      }
     }
 
     let completionResult: Awaited<ReturnType<typeof completeDiscovery>> | null = null;

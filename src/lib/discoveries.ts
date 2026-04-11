@@ -10,6 +10,7 @@ export type DiscoveryRecord = {
   user_id: string;
   student_id: string | null;
   category: DiscoveryCatalogCategory;
+  image_path?: string | null;
   common_name: string;
   scientific_name: string | null;
   confidence_level: "low" | "medium" | "high";
