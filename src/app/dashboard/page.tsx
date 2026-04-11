@@ -1,10 +1,12 @@
 import { BadgeProgressWidget } from "@/components/badge-progress-widget";
 import { DashboardDailyConditions } from "@/components/dashboard-daily-conditions";
 import { DashboardDailyBriefing } from "@/components/dashboard-daily-briefing";
+import { DashboardTodayNextStep } from "@/components/dashboard-today-next-step";
 import { AppShell } from "@/components/app-shell";
 import { requireUser } from "@/lib/auth";
 import type { ActivityCompletionRecord } from "@/lib/activity-completions";
 import { getEnvironmentalContext } from "@/lib/context/engine";
+import { deriveWeatherContext } from "@/lib/context/weather";
 import { getTideSummary } from "@/lib/context/tides";
 import { getHistoryFactForDate } from "@/lib/daily-brief/history-fact";
 import { getNatureQuoteForDate } from "@/lib/daily-brief/nature-quote";
@@ -59,19 +61,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const generationRows = (generations ?? []) as GenerationRecord[];
   const studentRows = (students ?? []) as StudentRecord[];
   const resolvedLocationPreference = resolveUserLocationPreference(locationPreferences);
-  const householdBriefing = await ensureHouseholdBriefing(
-    supabase,
-    user.id,
-    generationRows,
-    resolvedLocationPreference.location.displayLabel
-  );
-  const allGenerationRows = [
-    householdBriefing.animalGeneration,
-    householdBriefing.birdGeneration,
-    householdBriefing.plantGeneration,
-    householdBriefing.fishGeneration,
-    ...generationRows
-  ].filter((item, index, items) => items.findIndex((entry) => entry.id === item.id) === index);
   const completionRows = (completions ?? []) as ActivityCompletionRecord[];
   const badgeCounts = (studentBadges ?? []).reduce<Record<string, number>>((acc, item) => {
     const row = item as { student_id?: string };
@@ -89,17 +78,69 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         (studentRows.length === 1 ? studentRows[0] : null);
 
   const today = new Date().toISOString().slice(0, 10);
-  const environmental = await getEnvironmentalContext(supabase, {
-    requestDate: today,
-    locationLabel: resolvedLocationPreference.location.displayLabel,
-    latitude: resolvedLocationPreference.location.latitude,
-    longitude: resolvedLocationPreference.location.longitude,
-    radiusMiles: resolvedLocationPreference.location.radiusMiles,
-    weatherCondition: "clear"
-  });
+  let environmental: {
+    location: typeof resolvedLocationPreference.location;
+    weather: Awaited<ReturnType<typeof getEnvironmentalContext>>["weather"];
+    fallbackWeatherSummary: Awaited<ReturnType<typeof getEnvironmentalContext>>["fallbackWeatherSummary"];
+  } = {
+    location: resolvedLocationPreference.location,
+    weather: null,
+    fallbackWeatherSummary: deriveWeatherContext({
+      requestDate: today,
+      weatherCondition: "clear"
+    })
+  };
+
+  try {
+    const loadedEnvironmental = await getEnvironmentalContext(supabase, {
+      requestDate: today,
+      locationLabel: resolvedLocationPreference.location.displayLabel,
+      latitude: resolvedLocationPreference.location.latitude,
+      longitude: resolvedLocationPreference.location.longitude,
+      radiusMiles: resolvedLocationPreference.location.radiusMiles,
+      weatherCondition: "clear"
+    });
+
+    environmental = {
+      location: loadedEnvironmental.location,
+      weather: loadedEnvironmental.weather,
+      fallbackWeatherSummary: loadedEnvironmental.fallbackWeatherSummary
+    };
+  } catch {
+    // Fall back to lightweight local conditions so the dashboard still loads.
+  }
+
   const tideSummary = getTideSummary(today, environmental.location);
   const historyFact = getHistoryFactForDate(today);
   const natureQuote = getNatureQuoteForDate(today);
+  let householdBriefing: Awaited<ReturnType<typeof ensureHouseholdBriefing>> | null = null;
+  let dashboardWarning = "";
+
+  if (studentRows.length > 0) {
+    try {
+      householdBriefing = await ensureHouseholdBriefing(
+        supabase,
+        user.id,
+        generationRows,
+        resolvedLocationPreference.location.displayLabel
+      );
+    } catch {
+      dashboardWarning = "Today's family briefing is still getting ready. The rest of the dashboard is safe to use.";
+    }
+  }
+
+  const allGenerationRows = [
+    ...(householdBriefing
+      ? [
+          householdBriefing.animalGeneration,
+          householdBriefing.birdGeneration,
+          householdBriefing.plantGeneration,
+          householdBriefing.fishGeneration
+        ]
+      : []),
+    ...generationRows
+  ].filter((item, index, items) => items.findIndex((entry) => entry.id === item.id) === index);
+
   const todayAdventure =
     allGenerationRows.find(
       (item) =>
@@ -134,20 +175,41 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         tide={tideSummary}
       />
 
-      <DashboardDailyBriefing
-        briefing={householdBriefing}
-        activeStudent={briefingStudent}
-        totalCompletedAdventures={totalCompletedAdventures}
-        totalSavedLessons={totalSavedLessons}
-        printableItemsCreated={printableItemsCreated}
-        todayAdventureHref={
-          todayAdventure
-            ? `/generations/${todayAdventure.id}`
-            : `/daily-adventure${briefingStudent ? `?studentId=${briefingStudent.id}` : ""}`
-        }
-        historyFact={historyFact}
-        natureQuote={natureQuote}
-      />
+      {studentRows.length === 0 ? (
+        <DashboardTodayNextStep
+          students={studentRows}
+          activeStudent={null}
+          todayAdventure={null}
+          todayAdventureCompleted={false}
+        />
+      ) : householdBriefing ? (
+        <DashboardDailyBriefing
+          briefing={householdBriefing}
+          activeStudent={briefingStudent}
+          totalCompletedAdventures={totalCompletedAdventures}
+          totalSavedLessons={totalSavedLessons}
+          printableItemsCreated={printableItemsCreated}
+          todayAdventureHref={
+            todayAdventure
+              ? `/generations/${todayAdventure.id}`
+              : `/daily-adventure${briefingStudent ? `?studentId=${briefingStudent.id}` : ""}`
+          }
+          historyFact={historyFact}
+          natureQuote={natureQuote}
+        />
+      ) : (
+        <section className="panel stack">
+          <div>
+            <p className="eyebrow">Today&apos;s briefing</p>
+            <h3>Dashboard basics are ready</h3>
+          </div>
+          <p className="panel-copy" style={{ margin: 0 }}>
+            {dashboardWarning || "The family briefing is still loading, but the rest of the dashboard is ready."}
+          </p>
+        </section>
+      )}
+
+      {dashboardWarning && studentRows.length > 0 && !householdBriefing ? <p className="error">{dashboardWarning}</p> : null}
 
       <BadgeProgressWidget
         badgeCount={totalBadgeCount}
