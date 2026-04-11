@@ -5,6 +5,8 @@ import { discoveryCatalogCategorySchema, type DiscoveryRecord } from "@/lib/disc
 import { createSignedStorageUrl, extractStoragePathFromLegacyUrl } from "@/lib/storage";
 import type { StudentRecord } from "@/lib/students";
 
+export const dynamic = "force-dynamic";
+
 export default async function DiscoverCatalogPage({
   searchParams
 }: {

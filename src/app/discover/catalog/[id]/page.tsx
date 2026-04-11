@@ -5,6 +5,8 @@ import { requireUser } from "@/lib/auth";
 import type { DiscoveryRecord } from "@/lib/discoveries";
 import { createSignedStorageUrl, extractStoragePathFromLegacyUrl } from "@/lib/storage";
 
+export const dynamic = "force-dynamic";
+
 export default async function DiscoveryDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase, user } = await requireUser();

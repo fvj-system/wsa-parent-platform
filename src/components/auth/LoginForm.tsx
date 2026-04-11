@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+
+const REMEMBER_DEVICE_KEY = "wsa-remember-device";
+const REMEMBERED_EMAIL_KEY = "wsa-remembered-email";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -13,6 +16,19 @@ export default function LoginForm() {
   const [rememberDevice, setRememberDevice] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const remembered = window.localStorage.getItem(REMEMBER_DEVICE_KEY);
+    const rememberedEmail = window.localStorage.getItem(REMEMBERED_EMAIL_KEY);
+    const shouldRemember = remembered !== "false";
+
+    setRememberDevice(shouldRemember);
+    if (shouldRemember && rememberedEmail) {
+      setEmail(rememberedEmail);
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -28,6 +44,19 @@ export default function LoginForm() {
       if (error) {
         setError(error.message);
         return;
+      }
+
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(
+          REMEMBER_DEVICE_KEY,
+          rememberDevice ? "true" : "false",
+        );
+
+        if (rememberDevice) {
+          window.localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+        } else {
+          window.localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+        }
       }
 
       router.replace("/dashboard");
