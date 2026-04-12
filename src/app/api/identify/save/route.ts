@@ -1,4 +1,5 @@
 import { createHash } from "crypto";
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { completeDiscovery } from "@/lib/activity-completions";
@@ -85,6 +86,22 @@ async function loadDiscoveryByFingerprint(supabase: Awaited<ReturnType<typeof cr
     .select(getDiscoverySelect())
     .eq("user_id", userId)
     .eq("request_fingerprint", requestFingerprint)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return (data as SavedDiscoveryRecord | null) ?? null;
+}
+
+async function loadDiscoveryById(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  discoveryId: string
+) {
+  const { data, error } = await supabase
+    .from("discoveries")
+    .select(getDiscoverySelect())
+    .eq("user_id", userId)
+    .eq("id", discoveryId)
     .maybeSingle();
 
   if (error) throw new Error(error.message);
@@ -215,8 +232,6 @@ export async function POST(request: Request) {
         throw new Error(uploadError.message);
       }
 
-      imageUrl = supabase.storage.from("leaf-photos").getPublicUrl(filePath).data.publicUrl;
-
       const signedImageUrl = await createSignedStorageUrl(supabase, "leaf-photos", filePath);
       imageUrl = signedImageUrl ?? "";
 
@@ -267,6 +282,19 @@ export async function POST(request: Request) {
     if (!discovery) {
       throw new Error("Discovery could not be saved.");
     }
+
+    const persistedDiscovery = await loadDiscoveryById(supabase, user.id, discovery.id);
+    if (!persistedDiscovery) {
+      console.error("[identify/save] discovery missing after successful save attempt", {
+        userId: user.id,
+        discoveryId: discovery.id,
+        studentId: parsed.data.studentId ?? null,
+        requestFingerprint
+      });
+      throw new Error("Discovery save did not persist. Please try again.");
+    }
+
+    discovery = persistedDiscovery;
 
     if (discovery.image_path) {
       const signedImageUrl = await createSignedStorageUrl(supabase, "leaf-photos", discovery.image_path);
@@ -393,6 +421,14 @@ export async function POST(request: Request) {
       }
     }
 
+    revalidatePath("/discover/catalog");
+    revalidatePath(`/discover/catalog/${discovery.id}`);
+    revalidatePath("/students");
+    if (parsed.data.studentId) {
+      revalidatePath(`/students/${parsed.data.studentId}`);
+      revalidatePath(`/portfolio/${parsed.data.studentId}`);
+    }
+
     return NextResponse.json({
       discovery,
       entry,
@@ -465,6 +501,15 @@ export async function POST(request: Request) {
     }
 
     const message = error instanceof Error ? error.message : "Unexpected server error.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const schemaCacheIssue = message.toLowerCase().includes("schema cache");
+
+    return NextResponse.json(
+      {
+        error: schemaCacheIssue
+          ? "Discovery storage is still syncing to the latest schema. Wait a moment, refresh, and try again."
+          : message
+      },
+      { status: schemaCacheIssue ? 503 : 500 }
+    );
   }
 }
