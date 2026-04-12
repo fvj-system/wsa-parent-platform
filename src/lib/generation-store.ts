@@ -25,6 +25,7 @@ export async function saveGeneration({
     .insert({
       user_id: userId,
       student_id: studentId ?? null,
+      kind: toolType,
       tool_type: toolType,
       title,
       input_json: inputJson,
