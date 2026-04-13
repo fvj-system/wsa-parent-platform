@@ -26,7 +26,7 @@ export default async function NearbyOpportunitiesPage() {
       userLabel={user.email ?? "WSA family"}
       eyebrow="Family Planning"
       title="Nearby Opportunities"
-      description="Museums, landmarks, nature centers, and family learning stops that stay close to home."
+      description="A local-guide mix of nearby nature stops, museums, event calendars, family programs, festivals, and public learning ideas close to home."
     >
       <LocationPreferencesCard initialPreferences={preferences} resolvedLocation={resolvedPreference} />
       <DashboardFamilyOpportunities items={items} showHeader={false} />

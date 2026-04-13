@@ -173,7 +173,6 @@ export function IdentifyTool({ students, preselectedStudentId }: IdentifyToolPro
           <input
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={async (event) => {
               const nextFile = event.target.files?.[0] ?? null;
               setResult(null);
@@ -200,6 +199,9 @@ export function IdentifyTool({ students, preselectedStudentId }: IdentifyToolPro
             }}
           />
         </label>
+        <p className="muted" style={{ margin: "-6px 0 0" }}>
+          Choose from your photo library here. For live camera capture, use your phone camera first or the quick camera flow.
+        </p>
 
         <label>
           Notes for the naturalist

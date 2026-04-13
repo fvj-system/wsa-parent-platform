@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { LocationMode, LocationPreferences, ResolvedUserLocationPreference } from "@/lib/location-preferences";
 
 type LocationPreferencesCardProps = {
@@ -11,6 +11,7 @@ type LocationPreferencesCardProps = {
 const radiusOptions = [10, 25, 50] as const;
 
 export function LocationPreferencesCard({ initialPreferences, resolvedLocation }: LocationPreferencesCardProps) {
+  const zipInputRef = useRef<HTMLInputElement | null>(null);
   const [locationMode, setLocationMode] = useState<LocationMode>(initialPreferences.locationMode);
   const [homeZipcode, setHomeZipcode] = useState(initialPreferences.homeZipcode ?? "");
   const [searchRadiusMiles, setSearchRadiusMiles] = useState<(typeof radiusOptions)[number]>(initialPreferences.searchRadiusMiles);
@@ -18,12 +19,20 @@ export function LocationPreferencesCard({ initialPreferences, resolvedLocation }
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  function normalizeZipcodeCandidate(value: string) {
+    const digits = value.replace(/\D/g, "");
+    return digits.length >= 5 ? digits.slice(0, 5) : digits;
+  }
+
   async function saveZipcodePreferences() {
     setIsSaving(true);
     setError(null);
     setMessage(null);
 
     try {
+      const zipcodeCandidate = zipInputRef.current?.value ?? homeZipcode;
+      const normalizedZipcode = normalizeZipcodeCandidate(zipcodeCandidate);
+
       const response = await fetch("/api/location-preferences", {
         method: "POST",
         headers: {
@@ -31,7 +40,7 @@ export function LocationPreferencesCard({ initialPreferences, resolvedLocation }
         },
         body: JSON.stringify({
           locationMode: "zipcode",
-          homeZipcode,
+          homeZipcode: normalizedZipcode,
           searchRadiusMiles
         })
       });
@@ -130,11 +139,13 @@ export function LocationPreferencesCard({ initialPreferences, resolvedLocation }
           <label>
             ZIP code
             <input
+              ref={zipInputRef}
+              autoComplete="postal-code"
               inputMode="numeric"
-              maxLength={5}
+              maxLength={10}
               value={homeZipcode}
-              onChange={(event) => setHomeZipcode(event.target.value.replace(/\D/g, "").slice(0, 5))}
-              placeholder="20653"
+              onChange={(event) => setHomeZipcode(event.target.value.replace(/[^\d-]/g, "").slice(0, 10))}
+              placeholder="20653 or 20653-1234"
             />
           </label>
 

@@ -331,7 +331,6 @@ export function QuickDiscoverCamera({ isOpen, onClose }: QuickDiscoverCameraProp
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              capture="environment"
               className="print-hide"
               onChange={async (event) => {
                 const nextFile = event.target.files?.[0] ?? null;

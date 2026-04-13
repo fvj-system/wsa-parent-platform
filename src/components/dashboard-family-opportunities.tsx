@@ -7,9 +7,12 @@ type DashboardFamilyOpportunitiesProps = {
 
 const typeLabels: Record<FamilyOpportunity["type"], string> = {
   museum: "Museum",
-  landmark: "Historic Landmark",
-  library_event: "Library Event",
-  nature_center: "Nature Center"
+  history_site: "Historic Site",
+  nature_center: "Nature Center",
+  park: "Nature Spot",
+  kids_programs: "Kids Programs",
+  festival_calendar: "Festivals & Events",
+  lecture_calendar: "Lectures & Talks"
 };
 
 export function DashboardFamilyOpportunities({ items, showHeader = true }: DashboardFamilyOpportunitiesProps) {
@@ -42,8 +45,8 @@ export function DashboardFamilyOpportunities({ items, showHeader = true }: Dashb
               <p className="muted dashboard-opportunity-location">
                 {item.locationLabel}
               </p>
-              <a className="button button-ghost dashboard-opportunity-map" href={item.mapUrl} target="_blank" rel="noreferrer">
-                Map
+              <a className="button button-ghost dashboard-opportunity-map" href={item.href} target="_blank" rel="noreferrer">
+                {item.ctaLabel}
               </a>
             </div>
           </article>

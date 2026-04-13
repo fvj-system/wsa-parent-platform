@@ -131,7 +131,7 @@ export function resolveUserLocationPreference(preferences: LocationPreferences):
 }
 
 export async function geocodeZipcode(zipcode: string) {
-  const normalizedZipcode = zipcode.trim();
+  const normalizedZipcode = zipcode.replace(/\D/g, "").slice(0, 5);
   if (!/^\d{5}$/.test(normalizedZipcode)) {
     throw new Error("Enter a valid 5-digit ZIP code.");
   }

@@ -3,11 +3,19 @@ import { getSpotMapUrl, milesBetweenPoints, type ResolvedLocationContext } from 
 export type FamilyOpportunity = {
   id: string;
   title: string;
-  type: "museum" | "landmark" | "library_event" | "nature_center";
+  type:
+    | "museum"
+    | "history_site"
+    | "nature_center"
+    | "park"
+    | "kids_programs"
+    | "festival_calendar"
+    | "lecture_calendar";
   locationLabel: string;
   reason: string;
   distanceMiles: number | null;
-  mapUrl: string;
+  href: string;
+  ctaLabel: string;
 };
 
 const OPPORTUNITIES = [
@@ -18,61 +26,117 @@ const OPPORTUNITIES = [
     locationLabel: "Solomons, MD",
     latitude: 38.3215,
     longitude: -76.4519,
-    reason: "A strong fit for families blending local history, Chesapeake Bay ecology, and marine life."
+    reason: "One of the best Southern Maryland stops for Chesapeake Bay wildlife, hands-on family learning, and museum programming that actually fits the region.",
+    href: getSpotMapUrl({
+      name: "Calvert Marine Museum",
+      latitude: 38.3215,
+      longitude: -76.4519,
+      location_label: "Solomons, MD"
+    }),
+    ctaLabel: "Map"
   },
   {
-    id: "patuxent-river-naval-air-museum",
-    title: "Patuxent River Naval Air Museum",
-    type: "museum",
-    locationLabel: "Lexington Park, MD",
-    latitude: 38.2537,
-    longitude: -76.4522,
-    reason: "Useful for family week plans that connect Maryland history, engineering, and place-based learning."
-  },
-  {
-    id: "st-clements-island-museum",
-    title: "St. Clements Island Museum",
-    type: "museum",
-    locationLabel: "Coltons Point, MD",
-    latitude: 38.2402,
-    longitude: -76.744,
-    reason: "A good local history stop when the family wants a shoreline-and-settlement connection."
-  },
-  {
-    id: "point-lookout-state-park",
-    title: "Point Lookout Historic Area",
-    type: "landmark",
-    locationLabel: "Scotland, MD",
-    latitude: 38.0417,
-    longitude: -76.3274,
-    reason: "Strong for families wanting Civil War history, shoreline habitat, and bird-rich outdoor time in one outing."
+    id: "annmarie-garden",
+    title: "Annmarie Sculpture Garden & Arts Center",
+    type: "kids_programs",
+    locationLabel: "Solomons, MD",
+    latitude: 38.3597,
+    longitude: -76.4614,
+    reason: "A strong local pick for family art-and-nature days, kid-friendly events, seasonal festivals, and outdoor walking in one stop.",
+    href: "https://www.annmariegarden.org/annmarie2/event-info-0",
+    ctaLabel: "Events"
   },
   {
     id: "jefferson-patterson-park",
     title: "Jefferson Patterson Park and Museum",
-    type: "landmark",
+    type: "history_site",
     locationLabel: "St. Leonard, MD",
     latitude: 38.4045,
     longitude: -76.5122,
-    reason: "Blends archaeology, trails, and local history in a way that works well for mixed-age family days."
+    reason: "Useful when you want trails, archaeology, local history, and a place that feels educational without feeling like school all day.",
+    href: getSpotMapUrl({
+      name: "Jefferson Patterson Park and Museum",
+      latitude: 38.4045,
+      longitude: -76.5122,
+      location_label: "St. Leonard, MD"
+    }),
+    ctaLabel: "Map"
   },
   {
-    id: "greenwell-state-park",
+    id: "greenwell-foundation",
     title: "Greenwell Foundation Nature Center",
     type: "nature_center",
     locationLabel: "Hollywood, MD",
     latitude: 38.345,
     longitude: -76.5445,
-    reason: "A calm family-friendly nature stop with trails, shoreline access, and room for simple outdoor learning."
+    reason: "A calm family nature option with shoreline, trails, and simple outdoor learning for mixed-age kids who do better with an easy-access place.",
+    href: getSpotMapUrl({
+      name: "Greenwell Foundation Nature Center",
+      latitude: 38.345,
+      longitude: -76.5445,
+      location_label: "Hollywood, MD"
+    }),
+    ctaLabel: "Map"
   },
   {
-    id: "county-library-calendar",
-    title: "County Library Family Calendar",
-    type: "library_event",
-    locationLabel: "Southern Maryland libraries",
+    id: "point-lookout-state-park",
+    title: "Point Lookout Historic Area",
+    type: "park",
+    locationLabel: "Scotland, MD",
+    latitude: 38.0417,
+    longitude: -76.3274,
+    reason: "Good for families who want shoreline habitat, birding potential, and Civil War history in one bigger outing instead of several separate stops.",
+    href: getSpotMapUrl({
+      name: "Point Lookout Historic Area",
+      latitude: 38.0417,
+      longitude: -76.3274,
+      location_label: "Scotland, MD"
+    }),
+    ctaLabel: "Map"
+  },
+  {
+    id: "st-marys-library-events",
+    title: "St. Mary's County Library Family Events",
+    type: "kids_programs",
+    locationLabel: "St. Mary's County, MD",
     latitude: null,
     longitude: null,
-    reason: "A practical backup for Family Week planning when you want a low-friction educational outing or storytime."
+    reason: "A reliable place to find kid-friendly storytimes, STEM activities, homeschool-friendly programs, and low-cost indoor backup plans.",
+    href: "https://www.google.com/search?q=St.+Mary%27s+County+Library+events",
+    ctaLabel: "Calendar"
+  },
+  {
+    id: "calvert-library-events",
+    title: "Calvert Library Events",
+    type: "kids_programs",
+    locationLabel: "Calvert County, MD",
+    latitude: null,
+    longitude: null,
+    reason: "Useful for quick family outings when you need a clean, simple, kid-focused event calendar instead of another long day of planning.",
+    href: "https://www.google.com/search?q=Calvert+Library+events",
+    ctaLabel: "Calendar"
+  },
+  {
+    id: "calvert-parks-rec",
+    title: "Calvert County Parks & Recreation Activities",
+    type: "festival_calendar",
+    locationLabel: "Calvert County, MD",
+    latitude: null,
+    longitude: null,
+    reason: "A strong regional hub for family programs, seasonal activities, camps, fairs, and community events that can fill the calendar fast.",
+    href: "https://www.calvertcountymd.gov/index.aspx?nid=115",
+    ctaLabel: "Programs"
+  },
+  {
+    id: "college-southern-maryland-events",
+    title: "College of Southern Maryland Public Events",
+    type: "lecture_calendar",
+    locationLabel: "Southern Maryland campuses",
+    latitude: null,
+    longitude: null,
+    reason: "Helpful for parents looking for public talks, lectures, student showcases, and community learning events that feel a little more grown-up and educational.",
+    href: "https://www.google.com/search?q=College+of+Southern+Maryland+events",
+    ctaLabel: "Events"
   }
 ] as const;
 
@@ -90,21 +154,15 @@ export function getNearbyFamilyOpportunities(location: ResolvedLocationContext) 
       locationLabel: item.locationLabel,
       reason: item.reason,
       distanceMiles,
-      mapUrl:
-        item.latitude !== null && item.longitude !== null
-          ? getSpotMapUrl({
-              name: item.title,
-              latitude: item.latitude,
-              longitude: item.longitude,
-              location_label: item.locationLabel
-            })
-          : "https://www.google.com/maps/search/?api=1&query=Southern+Maryland+Library+Events"
+      href: item.href,
+      ctaLabel: item.ctaLabel
     } satisfies FamilyOpportunity;
   })
     .sort((left, right) => {
+      if (left.distanceMiles === null && right.distanceMiles === null) return left.title.localeCompare(right.title);
       if (left.distanceMiles === null) return 1;
       if (right.distanceMiles === null) return -1;
       return left.distanceMiles - right.distanceMiles;
     })
-    .slice(0, 4);
+    .slice(0, 8);
 }

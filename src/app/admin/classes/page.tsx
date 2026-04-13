@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminClassStatusActions } from "@/components/admin-class-status-actions";
+import { AdminClassImportCard } from "@/components/admin-class-import-card";
 import { PageShell } from "@/components/page-shell";
 import { requireAdmin } from "@/lib/auth";
 import type { ClassBookingRecord, ClassRecord } from "@/lib/classes";
@@ -82,6 +83,8 @@ export default async function AdminClassesPage({
           <Link className="button button-ghost" href="/admin/classes?filter=past">Past</Link>
         </div>
       </section>
+
+      <AdminClassImportCard />
 
       <section className="stack">
         {classRows.map((item) => (

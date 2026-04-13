@@ -29,7 +29,7 @@ export default async function ClassesPage() {
           </div>
         </div>
         <p className="panel-copy" style={{ margin: 0 }}>
-          Follow WSA on Facebook for class updates, daily outdoor ideas, schedule notes, and announcements for families.
+          Follow WSA on Facebook for the freshest announcements. For beta, the booking list below stays reliable because admins can turn Facebook event copy into draft classes before publishing them here.
         </p>
         <div className="cta-row">
           <a className="button button-ghost" href={WSA_FACEBOOK_URL} target="_blank" rel="noreferrer">

@@ -10,7 +10,7 @@ import {
 
 const zipcodeSchema = z.object({
   locationMode: z.literal("zipcode"),
-  homeZipcode: z.string().trim().regex(/^\d{5}$/, "Enter a valid 5-digit ZIP code."),
+  homeZipcode: z.string().trim().min(5, "Enter a valid 5-digit ZIP code."),
   searchRadiusMiles: z.union([z.literal(10), z.literal(25), z.literal(50)])
 });
 
