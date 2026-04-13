@@ -227,7 +227,7 @@ export function StudentProfileView({
         </div>
         <div className="cta-row">
           <Link className="button button-ghost" href={`/animal-of-the-day?studentId=${student.id}`}>
-            Generate animal study
+            Open animal study
           </Link>
           <Link className="button button-ghost" href="/planner">
             Plan a week

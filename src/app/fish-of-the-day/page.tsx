@@ -1,43 +1,33 @@
-import { FishGenerator } from "@/components/fish-generator";
-import { PageShell } from "@/components/page-shell";
+import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { ensureHouseholdBriefing } from "@/lib/daily-briefing";
 import type { GenerationRecord } from "@/lib/generations";
-import type { StudentRecord } from "@/lib/students";
+import { getUserLocationPreferences, resolveUserLocationPreference } from "@/lib/location-preferences";
 
 export default async function FishOfTheDayPage({
   searchParams
 }: {
   searchParams: Promise<{ studentId?: string }>;
 }) {
-  const { studentId } = await searchParams;
+  await searchParams;
   const { supabase, user } = await requireUser();
-  const [{ data }, { data: students }] = await Promise.all([
+  const [{ data: generations }, locationPreferences] = await Promise.all([
     supabase
       .from("generations")
       .select("id, user_id, student_id, tool_type, title, input_json, output_json, created_at")
       .eq("user_id", user.id)
-      .eq("tool_type", "fish_of_the_day")
       .order("created_at", { ascending: false })
-      .limit(8),
-    supabase
-      .from("students")
-      .select("id, user_id, name, age, interests, current_rank, completed_adventures_count, created_at, updated_at")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
+      .limit(16),
+    getUserLocationPreferences(supabase, user.id)
   ]);
 
-  return (
-    <PageShell
-      userLabel={user.email ?? "WSA family"}
-      eyebrow="WSA Explorer Mode"
-      title="Fish of the Day field briefing"
-      description="Generate a local fishing briefing with water-aware habitat clues, nearby access, beginner-friendly bait guidance, and a calm family-ready outlook."
-    >
-      <FishGenerator
-        initialHistory={(data ?? []) as GenerationRecord[]}
-        students={(students ?? []) as StudentRecord[]}
-        preselectedStudentId={studentId}
-      />
-    </PageShell>
+  const resolvedLocationPreference = resolveUserLocationPreference(locationPreferences);
+  const briefing = await ensureHouseholdBriefing(
+    supabase,
+    user.id,
+    (generations ?? []) as GenerationRecord[],
+    resolvedLocationPreference.location.displayLabel
   );
+
+  redirect(`/generations/${briefing.fishGeneration.id}`);
 }

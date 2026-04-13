@@ -15,31 +15,35 @@ export function DashboardDailyConditions({ weather, fallbackSummary, tide }: Das
   const nextLow = tide.lowTides[0] ?? "--";
 
   return (
-    <section className="daily-conditions-strip">
-      <article className="specimen-card daily-condition-chip">
-        <div className="daily-condition-symbol">Sun</div>
-        <div className="daily-condition-copy">
+    <section className="specimen-card daily-conditions-panel">
+      <div className="daily-conditions-panel-head">
+        <div>
+          <p className="eyebrow">Conditions</p>
+          <h3>Today&apos;s field read</h3>
+        </div>
+        <p className="panel-copy" style={{ margin: 0 }}>
+          Weather, tides, and the quick nature read in one spot.
+        </p>
+      </div>
+
+      <div className="daily-conditions-grid">
+        <article className="daily-condition-item">
           <span className="eyebrow">Weather</span>
           <strong>{weatherLabel}</strong>
           <span className="muted">H {high} deg / L {low} deg</span>
-        </div>
-      </article>
+        </article>
 
-      <article className="specimen-card daily-condition-chip">
-        <div className="daily-condition-symbol">Tide</div>
-        <div className="daily-condition-copy">
+        <article className="daily-condition-item">
           <span className="eyebrow">Tides</span>
           <strong>{tide.hasTideData ? `High ${nextHigh}` : "No tide pressure"}</strong>
           <span className="muted">{tide.hasTideData ? `Low ${nextLow}` : tide.summary}</span>
-        </div>
-      </article>
+        </article>
 
-      <article className="specimen-card daily-condition-chip daily-condition-chip-wide">
-        <div className="daily-condition-copy">
+        <article className="daily-condition-item daily-condition-item-wide">
           <span className="eyebrow">Field Read</span>
           <strong className="daily-condition-field-read">{fallbackSummary}</strong>
-        </div>
-      </article>
+        </article>
+      </div>
     </section>
   );
 }

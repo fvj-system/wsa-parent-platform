@@ -21,7 +21,7 @@ export async function ensureHouseholdBriefing(
   supabase: SupabaseClient,
   userId: string,
   existingGenerations: GenerationRecord[],
-  locationLabel = process.env.WSA_DEFAULT_REGION || "Southern Maryland"
+  locationLabel = process.env.WSA_DEFAULT_REGION || "Delaware, Maryland, and Virginia"
 ): Promise<HouseholdBriefing> {
   const today = new Date().toISOString().slice(0, 10);
   const existingAnimal = existingGenerations.find(

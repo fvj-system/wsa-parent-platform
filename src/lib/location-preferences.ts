@@ -41,7 +41,7 @@ export function getDefaultLocationPreferences(): LocationPreferences {
     homeLng: null,
     currentLat: null,
     currentLng: null,
-    locationLabel: process.env.WSA_DEFAULT_REGION || "Southern Maryland",
+    locationLabel: process.env.WSA_DEFAULT_REGION || "Delaware, Maryland, and Virginia",
     searchRadiusMiles: 25
   };
 }
@@ -79,7 +79,7 @@ export async function getUserLocationPreferences(supabase: SupabaseClient, userI
 }
 
 export function resolveUserLocationPreference(preferences: LocationPreferences): ResolvedUserLocationPreference {
-  const fallbackLabel = process.env.WSA_DEFAULT_REGION || "Southern Maryland";
+  const fallbackLabel = process.env.WSA_DEFAULT_REGION || "Delaware, Maryland, and Virginia";
   const currentReady = preferences.currentLat !== null && preferences.currentLng !== null;
   const homeReady = preferences.homeLat !== null && preferences.homeLng !== null;
 

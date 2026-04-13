@@ -67,10 +67,10 @@ function shortenCue(value?: string | null) {
 }
 
 const imageStyles: Record<AdventureCategory, string> = {
-  animal: "today-adventure-image-center",
+  animal: "today-adventure-image-focus",
   bird: "today-adventure-image-top",
-  plant: "today-adventure-image-center",
-  fish: "today-adventure-image-center"
+  plant: "today-adventure-image-focus",
+  fish: "today-adventure-image-focus"
 };
 
 function shouldUseImageContainMode(item: AdventureItem) {
@@ -88,6 +88,7 @@ export function DashboardDailyBriefing({
   natureQuote
 }: DashboardDailyBriefingProps) {
   const [selectedCategory, setSelectedCategory] = useState<AdventureCategory>("animal");
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const animalTailored = activeStudent ? tailorAnimalBriefingForStudent(activeStudent, briefing.animalOutput) : null;
   const birdTailored = activeStudent ? tailorBirdBriefingForStudent(activeStudent, briefing.birdOutput) : null;
@@ -113,7 +114,7 @@ export function DashboardDailyBriefing({
           shortenCue(briefing.animalOutput.habitat)
         ],
         startHref: buildAdventureHref(activeStudent?.id ?? null, "animal"),
-        fullHref: "/animal-of-the-day"
+        fullHref: `/generations/${briefing.animalGeneration.id}`
       },
       bird: {
         key: "bird",
@@ -170,7 +171,7 @@ export function DashboardDailyBriefing({
           shortenCue(briefing.fishOutput.bestNearbyPlaceType)
         ],
         startHref: buildAdventureHref(activeStudent?.id ?? null, "fish"),
-        fullHref: "/fish-of-the-day"
+        fullHref: `/generations/${briefing.fishGeneration.id}`
       }
     }),
     [activeStudent?.id, animalTailored?.explanation, birdTailored?.explanation, briefing, fishTailored?.explanation, plantTailored?.explanation]
@@ -179,7 +180,8 @@ export function DashboardDailyBriefing({
   const selectedItem = adventureItems[selectedCategory];
   const uniqueLookForCues = Array.from(new Set(selectedItem.lookFor.filter(Boolean)));
   const uniqueWhereCues = Array.from(new Set(selectedItem.where.filter(Boolean)));
-  const statusLabel = `${activeStudent?.name ?? "Household"} • ${(activeStudent?.current_rank ?? "Colt")} Trail Status`;
+  const statusLabel = `${activeStudent?.name ?? "Household"} | ${activeStudent?.current_rank ?? "Colt"} Trail Status`;
+  const historyPreview = summarizeForAdventure(historyFact) || historyFact;
 
   return (
     <section className="panel stack">
@@ -189,12 +191,24 @@ export function DashboardDailyBriefing({
 
       <div className="daily-briefing-notes-strip">
         <article className="field-guide-note daily-briefing-note-inline daily-history-fact-note">
-          <p className="eyebrow daily-history-fact-label">History Fact</p>
-          <div className="daily-history-fact-copy">
-            <p className="daily-history-fact-hook">Did you know?</p>
-            <p className="daily-history-fact-body">{historyFact}</p>
+          <button
+            type="button"
+            className={`daily-history-fact-toggle ${isHistoryOpen ? "daily-history-fact-toggle-open" : ""}`}
+            onClick={() => setIsHistoryOpen((current) => !current)}
+            aria-expanded={isHistoryOpen}
+          >
+            <span className="eyebrow daily-history-fact-label">History Fact</span>
+            <span className="daily-history-fact-preview">{historyPreview}</span>
+            <span className="daily-history-fact-toggle-text">{isHistoryOpen ? "Hide" : "Read more"}</span>
+          </button>
+          <div className={`daily-history-fact-panel ${isHistoryOpen ? "daily-history-fact-panel-open" : ""}`}>
+            <div className="daily-history-fact-copy">
+              <p className="daily-history-fact-hook">Did you know?</p>
+              <p className="daily-history-fact-body">{historyFact}</p>
+            </div>
           </div>
         </article>
+
         <article className="field-guide-note daily-briefing-note-inline">
           <p className="eyebrow" style={{ marginBottom: 6 }}>
             Nature Quote
@@ -234,6 +248,7 @@ export function DashboardDailyBriefing({
               className={`${imageStyles[selectedCategory]} today-adventure-media-image ${shouldUseImageContainMode(selectedItem) ? "today-adventure-image-contain" : ""}`}
             />
           </div>
+
           <div className="today-adventure-copy">
             <div className="today-adventure-copy-head">
               <h4>{selectedItem.title}</h4>
