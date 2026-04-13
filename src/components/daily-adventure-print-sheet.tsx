@@ -4,21 +4,17 @@ import type { DailyAdventureOutput } from "@/lib/generations";
 function compactSentence(
   value: string | null | undefined,
   fallback: string,
-  maxLength = 150,
+  _maxLength = 150,
 ) {
   const text = String(value ?? "")
     .replace(/\s+/g, " ")
     .trim();
-  const firstSentence = text.match(/[^.!?]+[.!?]?/)?.[0]?.trim() ?? text;
-  const normalized = firstSentence || fallback;
-  return normalized.length > maxLength
-    ? `${normalized.slice(0, maxLength - 3).trimEnd()}...`
-    : normalized;
+  return text || fallback;
 }
 
 function compactList(
   items: Array<string | null | undefined>,
-  limit: number,
+  _limit: number,
   fallback: string[],
 ) {
   const cleaned = items
@@ -29,11 +25,7 @@ function compactList(
     )
     .filter(Boolean);
   const unique = Array.from(new Set(cleaned));
-  return (unique.length ? unique : fallback)
-    .slice(0, limit)
-    .map((item) =>
-      item.length > 88 ? `${item.slice(0, 85).trimEnd()}...` : item,
-    );
+  return unique.length ? unique : fallback;
 }
 
 function deriveGearChecklist(result: DailyAdventureOutput) {
@@ -247,6 +239,26 @@ export function DailyAdventurePrintSheet({
     "Record the clearest clue you saw and how it changed the family's plan.",
     150,
   );
+  const printStepByStep = compactList(
+    result.missionStops,
+    6,
+    [
+      "Start with one calm, family-friendly stop.",
+      "Notice the first clues before rushing ahead.",
+      "Work through the main activity in order.",
+      "Wrap up with the journal prompt before heading home.",
+    ],
+  );
+  const printScavengerTasks = compactList(
+    result.scavengerHuntTasks,
+    8,
+    [],
+  );
+  const printTalkingPoints = compactList(
+    result.parentTalkingPoints,
+    8,
+    [],
+  );
 
   return (
     <div className="print-container daily-adventure-print-shell print-only mission-briefing">
@@ -303,13 +315,30 @@ export function DailyAdventurePrintSheet({
 
         <div className="daily-adventure-print-grid">
           <section className="daily-adventure-print-section">
+            <h3>Step-by-Step Plan</h3>
+            <ul>
+              {printStepByStep.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="daily-adventure-print-section">
             <h3>{isMuseumMission ? "Mission Route" : "Target Intel"}</h3>
             <p>{printTargetIntel}</p>
           </section>
 
           <section className="daily-adventure-print-section">
             <h3>{isMuseumMission ? "Scavenger Hunt" : "Tactical Bait"}</h3>
-            <p>{printTacticalBait}</p>
+            {isMuseumMission && printScavengerTasks.length ? (
+              <ul>
+                {printScavengerTasks.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>{printTacticalBait}</p>
+            )}
           </section>
 
           <section className="daily-adventure-print-section">
@@ -323,7 +352,15 @@ export function DailyAdventurePrintSheet({
 
           <section className="daily-adventure-print-section">
             <h3>{isMuseumMission ? "Talking Points" : "Casting Instructions"}</h3>
-            <p>{printCastingInstructions}</p>
+            {isMuseumMission && printTalkingPoints.length ? (
+              <ul>
+                {printTalkingPoints.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>{printCastingInstructions}</p>
+            )}
           </section>
 
           <section className="daily-adventure-print-section">
