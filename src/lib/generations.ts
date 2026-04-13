@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { dailyAdventurePresetKeys } from "@/lib/daily-adventure-presets";
 import { getRegulationStatusLabel } from "@/lib/regulations/types";
+import { smithsonianMuseumKeys } from "@/lib/smithsonian-museums";
 
 export const generationKinds = [
   "lesson",
@@ -110,12 +111,29 @@ export const dailyAdventureInputSchema = z.object({
   householdMode: z.boolean().default(false),
   studentId: z.string().uuid().optional(),
   studentName: z.string().trim().min(1).max(80).optional(),
+  studentAge: z.coerce.number().int().min(3).max(18).optional(),
+  studentInterests: z.array(z.string().trim().min(1).max(80)).default([]),
+  householdStudents: z
+    .array(
+      z.object({
+        id: z.string().uuid().optional(),
+        name: z.string().trim().min(1).max(80),
+        age: z.coerce.number().int().min(3).max(18),
+        interests: z.array(z.string().trim().min(1).max(80)).default([])
+      })
+    )
+    .default([]),
   preset: z.enum(dailyAdventurePresetKeys).optional(),
+  museumKeys: z.array(z.enum(smithsonianMuseumKeys)).default([]),
   locationLabel: z.string().trim().min(2).max(120).default("Southern Maryland"),
   latitude: z.coerce.number().min(-90).max(90).optional(),
   longitude: z.coerce.number().min(-180).max(180).optional(),
   radiusMiles: z.coerce.number().int().min(1).max(50).default(10),
-  weatherCondition: z.string().trim().max(60).default("clear")
+  weatherCondition: z.string().trim().max(60).default("clear"),
+  timeAvailable: z.string().trim().min(1).max(40).optional(),
+  budget: z.string().trim().min(1).max(40).optional(),
+  energyLevel: z.string().trim().min(1).max(40).optional(),
+  travelDistance: z.string().trim().min(1).max(40).optional()
 });
 
 export type DailyAdventureOutput = {
@@ -125,6 +143,10 @@ export type DailyAdventureOutput = {
   natureJournalPrompt: string;
   discussionQuestion: string;
   challengeActivity: string;
+  missionStops: string[];
+  scavengerHuntTasks: string[];
+  parentTalkingPoints: string[];
+  specialExhibitNote: string | null;
   optionalFieldTripIdea: string | null;
   facebookCaption: string;
   bestTimeWindow: string | null;
@@ -160,6 +182,10 @@ export const EMPTY_DAILY_ADVENTURE: DailyAdventureOutput = {
   natureJournalPrompt: "",
   discussionQuestion: "",
   challengeActivity: "",
+  missionStops: [],
+  scavengerHuntTasks: [],
+  parentTalkingPoints: [],
+  specialExhibitNote: null,
   optionalFieldTripIdea: null,
   facebookCaption: "",
   bestTimeWindow: null,
@@ -231,6 +257,10 @@ export function normalizeDailyAdventure(raw: unknown): DailyAdventureOutput {
     natureJournalPrompt: coerceString(source.natureJournalPrompt),
     discussionQuestion: coerceString(source.discussionQuestion),
     challengeActivity: coerceString(source.challengeActivity),
+    missionStops: coerceStringArray(source.missionStops),
+    scavengerHuntTasks: coerceStringArray(source.scavengerHuntTasks),
+    parentTalkingPoints: coerceStringArray(source.parentTalkingPoints),
+    specialExhibitNote: coerceNullableString(source.specialExhibitNote),
     optionalFieldTripIdea: coerceNullableString(source.optionalFieldTripIdea),
     facebookCaption: coerceString(source.facebookCaption),
     bestTimeWindow: coerceNullableString(source.bestTimeWindow),
@@ -383,6 +413,10 @@ export const dailyAdventureOutputSchema = z.object({
   natureJournalPrompt: z.string().trim().min(1),
   discussionQuestion: z.string().trim().min(1),
   challengeActivity: z.string().trim().min(1),
+  missionStops: z.array(z.string().trim().min(1)),
+  scavengerHuntTasks: z.array(z.string().trim().min(1)),
+  parentTalkingPoints: z.array(z.string().trim().min(1)),
+  specialExhibitNote: z.string().trim().nullable(),
   optionalFieldTripIdea: z.string().trim().nullable(),
   facebookCaption: z.string().trim().min(1),
   bestTimeWindow: z.string().trim().nullable(),
@@ -543,7 +577,20 @@ export type DailyAdventureGenerationInput = {
   householdMode?: boolean;
   studentId?: string;
   studentName?: string;
+  studentAge?: number;
+  studentInterests?: string[];
+  householdStudents?: Array<{
+    id?: string;
+    name: string;
+    age: number;
+    interests: string[];
+  }>;
   preset?: (typeof dailyAdventurePresetKeys)[number];
+  museumKeys?: Array<(typeof smithsonianMuseumKeys)[number]>;
+  timeAvailable?: string;
+  budget?: string;
+  energyLevel?: string;
+  travelDistance?: string;
 };
 
 export const animalOutputJsonSchema = {
@@ -682,6 +729,10 @@ export const dailyAdventureOutputJsonSchema = {
     natureJournalPrompt: { type: "string" },
     discussionQuestion: { type: "string" },
     challengeActivity: { type: "string" },
+    missionStops: { type: ["array", "null"], items: { type: "string" } },
+    scavengerHuntTasks: { type: ["array", "null"], items: { type: "string" } },
+    parentTalkingPoints: { type: ["array", "null"], items: { type: "string" } },
+    specialExhibitNote: { type: ["string", "null"] },
     optionalFieldTripIdea: { type: "string" },
     facebookCaption: { type: "string" },
     bestTimeWindow: { type: ["string", "null"] },
@@ -737,6 +788,10 @@ export const dailyAdventureOutputJsonSchema = {
     "natureJournalPrompt",
     "discussionQuestion",
     "challengeActivity",
+    "missionStops",
+    "scavengerHuntTasks",
+    "parentTalkingPoints",
+    "specialExhibitNote",
     "optionalFieldTripIdea",
     "facebookCaption",
     "bestTimeWindow",

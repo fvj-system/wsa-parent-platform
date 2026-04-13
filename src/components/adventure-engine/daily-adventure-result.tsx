@@ -96,6 +96,12 @@ export function DailyAdventureResult({ result, generationId }: DailyAdventureRes
   const gear = deriveGearChecklist(result);
   const safetyNote = deriveSafetyNote(result);
   const isFishingMission = Boolean(result.fishingMainSpecies || result.fishingOutlook);
+  const isMuseumMission = Boolean(
+    result.missionStops?.length ||
+      result.scavengerHuntTasks?.length ||
+      result.parentTalkingPoints?.length ||
+      result.specialExhibitNote,
+  );
 
   return (
     <article className="panel stack daily-adventure-sheet daily-adventure-sheet-fullscreen print-sheet">
@@ -210,10 +216,14 @@ export function DailyAdventureResult({ result, generationId }: DailyAdventureRes
           <>
             <div className="daily-adventure-lead">
               <div className="mission-crest">
-                <span className="pill field-guide-pill">Animal of the day</span>
+                <span className="pill field-guide-pill">
+                  {isMuseumMission ? "Museum mission" : "Animal of the day"}
+                </span>
                 <h2>{result.animalOfTheDay}</h2>
                 <p className="panel-copy" style={{ margin: 0 }}>
-                  A field-ready homeschool plan built for one clear outdoor mission and one meaningful conversation.
+                  {isMuseumMission
+                    ? "A field-guide museum plan with a clear route, scavenger tasks, and parent talking points."
+                    : "A field-ready homeschool plan built for one clear outdoor mission and one meaningful conversation."}
                 </p>
               </div>
 
@@ -229,7 +239,7 @@ export function DailyAdventureResult({ result, generationId }: DailyAdventureRes
                   <section className="mission-panel">
                     <div className="section-heading">
                       <MissionIcon />
-                      <h4>Outdoor mission</h4>
+                      <h4>{isMuseumMission ? "Main mission" : "Outdoor mission"}</h4>
                     </div>
                     <p>{result.outdoorObservationActivity}</p>
                   </section>
@@ -240,6 +250,32 @@ export function DailyAdventureResult({ result, generationId }: DailyAdventureRes
                     </div>
                     <p>{result.challengeActivity}</p>
                   </section>
+                  {result.missionStops?.length ? (
+                    <section className="mission-panel">
+                      <div className="section-heading">
+                        <MissionIcon />
+                        <h4>Best stops</h4>
+                      </div>
+                      <ul className="result-list result-list-tight">
+                        {result.missionStops.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </section>
+                  ) : null}
+                  {result.scavengerHuntTasks?.length ? (
+                    <section className="mission-panel">
+                      <div className="section-heading">
+                        <MissionIcon />
+                        <h4>Scavenger hunt checklist</h4>
+                      </div>
+                      <ul className="result-list result-list-tight">
+                        {result.scavengerHuntTasks.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </section>
+                  ) : null}
                   <section className="mission-panel">
                     <div className="section-heading">
                       <MissionIcon />
@@ -284,6 +320,28 @@ export function DailyAdventureResult({ result, generationId }: DailyAdventureRes
                       <p>{result.fishingOutlook}</p>
                     </section>
                   ) : null}
+                  {result.parentTalkingPoints?.length ? (
+                    <section className="mission-panel">
+                      <div className="section-heading">
+                        <MissionIcon />
+                        <h4>Parent talking points</h4>
+                      </div>
+                      <ul className="result-list result-list-tight">
+                        {result.parentTalkingPoints.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </section>
+                  ) : null}
+                  {result.specialExhibitNote ? (
+                    <section className="mission-panel">
+                      <div className="section-heading">
+                        <MissionIcon />
+                        <h4>Special exhibit note</h4>
+                      </div>
+                      <p>{result.specialExhibitNote}</p>
+                    </section>
+                  ) : null}
                   {result.likelySpecies?.length ? (
                     <section className="mission-panel">
                       <div className="section-heading">
@@ -307,7 +365,11 @@ export function DailyAdventureResult({ result, generationId }: DailyAdventureRes
                     </section>
                   ) : null}
                   <RecommendedSpotsList
-                    title="Best nearby places to look"
+                    title={
+                      isMuseumMission
+                        ? "Selected Smithsonian stops"
+                        : "Best nearby places to look"
+                    }
                     items={result.recommendedNearbySpots ?? []}
                     emptyMessage="No nearby location recommendations were saved with this adventure yet."
                   />
@@ -365,7 +427,9 @@ export function DailyAdventureResult({ result, generationId }: DailyAdventureRes
                     <h4>Quick family win</h4>
                   </div>
                   <p className="panel-copy" style={{ margin: 0 }}>
-                    If time runs short, answer the morning question outdoors, complete one focused observation, and finish with the journal prompt.
+                    {isMuseumMission
+                      ? "If time runs short, answer the morning question in one anchor gallery, finish three scavenger tasks, and end with the journal prompt."
+                      : "If time runs short, answer the morning question outdoors, complete one focused observation, and finish with the journal prompt."}
                   </p>
                 </section>
 

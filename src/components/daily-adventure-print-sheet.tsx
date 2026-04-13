@@ -130,6 +130,15 @@ export function DailyAdventurePrintSheet({
 }) {
   const gear = deriveGearChecklist(result);
   const safetyNote = deriveSafetyNote(result);
+  const isFishingMission = Boolean(
+    result.fishingMainSpecies || result.fishingOutlook,
+  );
+  const isMuseumMission = Boolean(
+    result.missionStops?.length ||
+      result.scavengerHuntTasks?.length ||
+      result.parentTalkingPoints?.length ||
+      result.specialExhibitNote,
+  );
   const printMission = compactSentence(
     result.outdoorObservationActivity,
     "Head outside for one calm observation mission and one focused family conversation.",
@@ -198,27 +207,39 @@ export function DailyAdventurePrintSheet({
     Boolean(item.url),
   );
   const printTargetIntel = compactSentence(
-    [result.fishingMainSpeciesDescription, printBestTime, printWeather]
-      .filter(Boolean)
-      .join(" "),
-    "Use today's water, weather, and species clues to choose one smart place to begin.",
+    isMuseumMission
+      ? result.missionStops.join(" ")
+      : [result.fishingMainSpeciesDescription, printBestTime, printWeather]
+          .filter(Boolean)
+          .join(" "),
+    isMuseumMission
+      ? "Use one clear museum route so the family sees the best exhibits before energy drops."
+      : "Use today's water, weather, and species clues to choose one smart place to begin.",
     150,
   );
   const printTacticalBait = compactSentence(
-    [
-      result.fishingLiveBait ? `Live bait: ${result.fishingLiveBait}.` : "",
-      result.fishingArtificialBait
-        ? `Artificial bait: ${result.fishingArtificialBait}.`
-        : "",
-    ]
-      .filter(Boolean)
-      .join(" "),
-    "Bring one simple live option and one compact artificial lure so the family can adjust quickly.",
+    isMuseumMission
+      ? result.scavengerHuntTasks.join(" ")
+      : [
+          result.fishingLiveBait ? `Live bait: ${result.fishingLiveBait}.` : "",
+          result.fishingArtificialBait
+            ? `Artificial bait: ${result.fishingArtificialBait}.`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" "),
+    isMuseumMission
+      ? "Keep the hunt short, specific, and easy to finish."
+      : "Bring one simple live option and one compact artificial lure so the family can adjust quickly.",
     140,
   );
   const printCastingInstructions = compactSentence(
-    [result.fishingWhereToCast, printCues.join(". ")].filter(Boolean).join(" "),
-    "Work visible cover, shade, grass edges, or structure transitions before changing locations.",
+    isMuseumMission
+      ? result.parentTalkingPoints.join(" ")
+      : [result.fishingWhereToCast, printCues.join(". ")].filter(Boolean).join(" "),
+    isMuseumMission
+      ? "Pause often enough for kids to notice, compare, and explain what they found."
+      : "Work visible cover, shade, grass edges, or structure transitions before changing locations.",
     140,
   );
   const printFieldNotes = compactSentence(
@@ -282,12 +303,12 @@ export function DailyAdventurePrintSheet({
 
         <div className="daily-adventure-print-grid">
           <section className="daily-adventure-print-section">
-            <h3>Target Intel</h3>
+            <h3>{isMuseumMission ? "Mission Route" : "Target Intel"}</h3>
             <p>{printTargetIntel}</p>
           </section>
 
           <section className="daily-adventure-print-section">
-            <h3>Tactical Bait</h3>
+            <h3>{isMuseumMission ? "Scavenger Hunt" : "Tactical Bait"}</h3>
             <p>{printTacticalBait}</p>
           </section>
 
@@ -301,7 +322,7 @@ export function DailyAdventurePrintSheet({
           </section>
 
           <section className="daily-adventure-print-section">
-            <h3>Casting Instructions</h3>
+            <h3>{isMuseumMission ? "Talking Points" : "Casting Instructions"}</h3>
             <p>{printCastingInstructions}</p>
           </section>
 
@@ -316,7 +337,7 @@ export function DailyAdventurePrintSheet({
           </section>
 
           <section className="daily-adventure-print-section">
-            <h3>Weather Window</h3>
+            <h3>{isFishingMission ? "Weather Window" : "Best Window"}</h3>
             <p>{printBestTime}</p>
           </section>
 

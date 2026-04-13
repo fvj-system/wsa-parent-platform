@@ -11,7 +11,7 @@ const presets: Array<{ key: DailyAdventurePresetKey; href: string; accent: strin
   { key: "backyard", href: "/daily-adventure?preset=backyard", accent: "Backyard" },
   { key: "weekend", href: "/daily-adventure?preset=weekend", accent: "Weekend" },
   { key: "bird", href: "/daily-adventure?preset=bird", accent: "Bird study" },
-  { key: "fishing", href: "/daily-adventure?preset=fishing", accent: "Fishing" }
+  { key: "fish", href: "/daily-adventure?preset=fish", accent: "Fishing" }
 ];
 
 export function DashboardQuickStartPresets({ activeStudentId }: DashboardQuickStartPresetsProps) {

@@ -9,6 +9,10 @@ import {
   type DailyAdventurePresetKey,
 } from "@/lib/daily-adventure-presets";
 import type { DailyAdventureOutput, GenerationRecord } from "@/lib/generations";
+import {
+  smithsonianMuseums,
+  type SmithsonianMuseumKey,
+} from "@/lib/smithsonian-museums";
 import type { StudentRecord } from "@/lib/students";
 
 type DailyAdventureGeneratorProps = {
@@ -80,6 +84,9 @@ export function DailyAdventureGenerator({
   const [selectedPreset, setSelectedPreset] = useState<
     DailyAdventurePresetKey | ""
   >(preselectedPreset ?? "");
+  const [selectedMuseumKeys, setSelectedMuseumKeys] = useState<
+    SmithsonianMuseumKey[]
+  >([]);
   const [locationLabel, setLocationLabel] = useState(initialLocationLabel);
   const [radiusMiles, setRadiusMiles] = useState(String(initialRadiusMiles));
   const [weatherCondition, setWeatherCondition] = useState(
@@ -96,6 +103,10 @@ export function DailyAdventureGenerator({
   const [error, setError] = useState("");
   const [viewState, setViewState] = useState<ViewState>("idle");
   const [isWeatherResolving, setIsWeatherResolving] = useState(false);
+  const [timeAvailable, setTimeAvailable] = useState("1-2 hours");
+  const [budget, setBudget] = useState("free");
+  const [energyLevel, setEnergyLevel] = useState("medium");
+  const [travelDistance, setTravelDistance] = useState("local");
 
   useEffect(() => {
     if (preselectedStudentId) {
@@ -117,15 +128,23 @@ export function DailyAdventureGenerator({
       ? (students.find((student) => student.id === selectedTarget.targetId) ??
         null)
       : null;
+
+  const isSmithsonianPreset = selectedPreset === "smithsonian";
   const canGenerate =
     !isWeatherResolving &&
     (selectedTarget.targetType === "household" ||
       selectedStudent !== null ||
-      students.length === 0);
-  const [timeAvailable, setTimeAvailable] = useState("1-2 hours");
-  const [budget, setBudget] = useState("free");
-  const [energyLevel, setEnergyLevel] = useState("medium");
-  const [travelDistance, setTravelDistance] = useState("local");
+      students.length === 0) &&
+    (!isSmithsonianPreset || selectedMuseumKeys.length > 0);
+
+  const toggleMuseum = (museumKey: SmithsonianMuseumKey) => {
+    setSelectedMuseumKeys((current) =>
+      current.includes(museumKey)
+        ? current.filter((key) => key !== museumKey)
+        : [...current, museumKey],
+    );
+  };
+
   return (
     <section className="stack daily-adventure-flow">
       {viewState === "idle" ? (
@@ -141,7 +160,7 @@ export function DailyAdventureGenerator({
                   Adventure Planner
                 </div>
                 <h3 className="planner-title">
-                  Plan today's field-guide mission
+                  Plan today&apos;s field-guide mission
                 </h3>
                 <p className="panel-copy">
                   Build one calm, practical outdoor homeschool mission with a
@@ -211,6 +230,49 @@ export function DailyAdventureGenerator({
             </select>
           </label>
 
+          {isSmithsonianPreset ? (
+            <div className="stack">
+              <div>
+                <p className="eyebrow" style={{ marginBottom: 6 }}>
+                  Choose museum(s)
+                </p>
+                <p className="field-helper-text" style={{ marginTop: 0 }}>
+                  Pick one or more free Smithsonian stops for today&apos;s
+                  family mission.
+                </p>
+              </div>
+
+              <div className="museum-selector-grid">
+                {smithsonianMuseums.map((museum) => {
+                  const isSelected = selectedMuseumKeys.includes(museum.key);
+
+                  return (
+                    <button
+                      key={museum.key}
+                      type="button"
+                      className={`museum-option-card ${
+                        isSelected ? "museum-option-card-active" : ""
+                      }`}
+                      aria-pressed={isSelected}
+                      onClick={() => toggleMuseum(museum.key)}
+                    >
+                      <span className="museum-option-badge">
+                        {isSelected ? "Selected" : "Select"}
+                      </span>
+                      <strong>{museum.name}</strong>
+                      <span>{museum.locationLabel}</span>
+                      <span>{museum.highlights.slice(0, 2).join(" | ")}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <p className="field-helper-text">
+                Multi-stop museum days usually feel best with 1-2 museums.
+              </p>
+            </div>
+          ) : null}
+
           <LocationContextFields
             locationLabel={locationLabel}
             radiusMiles={radiusMiles}
@@ -246,6 +308,7 @@ export function DailyAdventureGenerator({
               })();
             }}
           />
+
           <div className="stack">
             <label>
               Time Available
@@ -254,7 +317,7 @@ export function DailyAdventureGenerator({
                 onChange={(e) => setTimeAvailable(e.target.value)}
               >
                 <option value="30 min">30 min</option>
-                <option value="1-2 hours">1–2 hours</option>
+                <option value="1-2 hours">1-2 hours</option>
                 <option value="half day">Half day</option>
                 <option value="full day">Full day</option>
               </select>
@@ -267,8 +330,8 @@ export function DailyAdventureGenerator({
                 onChange={(e) => setBudget(e.target.value)}
               >
                 <option value="free">Free</option>
-                <option value="low">$0–$20</option>
-                <option value="medium">$20–$75</option>
+                <option value="low">$0-$20</option>
+                <option value="medium">$20-$75</option>
                 <option value="high">$75+</option>
               </select>
             </label>
@@ -292,17 +355,24 @@ export function DailyAdventureGenerator({
                 onChange={(e) => setTravelDistance(e.target.value)}
               >
                 <option value="backyard">Backyard</option>
-                <option value="local">Local (10–15 min)</option>
-                <option value="regional">30–60 min</option>
+                <option value="local">Local (10-15 min)</option>
+                <option value="regional">30-60 min</option>
                 <option value="far">Day trip</option>
               </select>
             </label>
           </div>
+
           <button
             type="button"
             disabled={!canGenerate}
             onClick={() => {
               setError("");
+
+              if (isSmithsonianPreset && selectedMuseumKeys.length === 0) {
+                setError("Choose at least one Smithsonian museum first.");
+                return;
+              }
+
               setViewState("loading");
 
               void (async () => {
@@ -325,7 +395,27 @@ export function DailyAdventureGenerator({
                         selectedTarget.targetType === "student"
                           ? selectedStudent?.name
                           : undefined,
+                      studentAge:
+                        selectedTarget.targetType === "student"
+                          ? selectedStudent?.age
+                          : undefined,
+                      studentInterests:
+                        selectedTarget.targetType === "student"
+                          ? selectedStudent?.interests ?? []
+                          : [],
+                      householdStudents:
+                        selectedTarget.targetType === "household"
+                          ? students.map((student) => ({
+                              id: student.id,
+                              name: student.name,
+                              age: student.age,
+                              interests: student.interests ?? [],
+                            }))
+                          : [],
                       preset: selectedPreset || undefined,
+                      museumKeys: isSmithsonianPreset
+                        ? selectedMuseumKeys
+                        : [],
                       locationLabel,
                       radiusMiles: Number(radiusMiles),
                       weatherCondition,
@@ -360,7 +450,7 @@ export function DailyAdventureGenerator({
               })();
             }}
           >
-            Plan Today’s Missionnpm
+            Plan Today&apos;s Mission
           </button>
 
           {error ? <p className="error">{error}</p> : null}
@@ -373,8 +463,8 @@ export function DailyAdventureGenerator({
             <p className="eyebrow">Field Guide Loading</p>
             <h3>Adventure awaits</h3>
             <p className="panel-copy">
-              Charting today's trail, weather, and mission details for your next
-              outing.
+              Charting today&apos;s trail, weather, and mission details for your
+              next outing.
             </p>
           </div>
         </article>

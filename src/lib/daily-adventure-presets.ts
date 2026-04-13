@@ -2,12 +2,12 @@ export const dailyAdventurePresetKeys = [
   "animal",
   "plant",
   "fish",
+  "smithsonian",
   "quick",
   "rainy",
   "backyard",
   "weekend",
-  "bird",
-  "fishing"
+  "bird"
 ] as const;
 
 export type DailyAdventurePresetKey = (typeof dailyAdventurePresetKeys)[number];
@@ -19,7 +19,7 @@ export type DailyAdventurePreset = {
   subtitle: string;
   promptFocus: string[];
   titlePrefix: string;
-  contentTemplate: "animal" | "bird" | "plant" | "fish" | "general";
+  contentTemplate: "animal" | "bird" | "plant" | "fish" | "general" | "smithsonian";
   themeBinding: null | "animal" | "bird" | "plant" | "fish";
   generatorType:
     | "themedMissionGenerator"
@@ -27,10 +27,11 @@ export type DailyAdventurePreset = {
     | "quickMissionGenerator"
     | "rainyDayGenerator"
     | "backyardGenerator"
-    | "weekendPlannerGenerator";
+    | "weekendPlannerGenerator"
+    | "museumMissionGenerator";
   audienceModes: Array<"student" | "household">;
   weatherSensitivity: "low" | "medium" | "high";
-  searchRadiusMode: "local" | "weekend_regional";
+  searchRadiusMode: "local" | "weekend_regional" | "destination";
 };
 
 export const dailyAdventurePresets: Record<DailyAdventurePresetKey, DailyAdventurePreset> = {
@@ -89,6 +90,26 @@ export const dailyAdventurePresets: Record<DailyAdventurePresetKey, DailyAdventu
       "Emphasize shoreline, water movement, bait clues, fish habitat, or aquatic observation.",
       "If actual fishing is not practical, make it an aquatic field study rather than a generic nature walk.",
       "Gear and challenge language should feel connected to fishing or aquatic exploration."
+    ]
+  },
+  smithsonian: {
+    key: "smithsonian",
+    label: "Smithsonian Museum Mission",
+    shortLabel: "Smithsonian",
+    subtitle: "DC museum field guide, scavenger hunt, and family talking prompts",
+    titlePrefix: "Smithsonian Mission",
+    contentTemplate: "smithsonian",
+    themeBinding: null,
+    generatorType: "museumMissionGenerator",
+    audienceModes: ["student", "household"],
+    weatherSensitivity: "low",
+    searchRadiusMode: "destination",
+    promptFocus: [
+      "Make this a premium Smithsonian museum mission rather than a generic field trip.",
+      "Use selected museum stops, student ages, interests, and available time to prioritize exhibits and pacing.",
+      "Include scavenger-hunt style tasks, observation prompts, fun challenge items, and clear parent talking points.",
+      "If history or culture is involved, include balanced age-appropriate perspective prompts that help families compare viewpoints respectfully.",
+      "Do not fake live event data. Use a same-day arrival note for special exhibits if live data is not available."
     ]
   },
   quick: {
@@ -188,28 +209,10 @@ export const dailyAdventurePresets: Record<DailyAdventurePresetKey, DailyAdventu
       "The discussion question should be about bird behavior or habitat."
     ]
   },
-  fishing: {
-    key: "fishing",
-    label: "Fish-focused mission",
-    shortLabel: "Fishing focus",
-    subtitle: "Water, shoreline, fish, and aquatic signs",
-    titlePrefix: "Fishing Mission",
-    contentTemplate: "fish",
-    themeBinding: "fish",
-    generatorType: "themedMissionGenerator",
-    audienceModes: ["student", "household"],
-    weatherSensitivity: "high",
-    searchRadiusMode: "local",
-    promptFocus: [
-      "Make the mission clearly fish or water focused.",
-      "Emphasize shoreline, water movement, bait clues, fish habitat, or aquatic observation.",
-      "If actual fishing is not practical, make it an aquatic field study rather than a generic nature walk.",
-      "Gear and challenge language should feel connected to fishing or aquatic exploration."
-    ]
-  }
 };
 
 export function getDailyAdventurePreset(value?: string | null) {
   if (!value) return null;
+  if (value === "fishing") return dailyAdventurePresets.fish;
   return dailyAdventurePresets[value as DailyAdventurePresetKey] ?? null;
 }
