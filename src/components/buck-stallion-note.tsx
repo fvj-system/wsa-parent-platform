@@ -11,7 +11,7 @@ export function BuckStallionNote({ title, body, compact = false }: BuckStallionN
         <span className="rank-emblem rank-emblem-small rank-stallion" />
       </div>
       <div className="buck-note-copy">
-        <p className="eyebrow">{compact ? "Buck Stallion" : "Buck Stallion Guide Note"}</p>
+        <p className="eyebrow">{compact ? "WSA note" : "WSA guide note"}</p>
         <h4>{title}</h4>
         <p className="panel-copy" style={{ marginBottom: 0 }}>
           {body}

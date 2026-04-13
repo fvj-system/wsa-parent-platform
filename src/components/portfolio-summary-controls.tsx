@@ -25,13 +25,13 @@ export function PortfolioSummaryControls({ range, startDate, endDate }: Portfoli
         </a>
       </div>
 
-      <form className="cta-row" method="get">
+      <form className="portfolio-range-form" method="get">
         <input type="hidden" name="range" value="custom" />
-        <label style={{ minWidth: 180 }}>
+        <label className="portfolio-range-field">
           Start date
           <input type="date" name="start" defaultValue={range === "custom" ? startDate : ""} />
         </label>
-        <label style={{ minWidth: 180 }}>
+        <label className="portfolio-range-field">
           End date
           <input type="date" name="end" defaultValue={range === "custom" ? endDate : ""} />
         </label>
