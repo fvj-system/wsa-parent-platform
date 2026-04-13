@@ -12,6 +12,10 @@ import {
   dailyAdventureOutputJsonSchema,
   parseDailyAdventure
 } from "@/lib/generations";
+import {
+  buildRecommendedSpotsFromFamilyOpportunities,
+  getPlannerOpportunityMatches
+} from "@/lib/nearby/family-opportunities";
 import { createOpenAIClient, getOpenAIModel } from "@/lib/openai";
 import {
   buildSmithsonianRecommendedStops,
@@ -105,6 +109,19 @@ async function resolveFishingMissionImages(
     artificialBaitImageUrl: artificialBaitImage?.url ?? null,
     artificialBaitImageAlt: artificialBaitImage?.alt ?? null
   };
+}
+
+function mergeRecommendedSpots(
+  primary: DailyAdventureOutput["recommendedNearbySpots"],
+  secondary: DailyAdventureOutput["recommendedNearbySpots"]
+) {
+  const seen = new Set<string>();
+  return [...primary, ...secondary].filter((item) => {
+    const key = `${item.id}:${item.name}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function getAdventureTemplateInstructions(template: ResolvedAdventureTemplate) {
@@ -431,6 +448,28 @@ export async function POST(request: Request) {
     const location = resolveLocationContext(parsedInput.data);
     const environmental = await getEnvironmentalContext(supabase, parsedInput.data);
     const weather = deriveWeatherContext(parsedInput.data);
+    const plannerMode = parsedInput.data.plannerMode ?? "standard";
+    const plannerInterests = [
+      ...parsedInput.data.studentInterests,
+      ...parsedInput.data.householdStudents.flatMap((student) => student.interests)
+    ].filter((value, index, array) => array.indexOf(value) === index);
+    const plannerOpportunityMatches = getPlannerOpportunityMatches({
+      location,
+      interests: plannerInterests,
+      preset: parsedInput.data.preset,
+      weatherCondition: parsedInput.data.weatherCondition,
+      timeAvailable: parsedInput.data.timeAvailable,
+      budget: parsedInput.data.budget,
+      energyLevel: parsedInput.data.energyLevel,
+      travelDistance: parsedInput.data.travelDistance,
+      plannerMode,
+      planStyle: parsedInput.data.planStyle,
+      mainGoal: parsedInput.data.mainGoal,
+      practicalNeeds: parsedInput.data.practicalNeeds,
+      extraContext: parsedInput.data.extraContext
+    });
+    const plannerOpportunitySpots =
+      buildRecommendedSpotsFromFamilyOpportunities(plannerOpportunityMatches);
     const generalNearbySpots =
       resolvedTemplate === "smithsonian"
         ? buildSmithsonianRecommendedStops(selectedMuseums)
@@ -464,6 +503,9 @@ export async function POST(request: Request) {
       resolvedTemplate === "smithsonian"
         ? "You are creating a premium Smithsonian museum field-guide mission for a family visiting Washington, DC."
         : "You are creating a daily homeschool outdoor adventure for a family in Southern Maryland.",
+      plannerMode === "advanced"
+        ? "Act like an expert local family adventure strategist with strength in Southern Maryland outings, Maryland history, fishing, wildlife, survival-minded practical wisdom, bushcraft awareness, first aid caution, and real-world family logistics."
+        : "Act like a trusted local family field guide who knows Southern Maryland outings, museum days, wildlife stops, history sites, fishing opportunities, and weather-aware planning.",
       resolvedTemplate === "smithsonian"
         ? "Behave like a thoughtful homeschool museum guide who can choose the best free Smithsonian stops, pacing, scavenger tasks, observation prompts, and parent talking points."
         : "Behave like a practical family fishing guide and outdoor trip planner who knows shoreline access, simple tackle, kid-friendly outings, weather, and field conditions.",
@@ -493,6 +535,13 @@ export async function POST(request: Request) {
             )
             .join("; ")}`
         : "Household students: not specified",
+      `Planner mode: ${plannerMode}`,
+      parsedInput.data.planStyle ? `Preferred day style: ${parsedInput.data.planStyle}` : "Preferred day style: flexible",
+      parsedInput.data.mainGoal ? `Main goal: ${parsedInput.data.mainGoal}` : "Main goal: useful local family outing",
+      parsedInput.data.practicalNeeds.length
+        ? `Practical needs: ${parsedInput.data.practicalNeeds.join(", ")}`
+        : "Practical needs: standard family needs",
+      parsedInput.data.extraContext ? `Extra family context: ${parsedInput.data.extraContext}` : "Extra family context: none",
       preset ? `Preset: ${preset.label}` : "Preset: balanced daily adventure",
       `Resolved content template: ${templateInstructions.templateLabel}`,
       `Time available: ${parsedInput.data.timeAvailable ?? "1-2 hours"}`,
@@ -519,6 +568,11 @@ export async function POST(request: Request) {
         : resolvedTemplate === "smithsonian"
           ? `Museum stop ideas: ${selectedMuseums.map((museum) => museum.name).join(", ")}.`
           : `Nearby place ideas: ${generalNearbySpots.map((spot) => `${spot.name} (${spot.spotType})`).join(", ") || "use a practical nearby nature stop"}.`,
+      plannerOpportunityMatches.length
+        ? `Trusted local opportunities and official source pages: ${plannerOpportunityMatches
+            .map((item) => `${item.title} [${item.type}] - ${item.reason}`)
+            .join("; ")}.`
+        : "Trusted local opportunities: no curated regional matches were found, so rely on the nearby nature context.",
       templateInstructions.outputGuide,
       "Every schema field must be present in the JSON response. Use null for unknown string fields and [] for unknown arrays. Never omit keys.",
       resolvedTemplate === "smithsonian"
@@ -547,7 +601,9 @@ export async function POST(request: Request) {
               "Keep fishing sections concise, realistic, and field-useful."
             ].join(" ")
           : "If this is not a fishing mission, leave fishing-specific fields null or empty arrays instead of inventing fishing content.",
-      "Return one complete daily adventure with a featured mission title, question, observation activity, journal prompt, discussion question, challenge, optional field trip idea, and facebook caption.",
+      plannerMode === "advanced"
+        ? "Return a polished family trip brief. The missionStops should read like a sensible stop sequence or time plan. Parent talking points should include educational highlights, local history or ecology notes when relevant, and calm practical coaching."
+        : "Return one complete daily adventure with a featured mission title, question, observation activity, journal prompt, discussion question, challenge, optional field trip idea, and facebook caption.",
       "If a field trip is not necessary, return an empty string for optionalFieldTripIdea.",
       preset
         ? `Make this meaningfully match the preset. ${preset.promptFocus.join(" ")}`
@@ -584,7 +640,9 @@ export async function POST(request: Request) {
     const recommendedNearbySpots =
       resolvedTemplate === "smithsonian"
         ? buildSmithsonianRecommendedStops(selectedMuseums)
-        : fishingRecommendation?.recommendedNearbySpots ?? generalNearbySpots;
+        : resolvedTemplate === "fish"
+          ? fishingRecommendation?.recommendedNearbySpots ?? generalNearbySpots
+          : mergeRecommendedSpots(plannerOpportunitySpots, generalNearbySpots).slice(0, 6);
     const defaultCopy = getDefaultAdventureCopy(resolvedTemplate, location.displayLabel);
     const output = parseDailyAdventure({
       ...baseOutput,
@@ -614,6 +672,9 @@ export async function POST(request: Request) {
         resolvedTemplate === "smithsonian"
           ? baseOutput.whyTheseSpotsWork ??
             selectedMuseums.map((museum) => museum.familyReason).join(" ")
+          : plannerMode === "advanced"
+            ? baseOutput.whyTheseSpotsWork ??
+              "These local picks were chosen from trusted Southern Maryland museums, parks, history sites, and official event pages so the day feels useful, realistic, and regionally grounded."
           : fishingRecommendation
             ? `These nearby water-access spots fit the fishing preset because they offer practical shoreline access, likely fish habitat, and better odds for a useful outing. ${environmental.marylandDnr.accessNotes}`
             : `These nearby spots fit today's ${templateInstructions.templateLabel} because they match the habitat, pace, and observation style suggested by the adventure. ${environmental.weather?.shortForecast ?? weather.summary}`,
@@ -650,7 +711,11 @@ export async function POST(request: Request) {
       userId: user.id,
       studentId: parsedInput.data.targetType === "student" ? parsedInput.data.studentId : undefined,
       toolType: "daily_adventure",
-      title: preset ? `${preset.titlePrefix} - ${parsedInput.data.requestDate}` : `Daily Adventure - ${parsedInput.data.requestDate}`,
+      title: preset
+        ? `${preset.titlePrefix} - ${parsedInput.data.requestDate}`
+        : plannerMode === "advanced"
+          ? `Advanced Adventure - ${parsedInput.data.requestDate}`
+          : `Daily Adventure - ${parsedInput.data.requestDate}`,
       inputJson: {
         ...parsedInput.data,
         targetType: parsedInput.data.targetType ?? (isHouseholdTarget ? "household" : "student"),

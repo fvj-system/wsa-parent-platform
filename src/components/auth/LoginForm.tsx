@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -112,6 +113,15 @@ export default function LoginForm() {
       >
         {loading ? "Signing In..." : "Sign In"}
       </button>
+
+      <div className="flex flex-col gap-2 text-center text-sm text-[#4e4339]">
+        <Link href="/auth/sign-up" className="font-semibold text-[#5b735b] underline underline-offset-4">
+          New here? Create a family account
+        </Link>
+        <Link href="/auth/forgot-password" className="underline underline-offset-4">
+          Forgot your password?
+        </Link>
+      </div>
     </form>
   );
 }

@@ -46,6 +46,7 @@ export type RecommendedSpot = {
   recommendedUseToday: string;
   accessNote: string;
   mapUrl: string;
+  linkLabel?: string;
 };
 
 const regionCenters: Array<{ keywords: string[]; label: string; latitude: number; longitude: number }> = [
@@ -186,7 +187,8 @@ export async function findRecommendedSpots({
     familyFriendly: spot.family_friendly,
     recommendedUseToday: getRecommendedUseToday(spot, activityTag),
     accessNote: buildAccessNote(spot),
-    mapUrl: getSpotMapUrl(spot)
+    mapUrl: getSpotMapUrl(spot),
+    linkLabel: "Open in Maps"
   }));
 }
 

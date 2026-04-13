@@ -2,9 +2,11 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export default function SignUpPage() {
+  const router = useRouter();
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -15,7 +17,7 @@ export default function SignUpPage() {
         <p className="eyebrow">Create account</p>
         <h2>Start your WSA family portal</h2>
         <p className="panel-copy">
-          Parents create a secure account through Supabase Auth. Email confirmation can be enabled in production.
+          Create your family login with email and password. If email confirmation is turned on, we will tell you to check your inbox before signing in.
         </p>
 
         <form
@@ -31,14 +33,20 @@ export default function SignUpPage() {
               const supabase = createClient();
               const email = String(formData.get("email") || "");
               const password = String(formData.get("password") || "");
+              const confirmPassword = String(formData.get("confirmPassword") || "");
               const fullName = String(formData.get("fullName") || "");
               const householdName = String(formData.get("householdName") || "");
 
-              const { error: signUpError } = await supabase.auth.signUp({
+              if (password !== confirmPassword) {
+                setError("Passwords do not match yet. Please type the same password twice.");
+                return;
+              }
+
+              const { data, error: signUpError } = await supabase.auth.signUp({
                 email,
                 password,
                 options: {
-                  emailRedirectTo: `${window.location.origin}/dashboard`,
+                  emailRedirectTo: `${window.location.origin}/auth/sign-in?confirmed=1`,
                   data: {
                     full_name: fullName,
                     household_name: householdName
@@ -51,7 +59,17 @@ export default function SignUpPage() {
                 return;
               }
 
-              setMessage("Account created. Check your email to confirm the sign-in link if confirmations are enabled.");
+              if (data.session) {
+                setMessage("Account created. Taking you to your dashboard now.");
+                form.reset();
+                router.replace("/dashboard");
+                router.refresh();
+                return;
+              }
+
+              setMessage(
+                `Account created for ${email}. Check your email for the confirmation link, then come back and sign in.`
+              );
               form.reset();
             });
           }}
@@ -71,6 +89,10 @@ export default function SignUpPage() {
           <label>
             Password
             <input name="password" type="password" minLength={10} required />
+          </label>
+          <label>
+            Confirm password
+            <input name="confirmPassword" type="password" minLength={10} required />
           </label>
           <button type="submit" disabled={isPending}>
             {isPending ? "Creating account..." : "Create account"}

@@ -38,7 +38,8 @@ export const recommendedSpotSchema = z.object({
   familyFriendly: z.boolean(),
   recommendedUseToday: z.string().min(1),
   accessNote: z.string().min(1),
-  mapUrl: z.string().url()
+  mapUrl: z.string().url(),
+  linkLabel: z.string().min(1).optional()
 });
 
 export const speciesGalleryImageSchema = z.object({
@@ -106,6 +107,7 @@ export const weekPlannerOutputSchema = z.object({
 
 export const dailyAdventureInputSchema = z.object({
   requestDate: z.string().trim().min(1),
+  plannerMode: z.enum(["standard", "advanced"]).default("standard"),
   targetType: z.enum(["student", "household"]).default("household"),
   targetId: z.string().uuid().optional(),
   householdMode: z.boolean().default(false),
@@ -133,7 +135,11 @@ export const dailyAdventureInputSchema = z.object({
   timeAvailable: z.string().trim().min(1).max(40).optional(),
   budget: z.string().trim().min(1).max(40).optional(),
   energyLevel: z.string().trim().min(1).max(40).optional(),
-  travelDistance: z.string().trim().min(1).max(40).optional()
+  travelDistance: z.string().trim().min(1).max(40).optional(),
+  planStyle: z.string().trim().min(1).max(60).optional(),
+  mainGoal: z.string().trim().min(1).max(80).optional(),
+  practicalNeeds: z.array(z.string().trim().min(1).max(60)).default([]),
+  extraContext: z.string().trim().max(400).optional()
 });
 
 export type DailyAdventureOutput = {
@@ -572,6 +578,7 @@ export type GenerationRecord = {
 
 export type DailyAdventureGenerationInput = {
   requestDate: string;
+  plannerMode?: "standard" | "advanced";
   targetType?: "student" | "household";
   targetId?: string;
   householdMode?: boolean;
@@ -591,6 +598,10 @@ export type DailyAdventureGenerationInput = {
   budget?: string;
   energyLevel?: string;
   travelDistance?: string;
+  planStyle?: string;
+  mainGoal?: string;
+  practicalNeeds?: string[];
+  extraContext?: string;
 };
 
 export const animalOutputJsonSchema = {

@@ -1117,6 +1117,43 @@ select {
   text-transform: uppercase;
 }
 
+.advanced-planner-chat {
+  gap: 10px;
+  padding: 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(68, 47, 28, 0.14);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 252, 246, 0.92),
+      rgba(246, 236, 214, 0.82)
+    ),
+    rgba(255, 255, 255, 0.58);
+}
+
+.advanced-planner-bubble {
+  max-width: min(100%, 760px);
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(68, 47, 28, 0.12);
+}
+
+.advanced-planner-bubble-assistant {
+  justify-self: start;
+  background: rgba(255, 250, 243, 0.9);
+}
+
+.advanced-planner-bubble-user {
+  justify-self: end;
+  background: rgba(187, 113, 53, 0.14);
+}
+
+.advanced-planner-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .adventure-awaits {
   display: grid;
   gap: 10px;

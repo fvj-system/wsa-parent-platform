@@ -39,6 +39,31 @@ type SelectedTarget =
   | { targetType: "household"; targetId: string }
   | { targetType: "student"; targetId: string };
 
+const advancedPlanStyleOptions = [
+  "Calm nature day",
+  "Adventurous outing",
+  "History-focused day",
+  "Skill-building day",
+  "Mixed family sampler",
+] as const;
+
+const advancedMainGoalOptions = [
+  "Nature and wildlife",
+  "Museum or history",
+  "Fishing or water skills",
+  "Outdoor resilience skills",
+  "Find a good local event",
+] as const;
+
+const advancedPracticalNeedOptions = [
+  "Easy restrooms",
+  "Food nearby",
+  "Short walks",
+  "Stroller friendly",
+  "Indoor backup",
+  "Low-cost only",
+] as const;
+
 function JournalIcon() {
   return (
     <svg
@@ -107,6 +132,13 @@ export function DailyAdventureGenerator({
   const [budget, setBudget] = useState("free");
   const [energyLevel, setEnergyLevel] = useState("medium");
   const [travelDistance, setTravelDistance] = useState("local");
+  const [plannerMode, setPlannerMode] = useState<"standard" | "advanced">(
+    "standard",
+  );
+  const [planStyle, setPlanStyle] = useState("");
+  const [mainGoal, setMainGoal] = useState("");
+  const [practicalNeeds, setPracticalNeeds] = useState<string[]>([]);
+  const [extraContext, setExtraContext] = useState("");
 
   useEffect(() => {
     if (preselectedStudentId) {
@@ -142,6 +174,14 @@ export function DailyAdventureGenerator({
       current.includes(museumKey)
         ? current.filter((key) => key !== museumKey)
         : [...current, museumKey],
+    );
+  };
+
+  const togglePracticalNeed = (value: string) => {
+    setPracticalNeeds((current) =>
+      current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value],
     );
   };
 
@@ -211,6 +251,42 @@ export function DailyAdventureGenerator({
             </p>
           )}
 
+          <div className="stack">
+            <div>
+              <p className="eyebrow" style={{ marginBottom: 6 }}>
+                Planner mode
+              </p>
+              <p className="field-helper-text" style={{ marginTop: 0 }}>
+                Standard is fast. Advanced asks follow-up questions like a local
+                planning assistant.
+              </p>
+            </div>
+            <div className="planner-mode-bar">
+              <button
+                className={`student-switcher-pill ${
+                  plannerMode === "standard"
+                    ? "student-switcher-pill-active"
+                    : ""
+                }`}
+                type="button"
+                onClick={() => setPlannerMode("standard")}
+              >
+                Standard Planner
+              </button>
+              <button
+                className={`student-switcher-pill ${
+                  plannerMode === "advanced"
+                    ? "student-switcher-pill-active"
+                    : ""
+                }`}
+                type="button"
+                onClick={() => setPlannerMode("advanced")}
+              >
+                Advanced Adventure Planner
+              </button>
+            </div>
+          </div>
+
           <label>
             Quick-start preset
             <select
@@ -271,6 +347,111 @@ export function DailyAdventureGenerator({
                 Multi-stop museum days usually feel best with 1-2 museums.
               </p>
             </div>
+          ) : null}
+
+          {plannerMode === "advanced" ? (
+            <section className="stack advanced-planner-chat">
+              <article className="advanced-planner-bubble advanced-planner-bubble-assistant">
+                <p className="eyebrow" style={{ marginBottom: 6 }}>
+                  Advanced Adventure Planner
+                </p>
+                <p className="panel-copy" style={{ margin: 0 }}>
+                  I&apos;ll narrow the day down like a local family planning
+                  assistant instead of making you fill one giant form.
+                </p>
+              </article>
+
+              <article className="advanced-planner-bubble advanced-planner-bubble-assistant">
+                <strong>1. What kind of day do you want?</strong>
+              </article>
+              <div className="advanced-planner-chip-row">
+                {advancedPlanStyleOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={`student-switcher-pill ${
+                      planStyle === option ? "student-switcher-pill-active" : ""
+                    }`}
+                    onClick={() => setPlanStyle(option)}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+              {planStyle ? (
+                <article className="advanced-planner-bubble advanced-planner-bubble-user">
+                  {planStyle}
+                </article>
+              ) : null}
+
+              {planStyle ? (
+                <>
+                  <article className="advanced-planner-bubble advanced-planner-bubble-assistant">
+                    <strong>2. What is the main win today?</strong>
+                  </article>
+                  <div className="advanced-planner-chip-row">
+                    {advancedMainGoalOptions.map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        className={`student-switcher-pill ${
+                          mainGoal === option
+                            ? "student-switcher-pill-active"
+                            : ""
+                        }`}
+                        onClick={() => setMainGoal(option)}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                  {mainGoal ? (
+                    <article className="advanced-planner-bubble advanced-planner-bubble-user">
+                      {mainGoal}
+                    </article>
+                  ) : null}
+                </>
+              ) : null}
+
+              {mainGoal ? (
+                <>
+                  <article className="advanced-planner-bubble advanced-planner-bubble-assistant">
+                    <strong>3. What practical needs matter most?</strong>
+                    <p className="field-helper-text" style={{ margin: "6px 0 0" }}>
+                      Pick any that matter today.
+                    </p>
+                  </article>
+                  <div className="advanced-planner-chip-row">
+                    {advancedPracticalNeedOptions.map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        className={`student-switcher-pill ${
+                          practicalNeeds.includes(option)
+                            ? "student-switcher-pill-active"
+                            : ""
+                        }`}
+                        onClick={() => togglePracticalNeed(option)}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : null}
+
+              {mainGoal ? (
+                <label>
+                  4. Anything else the planner should know?
+                  <textarea
+                    value={extraContext}
+                    onChange={(event) => setExtraContext(event.target.value)}
+                    rows={3}
+                    placeholder="Example: one child gets tired fast, we want a strong history angle, or we need an easy lunch stop."
+                  />
+                </label>
+              ) : null}
+            </section>
           ) : null}
 
           <LocationContextFields
@@ -384,6 +565,7 @@ export function DailyAdventureGenerator({
                     },
                     body: JSON.stringify({
                       requestDate: new Date().toISOString().slice(0, 10),
+                      plannerMode,
                       targetType: selectedTarget.targetType,
                       targetId: selectedTarget.targetId,
                       householdMode: selectedTarget.targetType === "household",
@@ -425,6 +607,12 @@ export function DailyAdventureGenerator({
                       budget,
                       energyLevel,
                       travelDistance,
+                      planStyle: plannerMode === "advanced" ? planStyle : undefined,
+                      mainGoal: plannerMode === "advanced" ? mainGoal : undefined,
+                      practicalNeeds:
+                        plannerMode === "advanced" ? practicalNeeds : [],
+                      extraContext:
+                        plannerMode === "advanced" ? extraContext : undefined,
                     }),
                   }),
                   wait(700),

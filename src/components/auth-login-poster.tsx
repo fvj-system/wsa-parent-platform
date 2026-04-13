@@ -25,6 +25,10 @@ export function AuthLoginPoster({ mode = "root" }: AuthLoginPosterProps) {
     searchParams.get("reset") === "success"
       ? "Password updated. Sign in with your new password."
       : "";
+  const confirmationMessage =
+    searchParams.get("confirmed") === "1"
+      ? "Email confirmed. You can sign in now."
+      : "";
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -151,6 +155,7 @@ export function AuthLoginPoster({ mode = "root" }: AuthLoginPosterProps) {
               </button>
 
               {resetMessage ? <p className="success">{resetMessage}</p> : null}
+              {confirmationMessage ? <p className="success">{confirmationMessage}</p> : null}
               {error ? <p className="error">{error}</p> : null}
             </form>
 

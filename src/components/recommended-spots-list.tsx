@@ -17,7 +17,7 @@ export function RecommendedSpotsList({
         <h4>{title}</h4>
         {items.length ? (
           <p className="panel-copy" style={{ margin: 0 }}>
-            These are the strongest nearby places to try first based on habitat fit, family-friendliness, and today&apos;s outing style.
+            These are the strongest local places, calendars, or source pages to check first based on today&apos;s outing style and family needs.
           </p>
         ) : null}
       </div>
@@ -50,7 +50,7 @@ export function RecommendedSpotsList({
                 </p>
                 <div className="cta-row" style={{ marginTop: 12 }}>
                   <a className="button button-ghost" href={spot.mapUrl} target="_blank" rel="noreferrer">
-                    Open in Maps
+                    {spot.linkLabel ?? "Open in Maps"}
                   </a>
                 </div>
               </div>
