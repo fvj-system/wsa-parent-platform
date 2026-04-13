@@ -46,7 +46,7 @@ export default function SignUpPage() {
                 email,
                 password,
                 options: {
-                  emailRedirectTo: `${window.location.origin}/auth/sign-in?confirmed=1`,
+                  emailRedirectTo: `${window.location.origin}/?confirmed=1`,
                   data: {
                     full_name: fullName,
                     household_name: householdName
@@ -102,7 +102,7 @@ export default function SignUpPage() {
         </form>
 
         <p className="muted">
-          Already have an account? <Link href="/auth/sign-in">Sign in</Link>
+          Already have an account? <Link href="/">Sign in</Link>
         </p>
       </section>
     </main>

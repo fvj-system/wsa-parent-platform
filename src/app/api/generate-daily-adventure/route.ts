@@ -358,6 +358,15 @@ function buildDailyAdventureFallback(
     challengeActivity:
       smithsonianFallback.challengeActivity ??
       "Complete one short observation challenge before heading home.",
+    missionStops:
+      smithsonianFallback.missionStops ??
+      [
+        `Start at one easy access point near ${locationLabel}.`,
+        "Take one minute to notice weather, footing, and the best first observation zone.",
+        "Work one focused family task before moving on.",
+        "Pause for the discussion question before heading home.",
+        "Wrap up with the journal prompt while the outing is still fresh."
+      ],
     facebookCaption:
       smithsonianFallback.facebookCaption ??
       "Today's Wild Stallion Academy mission is ready for the trail.",
@@ -407,6 +416,44 @@ function buildDailyAdventureFallback(
       smithsonianFallback.fallbackPlan ??
       "If conditions change, shorten the outing and finish the journal prompt at home."
   };
+}
+
+function buildStepByStepMission(
+  output: DailyAdventureOutput,
+  template: ResolvedAdventureTemplate,
+  locationLabel: string
+) {
+  if (output.missionStops.length) {
+    return output.missionStops;
+  }
+
+  if (template === "smithsonian") {
+    return [
+      "Start with your anchor museum instead of trying to cover every gallery.",
+      "Begin in the first high-interest exhibit area while energy is fresh.",
+      "Complete three scavenger hunt tasks before changing floors or wings.",
+      "Pause for one parent talking point before the next section.",
+      "Wrap up with the discussion question before leaving."
+    ];
+  }
+
+  if (template === "fish") {
+    return [
+      `Start at the easiest safe access point near ${locationLabel}.`,
+      "Get gear ready and spend one minute reading the water before the first cast.",
+      "Try the first bait or lure at visible cover, shade, or current seams.",
+      "Watch for bait movement, ripples, birds, or structure that suggest a better next cast.",
+      "Finish with a short wrap-up about what the water taught your family today."
+    ];
+  }
+
+  return [
+    `Start at one calm family-friendly spot near ${locationLabel}.`,
+    "Take one minute to notice weather, sounds, movement, and the best first observation zone.",
+    "Do the main mission first while attention is strongest.",
+    "Pause for the challenge activity or discussion question before moving on.",
+    "Wrap up with the journal prompt before heading home."
+  ];
 }
 
 export async function POST(request: Request) {
@@ -489,7 +536,8 @@ export async function POST(request: Request) {
             latitude: parsedInput.data.latitude,
             longitude: parsedInput.data.longitude,
             radiusMiles: parsedInput.data.radiusMiles,
-            weatherCondition: parsedInput.data.weatherCondition
+            weatherCondition: parsedInput.data.weatherCondition,
+            targetFish: parsedInput.data.targetFish
           })
         : null;
     const fishingImages = await resolveFishingMissionImages(fishingRecommendation);
@@ -550,6 +598,7 @@ export async function POST(request: Request) {
       `Budget: ${parsedInput.data.budget ?? "free"}`,
       `Energy level: ${parsedInput.data.energyLevel ?? "medium"}`,
       `Travel distance: ${parsedInput.data.travelDistance ?? "local"}`,
+      parsedInput.data.targetFish ? `Requested target fish: ${parsedInput.data.targetFish}` : "Requested target fish: planner choice",
       `Location focus: ${location.displayLabel}`,
       `Weather context: ${environmental.weather?.shortForecast ?? weather.summary}`,
       environmental.weather?.hazards?.length
@@ -576,6 +625,7 @@ export async function POST(request: Request) {
             .join("; ")}.`
         : "Trusted local opportunities: no curated regional matches were found, so rely on the nearby nature context.",
       templateInstructions.outputGuide,
+      "missionStops must be a practical step-by-step plan with 4-7 short action steps. Include where to start, what to do first, what to watch for, how to move through the outing, and how to wrap up.",
       "Every schema field must be present in the JSON response. Use null for unknown string fields and [] for unknown arrays. Never omit keys.",
       resolvedTemplate === "smithsonian"
         ? [
@@ -648,6 +698,11 @@ export async function POST(request: Request) {
     const defaultCopy = getDefaultAdventureCopy(resolvedTemplate, location.displayLabel);
     const output = parseDailyAdventure({
       ...baseOutput,
+      animalOfTheDay:
+        resolvedTemplate === "fish"
+          ? fishingRecommendation?.primarySpecies ?? baseOutput.animalOfTheDay
+          : baseOutput.animalOfTheDay,
+      missionStops: buildStepByStepMission(baseOutput, resolvedTemplate, location.displayLabel),
       bestTimeWindow: fishingRecommendation?.bestTimeWindow ?? baseOutput.bestTimeWindow ?? defaultCopy.bestTimeWindow,
       suggestedPlaceType:
         resolvedTemplate === "smithsonian"

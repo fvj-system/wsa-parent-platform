@@ -4,6 +4,7 @@ type LocationContextFieldsProps = {
   locationLabel: string;
   radiusMiles: string;
   weatherCondition: string;
+  hideRadius?: boolean;
   weatherHelperText?: string;
   onLocationLabelChange: (value: string) => void;
   onRadiusMilesChange: (value: string) => void;
@@ -15,6 +16,7 @@ export function LocationContextFields({
   locationLabel,
   radiusMiles,
   weatherCondition,
+  hideRadius = false,
   weatherHelperText,
   onLocationLabelChange,
   onRadiusMilesChange,
@@ -40,14 +42,16 @@ export function LocationContextFields({
           />
         </label>
 
-        <label>
-          Radius
-          <select value={radiusMiles} onChange={(event) => onRadiusMilesChange(event.target.value)}>
-            <option value="5">Within 5 miles</option>
-            <option value="10">Within 10 miles</option>
-            <option value="25">Within 25 miles</option>
-          </select>
-        </label>
+        {hideRadius ? null : (
+          <label>
+            Radius
+            <select value={radiusMiles} onChange={(event) => onRadiusMilesChange(event.target.value)}>
+              <option value="5">Within 5 miles</option>
+              <option value="10">Within 10 miles</option>
+              <option value="25">Within 25 miles</option>
+            </select>
+          </label>
+        )}
       </div>
 
       <label>

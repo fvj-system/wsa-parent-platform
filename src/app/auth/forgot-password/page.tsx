@@ -115,7 +115,7 @@ export default function ForgotPasswordPage() {
         )}
 
         <p className="muted">
-          Remembered it? <Link href="/auth/sign-in">Back to sign in</Link>
+          Remembered it? <Link href="/">Back to sign in</Link>
         </p>
       </section>
     </main>

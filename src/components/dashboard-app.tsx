@@ -359,7 +359,7 @@ export function DashboardApp({ initialProfile, initialWaiver, initialPhotos, ini
           onClick={() => {
             startTransition(async () => {
               await supabase.auth.signOut();
-              router.push("/auth/sign-in");
+              router.push("/");
               router.refresh();
             });
           }}

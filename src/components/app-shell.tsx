@@ -155,7 +155,7 @@ export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
                   startTransition(async () => {
                     const supabase = createClient();
                     await supabase.auth.signOut();
-                    router.push("/auth/sign-in");
+                    router.push("/");
                     router.refresh();
                   });
                 }}

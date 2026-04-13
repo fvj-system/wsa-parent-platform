@@ -173,6 +173,16 @@ export function DailyAdventureResult({ result, generationId }: DailyAdventureRes
                   <p>{result.fishingMainSpeciesDescription}</p>
                 </section>
               ) : null}
+              {result.missionStops?.length ? (
+                <section className="mission-panel fishing-mission-span">
+                  <div className="section-heading"><MissionIcon /><h4>Step-by-step plan</h4></div>
+                  <ul className="result-list result-list-tight">
+                    {result.missionStops.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
               {result.fishingOtherLikelyFish?.length ? (
                 <section className="mission-panel fishing-mission-span">
                   <div className="section-heading"><MissionIcon /><h4>Other likely fish</h4></div>
@@ -254,7 +264,7 @@ export function DailyAdventureResult({ result, generationId }: DailyAdventureRes
                     <section className="mission-panel">
                       <div className="section-heading">
                         <MissionIcon />
-                        <h4>Best stops</h4>
+                        <h4>Step-by-step plan</h4>
                       </div>
                       <ul className="result-list result-list-tight">
                         {result.missionStops.map((item) => (

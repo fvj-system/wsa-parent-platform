@@ -10,7 +10,7 @@ const REMEMBER_DEVICE_KEY = "wsa-remember-device";
 const REMEMBERED_EMAIL_KEY = "wsa-remembered-email";
 
 type AuthLoginPosterProps = {
-  mode?: "root" | "sign-in";
+  mode?: "root";
 };
 
 export function AuthLoginPoster({ mode = "root" }: AuthLoginPosterProps) {
@@ -161,11 +161,7 @@ export function AuthLoginPoster({ mode = "root" }: AuthLoginPosterProps) {
 
             <div className={styles.links}>
               <Link href="/auth/forgot-password">Forgot password?</Link>
-              {mode === "sign-in" ? (
-                <Link href="/">Back to home sign in</Link>
-              ) : (
-                <Link href="/auth/sign-up">Create family account</Link>
-              )}
+              <Link href="/auth/sign-up">Create family account</Link>
             </div>
 
             <p className={styles.tagline}>

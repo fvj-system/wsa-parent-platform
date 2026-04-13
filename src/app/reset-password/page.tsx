@@ -90,7 +90,7 @@ export default function ResetPasswordPage() {
 
               setMessage("Password updated. Redirecting you back to sign in...");
               setTimeout(() => {
-                router.push("/auth/sign-in?reset=success");
+                router.push("/?reset=success");
                 router.refresh();
               }, 1200);
             });

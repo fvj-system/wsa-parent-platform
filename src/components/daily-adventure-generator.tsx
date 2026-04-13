@@ -13,6 +13,7 @@ import {
   smithsonianMuseums,
   type SmithsonianMuseumKey,
 } from "@/lib/smithsonian-museums";
+import { FISH_DATA } from "@/lib/species/fish-data";
 import type { StudentRecord } from "@/lib/students";
 
 type DailyAdventureGeneratorProps = {
@@ -86,6 +87,24 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function getRadiusMilesForTravelDistance(
+  travelDistance: string,
+  fallbackRadiusMiles: number,
+) {
+  switch (travelDistance) {
+    case "backyard":
+      return 5;
+    case "regional":
+      return 25;
+    case "far":
+      return 50;
+    case "local":
+      return 10;
+    default:
+      return fallbackRadiusMiles;
+  }
+}
+
 export function DailyAdventureGenerator({
   userId,
   initialHistory: _initialHistory,
@@ -132,6 +151,7 @@ export function DailyAdventureGenerator({
   const [budget, setBudget] = useState("free");
   const [energyLevel, setEnergyLevel] = useState("medium");
   const [travelDistance, setTravelDistance] = useState("local");
+  const [targetFish, setTargetFish] = useState("");
   const [plannerMode, setPlannerMode] = useState<"standard" | "advanced">(
     "standard",
   );
@@ -162,6 +182,11 @@ export function DailyAdventureGenerator({
       : null;
 
   const isSmithsonianPreset = selectedPreset === "smithsonian";
+  const isFishingPreset = selectedPreset === "fish";
+  const effectiveRadiusMiles = getRadiusMilesForTravelDistance(
+    travelDistance,
+    Number(radiusMiles) || initialRadiusMiles,
+  );
   const canGenerate =
     !isWeatherResolving &&
     (selectedTarget.targetType === "household" ||
@@ -349,6 +374,27 @@ export function DailyAdventureGenerator({
             </div>
           ) : null}
 
+          {isFishingPreset ? (
+            <label>
+              Target fish
+              <select
+                value={targetFish}
+                onChange={(event) => setTargetFish(event.target.value)}
+              >
+                <option value="">Let the planner choose</option>
+                {FISH_DATA.map((fish) => (
+                  <option key={fish.slug} value={fish.commonName}>
+                    {fish.commonName}
+                  </option>
+                ))}
+              </select>
+              <p className="field-helper-text">
+                Pick a fish if your family wants to focus on one species. Leave
+                it on planner choice if you want the best local default.
+              </p>
+            </label>
+          ) : null}
+
           {plannerMode === "advanced" ? (
             <section className="stack advanced-planner-chat">
               <article className="advanced-planner-bubble advanced-planner-bubble-assistant">
@@ -457,6 +503,7 @@ export function DailyAdventureGenerator({
           <LocationContextFields
             locationLabel={locationLabel}
             radiusMiles={radiusMiles}
+            hideRadius
             weatherCondition={weatherCondition}
             weatherHelperText={forecastHelperText}
             onLocationLabelChange={(value) => setLocationLabel(value)}
@@ -540,6 +587,10 @@ export function DailyAdventureGenerator({
                 <option value="regional">30-60 min</option>
                 <option value="far">Day trip</option>
               </select>
+              <p className="field-helper-text">
+                This already sets how wide the planner searches, so you do not
+                need a second radius picker here.
+              </p>
             </label>
           </div>
 
@@ -599,7 +650,7 @@ export function DailyAdventureGenerator({
                         ? selectedMuseumKeys
                         : [],
                       locationLabel,
-                      radiusMiles: Number(radiusMiles),
+                      radiusMiles: effectiveRadiusMiles,
                       weatherCondition,
                       latitude,
                       longitude,
@@ -607,6 +658,7 @@ export function DailyAdventureGenerator({
                       budget,
                       energyLevel,
                       travelDistance,
+                      targetFish: isFishingPreset ? targetFish || undefined : undefined,
                       planStyle: plannerMode === "advanced" ? planStyle : undefined,
                       mainGoal: plannerMode === "advanced" ? mainGoal : undefined,
                       practicalNeeds:

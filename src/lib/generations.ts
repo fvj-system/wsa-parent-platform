@@ -136,6 +136,7 @@ export const dailyAdventureInputSchema = z.object({
   budget: z.string().trim().min(1).max(40).optional(),
   energyLevel: z.string().trim().min(1).max(40).optional(),
   travelDistance: z.string().trim().min(1).max(40).optional(),
+  targetFish: z.string().trim().min(1).max(80).optional(),
   planStyle: z.string().trim().min(1).max(60).optional(),
   mainGoal: z.string().trim().min(1).max(80).optional(),
   practicalNeeds: z.array(z.string().trim().min(1).max(60)).default([]),
@@ -598,6 +599,7 @@ export type DailyAdventureGenerationInput = {
   budget?: string;
   energyLevel?: string;
   travelDistance?: string;
+  targetFish?: string;
   planStyle?: string;
   mainGoal?: string;
   practicalNeeds?: string[];

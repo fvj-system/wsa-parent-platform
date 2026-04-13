@@ -3,10 +3,12 @@ import { getEnvironmentalContext } from "@/lib/context/engine";
 import { findRecommendedSpots, resolveLocationContext, type LocationContextInput, type RecommendedSpot } from "@/lib/context/nearby-spots";
 import { rankSpotsForWaterType } from "@/lib/fish-of-day/spot-ranking";
 import { getWaterTypeLabel, inferWaterTypeFromRecommendedSpots, type WaterType } from "@/lib/fish-of-day/water-type";
+import { getFishDataByName } from "@/lib/species/fish-data";
 
 export type FishingContextInput = LocationContextInput & {
   requestDate: string;
   weatherCondition?: string | null;
+  targetFish?: string | null;
 };
 
 export type FishingRecommendation = {
@@ -60,6 +62,12 @@ export async function getFishingRecommendation(
         : "active fishing";
 
   const likelySpecies = deriveLikelySpecies(rankedSpots, waterType);
+  const requestedTargetFish = input.targetFish?.trim() || null;
+  const primarySpecies = requestedTargetFish ?? likelySpecies[0] ?? "Local game fish";
+  const targetFishProfile = requestedTargetFish ? getFishDataByName(requestedTargetFish) : null;
+  const prioritizedSpecies = requestedTargetFish
+    ? [requestedTargetFish, ...likelySpecies.filter((species) => species.toLowerCase() !== requestedTargetFish.toLowerCase())]
+    : likelySpecies;
   const bestTimeWindow =
     environmental.fallbackWeatherSummary.supportLevel === "good"
       ? environmental.solunar.bestWindow
@@ -101,16 +109,18 @@ export async function getFishingRecommendation(
     waterTypeLabel: getWaterTypeLabel(waterType),
     bestTimeWindow,
     fishingOutlook,
-    likelySpecies,
-    primarySpecies: likelySpecies[0] ?? "Local game fish",
-    liveBait: getLiveBaitSuggestion(waterType),
-    artificialBait: getArtificialBaitSuggestion(waterType),
+    likelySpecies: prioritizedSpecies,
+    primarySpecies,
+    liveBait: targetFishProfile?.bestBait ?? getLiveBaitSuggestion(waterType),
+    artificialBait: targetFishProfile?.bestLures.slice(0, 2).join(" or ") ?? getArtificialBaitSuggestion(waterType),
     bestPlace:
       rankedSpots[0]?.name
         ? `${rankedSpots[0].name} (${getWaterTypeLabel(waterType)})`
         : `a ${getWaterTypeLabel(waterType).toLowerCase()} access point`,
     whereToCast: getWhereToCastSuggestion(waterType),
-    mainSpeciesDescription: getMainSpeciesDescription(likelySpecies[0] ?? "Local game fish", waterType),
+    mainSpeciesDescription: targetFishProfile
+      ? `${primarySpecies} is your chosen target today. ${targetFishProfile.wsaAnglerTip}`
+      : getMainSpeciesDescription(primarySpecies, waterType),
     gearChecklist: buildFishingGearChecklist(environmental.fallbackWeatherSummary.windExposure),
     outingMode,
     fallbackPlan,
