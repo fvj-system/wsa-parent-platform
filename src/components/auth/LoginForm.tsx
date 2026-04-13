@@ -78,7 +78,7 @@ export default function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
-          className="w-full rounded-lg border px-3 py-2"
+          className="w-full rounded-lg border px-3 py-2 text-base"
         />
       </div>
 
@@ -90,7 +90,7 @@ export default function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter your password"
-          className="w-full rounded-lg border px-3 py-2"
+          className="w-full rounded-lg border px-3 py-2 text-base"
         />
       </div>
 

@@ -2,6 +2,7 @@
   position: relative;
   min-height: 100vh;
   overflow: hidden;
+  width: 100%;
   background: none;
 }
 
@@ -246,7 +247,9 @@
 
 .form input[type="email"],
 .form input[type="password"] {
+  width: 100%;
   min-height: 52px;
+  font: 600 1rem/1.2 var(--font-sans);
   border-radius: 18px;
   border: 1px solid rgba(58, 85, 65, 0.22);
   background: rgba(255, 252, 245, 0.9);
@@ -377,9 +380,32 @@
     height: 24rem;
   }
 
+  .shell {
+    padding: 14px 10px;
+  }
+
+  .card {
+    padding: 8px;
+    border-radius: 24px;
+  }
+
+  .cardInner {
+    padding: 18px 15px 17px;
+    border-radius: 20px;
+  }
+
   .kicker {
     letter-spacing: 0.14em;
     font-size: 0.67rem;
+  }
+
+  .title {
+    font-size: clamp(1.9rem, 10vw, 2.35rem);
+    line-height: 1;
+  }
+
+  .copy {
+    font-size: 0.92rem;
   }
 
   .banner {

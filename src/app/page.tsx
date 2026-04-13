@@ -14,7 +14,7 @@ export default async function HomePage() {
 
   return (
     <main
-      className="min-h-screen w-full flex items-center justify-center px-4 py-6"
+      className="relative min-h-screen w-full overflow-hidden flex items-center justify-center px-4 py-6"
       style={{
         backgroundColor: "#a49382",
         backgroundImage: "url('/background.jpeg')",
@@ -37,11 +37,11 @@ export default async function HomePage() {
           Wild Stallion Academy
         </p>
 
-        <div className="inline-flex rounded-full bg-[#5a3720] px-5 py-2 text-lg font-bold text-[#f6ead8] mt-2">
+        <div className="mt-2 inline-flex rounded-full bg-[#5a3720] px-4 py-1.5 text-base font-bold text-[#f6ead8] sm:px-5 sm:py-2 sm:text-lg">
           Parent Portal
         </div>
 
-        <h1 className="font-serif font-black leading-[0.9] text-[3.5rem] sm:text-[5rem] text-[#2f2417] mt-3">
+        <h1 className="mt-3 font-serif font-black leading-[0.92] text-[clamp(2.65rem,12vw,3.5rem)] sm:text-[5rem] text-[#2f2417]">
           Wild Stallion
           <br />
           Academy

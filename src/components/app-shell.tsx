@@ -36,7 +36,7 @@ type AppShellProps = {
   children: React.ReactNode;
 };
 
-export function AppShell({ userLabel, children }: AppShellProps) {
+export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -100,7 +100,8 @@ export function AppShell({ userLabel, children }: AppShellProps) {
 
             <details className="shell-utility-menu shell-profile-menu">
               <summary className="button nav-pill nav-pill-secondary nav-pill-idle">
-                {`Profiles: ${activeProfileLabel} ▼`}
+                <span className="nav-summary-label">Profile</span>
+                <span className="nav-summary-value">{activeProfileLabel}</span>
               </summary>
               <div className="mobile-nav-more-panel shell-utility-panel">
                 <Link
@@ -125,7 +126,7 @@ export function AppShell({ userLabel, children }: AppShellProps) {
           <details className="shell-utility-menu">
             <summary className="button nav-pill nav-pill-secondary nav-pill-more nav-pill-idle">More</summary>
             <div className="mobile-nav-more-panel shell-utility-panel">
-              {utilityNavItems.map((item) => (
+              {utilityNavItems.map((item) =>
                 item.external ? (
                   <a
                     key={item.href}
@@ -138,15 +139,15 @@ export function AppShell({ userLabel, children }: AppShellProps) {
                   </a>
                 ) : (
                   <Link
-                  key={item.href}
-                  className={`button nav-pill nav-pill-secondary ${pathname === item.href ? "nav-pill-active" : "nav-pill-idle"}`}
-                  href={item.href}
-                  aria-current={pathname === item.href ? "page" : undefined}
-                >
-                  {item.label}
+                    key={item.href}
+                    className={`button nav-pill nav-pill-secondary ${pathname === item.href ? "nav-pill-active" : "nav-pill-idle"}`}
+                    href={item.href}
+                    aria-current={pathname === item.href ? "page" : undefined}
+                  >
+                    {item.label}
                   </Link>
                 )
-              ))}
+              )}
               <button
                 type="button"
                 className="button nav-pill nav-pill-secondary nav-pill-idle"
