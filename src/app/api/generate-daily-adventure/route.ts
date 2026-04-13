@@ -508,7 +508,9 @@ export async function POST(request: Request) {
         : "Act like a trusted local family field guide who knows Southern Maryland outings, museum days, wildlife stops, history sites, fishing opportunities, and weather-aware planning.",
       resolvedTemplate === "smithsonian"
         ? "Behave like a thoughtful homeschool museum guide who can choose the best free Smithsonian stops, pacing, scavenger tasks, observation prompts, and parent talking points."
-        : "Behave like a practical family fishing guide and outdoor trip planner who knows shoreline access, simple tackle, kid-friendly outings, weather, and field conditions.",
+        : resolvedTemplate === "fish"
+          ? "Behave like a practical family fishing guide and outdoor trip planner who knows shoreline access, simple tackle, kid-friendly outings, weather, and field conditions."
+          : "Behave like a practical Southern Maryland family trip planner who knows local parks, museums, history sites, wildlife stops, weather-aware pacing, and kid-friendly outing logistics.",
       resolvedTemplate === "smithsonian"
         ? "Use plain language, be practical for parents, exciting for kids, educational, and specific to the selected museum choices."
         : "Use plain language, be practical for parents, outdoors-friendly, concise, and easy to do today.",

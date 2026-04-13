@@ -503,6 +503,11 @@ function buildKeywordSet(input: Array<string | null | undefined>) {
     .filter((value, index, array) => array.indexOf(value) === index);
 }
 
+function includesKeyword(value: string | null | undefined, keywords: string[]) {
+  const normalized = String(value ?? "").toLowerCase();
+  return keywords.some((keyword) => normalized.includes(keyword));
+}
+
 function normalizeWeather(value?: string | null): PlannerWeather {
   return value === "mixed" ||
     value === "windy" ||
@@ -620,17 +625,38 @@ function scoreOpportunity(
   }
 
   if (
-    planStyle === "history" &&
+    includesKeyword(planStyle, ["history"]) &&
     item.tags.some((tag) => ["history", "maryland history", "living history"].includes(tag))
   ) {
     score += 5;
   }
 
   if (
-    planStyle === "skill-building" &&
+    includesKeyword(planStyle, ["skill", "adventure"]) &&
     item.tags.some((tag) =>
       ["fishing", "paddling", "wildlife", "hiking", "outdoors"].includes(tag),
     )
+  ) {
+    score += 4;
+  }
+
+  if (
+    includesKeyword(mainGoal, ["museum", "history"]) &&
+    item.tags.some((tag) => ["museum", "history", "maryland history", "living history"].includes(tag))
+  ) {
+    score += 4;
+  }
+
+  if (
+    includesKeyword(mainGoal, ["nature", "wildlife"]) &&
+    item.tags.some((tag) => ["nature", "wildlife", "birding", "park"].includes(tag))
+  ) {
+    score += 4;
+  }
+
+  if (
+    includesKeyword(mainGoal, ["fishing", "water"]) &&
+    item.tags.some((tag) => ["fishing", "shoreline", "paddling", "dnr"].includes(tag))
   ) {
     score += 4;
   }
