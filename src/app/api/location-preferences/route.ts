@@ -4,21 +4,26 @@ import { requireUser } from "@/lib/auth";
 import {
   geocodeZipcode,
   getUserLocationPreferences,
+  isSearchRadiusMiles,
   parseLocationPreferences,
   reverseGeocodeLocation
 } from "@/lib/location-preferences";
 
+const searchRadiusSchema = z.number().refine((value) => isSearchRadiusMiles(value), {
+  message: "Choose a supported search radius."
+});
+
 const zipcodeSchema = z.object({
   locationMode: z.literal("zipcode"),
   homeZipcode: z.string().trim().min(5, "Enter a valid 5-digit ZIP code."),
-  searchRadiusMiles: z.union([z.literal(10), z.literal(25), z.literal(50)])
+  searchRadiusMiles: searchRadiusSchema
 });
 
 const currentSchema = z.object({
   locationMode: z.literal("current"),
   currentLat: z.number().min(-90).max(90),
   currentLng: z.number().min(-180).max(180),
-  searchRadiusMiles: z.union([z.literal(10), z.literal(25), z.literal(50)])
+  searchRadiusMiles: searchRadiusSchema
 });
 
 const locationPreferencesSchema = z.union([zipcodeSchema, currentSchema]);

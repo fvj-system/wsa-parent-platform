@@ -2528,6 +2528,24 @@ select {
   gap: 10px;
 }
 
+.dashboard-opportunity-section {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-opportunity-section-heading {
+  display: grid;
+  gap: 4px;
+}
+
+.dashboard-opportunity-section-copy {
+  margin: 0;
+  color: #6a5845;
+  font:
+    600 0.88rem/1.45 Arial,
+    sans-serif;
+}
+
 .dashboard-opportunity-row {
   display: grid;
   gap: 8px;
@@ -2542,6 +2560,17 @@ select {
     ),
     rgba(255, 255, 255, 0.58);
   box-shadow: 0 10px 20px rgba(17, 10, 6, 0.08);
+}
+
+.dashboard-opportunity-row-event {
+  border-color: rgba(123, 70, 24, 0.22);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 248, 234, 0.98),
+      rgba(243, 225, 191, 0.9)
+    ),
+    rgba(255, 255, 255, 0.62);
 }
 
 .dashboard-opportunity-row-top,
@@ -2574,6 +2603,14 @@ select {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.dashboard-opportunity-event-meta {
+  margin: -2px 0 0;
+  color: #6d5336;
+  font:
+    600 0.8rem/1.4 Arial,
+    sans-serif;
 }
 
 .dashboard-opportunity-location {
@@ -4028,6 +4065,10 @@ select {
     border-radius: 16px;
   }
 
+  .dashboard-opportunity-section {
+    gap: 10px;
+  }
+
   .dashboard-opportunity-title {
     font-size: 0.98rem;
   }
@@ -4041,6 +4082,11 @@ select {
     min-height: 34px;
     padding: 8px 11px;
     font-size: 0.8rem;
+  }
+
+  .dashboard-opportunity-section-copy,
+  .dashboard-opportunity-event-meta {
+    font-size: 0.79rem;
   }
 
   .daily-conditions-panel {

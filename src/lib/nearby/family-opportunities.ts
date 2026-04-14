@@ -14,7 +14,9 @@ export type FamilyOpportunity = {
     | "park"
     | "kids_programs"
     | "festival_calendar"
-    | "lecture_calendar";
+    | "lecture_calendar"
+    | "event";
+  kind: "place" | "event";
   locationLabel: string;
   reason: string;
   distanceMiles: number | null;
@@ -23,6 +25,10 @@ export type FamilyOpportunity = {
   familyFit: string;
   practicalNote: string;
   tags: string[];
+  eventDate: string | null;
+  eventTime: string | null;
+  sourceLabel: string | null;
+  isThisWeek: boolean;
 };
 
 type PlannerMode = "standard" | "advanced";
@@ -33,18 +39,42 @@ type PlannerEnergy = "low" | "medium" | "high";
 type PlannerTravel = "backyard" | "local" | "regional" | "far";
 type PlannerSetting = "indoor" | "outdoor" | "mixed";
 
-type PlannerOpportunityRecord = Omit<
-  FamilyOpportunity,
-  "distanceMiles"
-> & {
+type SharedOpportunityRecord = {
+  id: string;
+  title: string;
+  type:
+    | "museum"
+    | "history_site"
+    | "nature_center"
+    | "park"
+    | "kids_programs"
+    | "festival_calendar"
+    | "lecture_calendar"
+    | "event";
+  locationLabel: string;
+  reason: string;
+  href: string;
+  ctaLabel: string;
+  familyFit: string;
+  practicalNote: string;
+  tags: string[];
   latitude: number | null;
   longitude: number | null;
+};
+
+type PlannerOpportunityRecord = SharedOpportunityRecord & {
   weatherFits: PlannerWeather[];
   timeFits: PlannerTime[];
   budgetFits: PlannerBudget[];
   energyFits: PlannerEnergy[];
   travelFits: PlannerTravel[];
   setting: PlannerSetting;
+};
+
+type EventOpportunityRecord = SharedOpportunityRecord & {
+  eventDate: string;
+  eventTime: string | null;
+  sourceLabel: string;
 };
 
 export type PlannerOpportunityFilters = {
@@ -491,6 +521,189 @@ const OPPORTUNITIES: PlannerOpportunityRecord[] = [
   },
 ];
 
+const CURATED_EVENT_OPPORTUNITIES: EventOpportunityRecord[] = [
+  {
+    id: "hsmc-homeschool-workshops-spring-2026",
+    title: "Homeschool Workshops - Spring 2026",
+    type: "event",
+    locationLabel: "Historic St. Mary's City, MD",
+    latitude: 38.1888,
+    longitude: -76.4274,
+    reason:
+      "A hands-on homeschool history day with rotating workshop stops, interpreters, and place-based learning at one of Southern Maryland's strongest field-trip sites.",
+    href: "https://www.hsmcdigshistory.org/events/",
+    ctaLabel: "Open event",
+    familyFit:
+      "Best for families who want a scheduled educational outing instead of building a whole history day from scratch.",
+    practicalNote:
+      "Plan for walking shoes, snacks, and a slower pace between activity stations if you are bringing multiple ages.",
+    tags: ["history", "homeschool", "workshop", "living history", "field trip"],
+    sourceLabel: "Historic St. Mary's City events",
+    eventDate: "2026-04-15",
+    eventTime: "10:00 AM - 2:30 PM"
+  },
+  {
+    id: "hsmc-american-revolution-lecture",
+    title: "Lecture: The American Revolution and the Fate of the World",
+    type: "event",
+    locationLabel: "Historic St. Mary's City Visitor Center, MD",
+    latitude: 38.1888,
+    longitude: -76.4274,
+    reason:
+      "A stronger fit for older students and parent-led history nights when you want one focused talk with real historical perspective instead of a generic reading assignment.",
+    href: "https://www.hsmcdigshistory.org/events/",
+    ctaLabel: "Open event",
+    familyFit:
+      "Useful for history-minded families who want a discussion anchor for civics, revolution, and cause-and-effect thinking.",
+    practicalNote:
+      "This is better for older kids, teens, or a parent-plus-student evening than for very young learners.",
+    tags: ["history", "lecture", "american revolution", "civics", "older students"],
+    sourceLabel: "Historic St. Mary's City events",
+    eventDate: "2026-04-16",
+    eventTime: "7:00 PM - 8:00 PM"
+  },
+  {
+    id: "pocomoke-tortoise-hare-dare-5k",
+    title: "Tortoise & Hare Dare 5K",
+    type: "event",
+    locationLabel: "Pocomoke River State Park, MD",
+    latitude: 38.1902,
+    longitude: -75.4702,
+    reason:
+      "A family-friendly park event that turns a state-park visit into a real goal day with movement, nature time, and a clear outdoor mission.",
+    href: "https://dnr.maryland.gov/publiclands/Pages/park-events.aspx",
+    ctaLabel: "Park events",
+    familyFit:
+      "Helpful when you want an active outdoor event with a built-in reason to get everyone moving.",
+    practicalNote:
+      "Bring water, trail shoes, and a simple warm-weather backup plan because the park setting is still the main part of the day.",
+    tags: ["park event", "outdoor", "state park", "family event", "movement"],
+    sourceLabel: "Maryland DNR park events",
+    eventDate: "2026-04-18",
+    eventTime: "Morning event"
+  },
+  {
+    id: "sandy-point-run-for-the-trees",
+    title: "Run for the Trees: Happy Little 5K",
+    type: "event",
+    locationLabel: "Sandy Point State Park, MD",
+    latitude: 39.0249,
+    longitude: -76.3971,
+    reason:
+      "A practical mix of movement, park time, and family challenge energy for a bigger weekend outing that still feels educational and outdoors-first.",
+    href: "https://dnr.maryland.gov/publiclands/Pages/park-events.aspx",
+    ctaLabel: "Park events",
+    familyFit:
+      "Works well for energetic families who want a park destination with a special event built in.",
+    practicalNote:
+      "This is a longer-drive option for Southern Maryland families, so it makes the most sense with a wider search radius and a half-day plan.",
+    tags: ["park event", "state park", "family run", "outdoor", "weekend"],
+    sourceLabel: "Maryland DNR park events",
+    eventDate: "2026-04-18",
+    eventTime: "Morning event"
+  },
+  {
+    id: "great-mills-pool-community-appreciation",
+    title: "Great Mills Swimming Pool Community Appreciation Event",
+    type: "event",
+    locationLabel: "Great Mills, MD",
+    latitude: 38.2352,
+    longitude: -76.4974,
+    reason:
+      "A low-friction community outing with a clear time window, easy family logistics, and a simple way to get out of the house without a long travel commitment.",
+    href: "https://www.stmaryscountymd.gov/pio/docs/2026-081NewsReleaseGMPoolYMCA.pdf",
+    ctaLabel: "Open notice",
+    familyFit:
+      "Useful when you want a nearby family event that feels easy, local, and realistic for a weekday stop-in.",
+    practicalNote:
+      "This is more of a short local visit than a full educational field trip, so pair it with one small reflection question or swim-related science prompt.",
+    tags: ["community event", "family", "local", "short outing"],
+    sourceLabel: "St. Mary's County Recreation & Parks",
+    eventDate: "2026-04-20",
+    eventTime: "8:00 AM - 6:00 PM"
+  },
+  {
+    id: "hsmc-little-explorers-funny-figureheads",
+    title: "Little Explorers - Funny Figureheads",
+    type: "event",
+    locationLabel: "Historic St. Mary's City Waterfront, MD",
+    latitude: 38.1888,
+    longitude: -76.4274,
+    reason:
+      "A nice younger-kid history and observation program that gives families one manageable themed stop instead of a giant all-day museum push.",
+    href: "https://www.hsmcdigshistory.org/events/",
+    ctaLabel: "Open event",
+    familyFit:
+      "Best for younger learners who do better with one guided activity and a short waterfront walk afterward.",
+    practicalNote:
+      "A great short outing choice when energy is limited and you still want something educational on the calendar.",
+    tags: ["history", "young kids", "waterfront", "guided activity"],
+    sourceLabel: "Historic St. Mary's City events",
+    eventDate: "2026-04-22",
+    eventTime: "10:00 AM - 11:00 AM"
+  },
+  {
+    id: "maryland-dnr-earth-day-events",
+    title: "Earth Day Events Across Maryland State Parks",
+    type: "event",
+    locationLabel: "Maryland State Parks",
+    latitude: null,
+    longitude: null,
+    reason:
+      "A strong official planning anchor when you want seasonal nature programming, stewardship themes, and a real spring event tied to state parks.",
+    href: "https://dnr.maryland.gov/publiclands/Pages/park-events.aspx",
+    ctaLabel: "Park events",
+    familyFit:
+      "Good for families who want the outing to feel seasonal, educational, and grounded in nature instead of just picking a random trail.",
+    practicalNote:
+      "Use this as a source page for choosing the park event that best fits your drive time and energy level.",
+    tags: ["earth day", "state parks", "nature", "seasonal", "family events"],
+    sourceLabel: "Maryland DNR park events",
+    eventDate: "2026-04-22",
+    eventTime: "Various times"
+  },
+  {
+    id: "assateague-pollinator-festival",
+    title: "Pollinator Festival",
+    type: "event",
+    locationLabel: "Assateague State Park, MD",
+    latitude: 38.3365,
+    longitude: -75.1519,
+    reason:
+      "A bigger regional nature event that turns pollinators, habitats, and spring ecology into a more memorable family field day.",
+    href: "https://dnr.maryland.gov/publiclands/Pages/park-events.aspx",
+    ctaLabel: "Park events",
+    familyFit:
+      "Best for families who are willing to drive farther for a themed state-park day with a clear science angle.",
+    practicalNote:
+      "Treat this like a bigger day trip and pack for weather, sand, and longer walking windows.",
+    tags: ["pollinators", "science", "state park", "festival", "nature"],
+    sourceLabel: "Maryland DNR park events",
+    eventDate: "2026-04-25",
+    eventTime: "Daytime event"
+  },
+  {
+    id: "hsmc-marylandfest",
+    title: "MarylandFest",
+    type: "event",
+    locationLabel: "Historic St. Mary's City, MD",
+    latitude: 38.1888,
+    longitude: -76.4274,
+    reason:
+      "A history-rich family festival with children's activities, crafts, and Maryland-focused programming that feels more like a true field-day destination.",
+    href: "https://www.hsmcdigshistory.org/events/marylandfest/",
+    ctaLabel: "Open event",
+    familyFit:
+      "A strong fit for multi-age families who want one bigger outing with built-in activities instead of planning several small stops.",
+    practicalNote:
+      "Plan for a half-day or longer because this works best when you give it room to breathe.",
+    tags: ["festival", "history", "maryland", "family activities", "field trip"],
+    sourceLabel: "Historic St. Mary's City events",
+    eventDate: "2026-05-02",
+    eventTime: "11:00 AM - 5:00 PM"
+  }
+];
+
 function buildKeywordSet(input: Array<string | null | undefined>) {
   return input
     .flatMap((value) =>
@@ -671,51 +884,138 @@ function scoreOpportunity(
   return score;
 }
 
+function getOpportunityDistanceMiles(
+  item: Pick<SharedOpportunityRecord, "latitude" | "longitude">,
+  location: ResolvedLocationContext,
+) {
+  if (
+    location.latitude === null ||
+    location.longitude === null ||
+    item.latitude === null ||
+    item.longitude === null
+  ) {
+    return null;
+  }
+
+  return (
+    Math.round(
+      milesBetweenPoints(
+        location.latitude,
+        location.longitude,
+        item.latitude,
+        item.longitude,
+      )! * 10,
+    ) / 10
+  );
+}
+
+function parseEventDate(value: string) {
+  return new Date(`${value}T12:00:00`);
+}
+
+function isWithinUpcomingWeek(eventDate: string, referenceDate: Date) {
+  const start = new Date(referenceDate);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+
+  const eventDay = parseEventDate(eventDate);
+  return eventDay >= start && eventDay <= end;
+}
+
+function isUpcomingEvent(eventDate: string, referenceDate: Date) {
+  const start = new Date(referenceDate);
+  start.setHours(0, 0, 0, 0);
+  return parseEventDate(eventDate) >= start;
+}
+
+function compareByDistanceThenTitle(left: FamilyOpportunity, right: FamilyOpportunity) {
+  if (left.distanceMiles === null && right.distanceMiles === null) {
+    return left.title.localeCompare(right.title);
+  }
+  if (left.distanceMiles === null) return 1;
+  if (right.distanceMiles === null) return -1;
+  return left.distanceMiles - right.distanceMiles;
+}
+
+function isWithinRadius(distanceMiles: number | null, radiusMiles: number) {
+  return distanceMiles === null || distanceMiles <= radiusMiles;
+}
+
 function toFamilyOpportunity(
   item: PlannerOpportunityRecord,
   location: ResolvedLocationContext,
 ): FamilyOpportunity {
-  const distanceMiles =
-    location.latitude !== null &&
-    location.longitude !== null &&
-    item.latitude !== null &&
-    item.longitude !== null
-      ? Math.round(
-          milesBetweenPoints(
-            location.latitude,
-            location.longitude,
-            item.latitude,
-            item.longitude,
-          )! * 10,
-        ) / 10
-      : null;
-
   return {
     id: item.id,
     title: item.title,
     type: item.type,
+    kind: "place",
     locationLabel: item.locationLabel,
     reason: item.reason,
-    distanceMiles,
+    distanceMiles: getOpportunityDistanceMiles(item, location),
     href: item.href,
     ctaLabel: item.ctaLabel,
     familyFit: item.familyFit,
     practicalNote: item.practicalNote,
     tags: item.tags,
+    eventDate: null,
+    eventTime: null,
+    sourceLabel: null,
+    isThisWeek: false,
+  };
+}
+
+function toEventFamilyOpportunity(
+  item: EventOpportunityRecord,
+  location: ResolvedLocationContext,
+  referenceDate: Date,
+): FamilyOpportunity {
+  return {
+    id: item.id,
+    title: item.title,
+    type: item.type,
+    kind: "event",
+    locationLabel: item.locationLabel,
+    reason: item.reason,
+    distanceMiles: getOpportunityDistanceMiles(item, location),
+    href: item.href,
+    ctaLabel: item.ctaLabel,
+    familyFit: item.familyFit,
+    practicalNote: item.practicalNote,
+    tags: item.tags,
+    eventDate: item.eventDate,
+    eventTime: item.eventTime,
+    sourceLabel: item.sourceLabel,
+    isThisWeek: isWithinUpcomingWeek(item.eventDate, referenceDate),
   };
 }
 
 export function getNearbyFamilyOpportunities(location: ResolvedLocationContext) {
-  return OPPORTUNITIES.map((item) => toFamilyOpportunity(item, location))
+  const today = new Date();
+  const eventItems = CURATED_EVENT_OPPORTUNITIES
+    .filter((item) => isUpcomingEvent(item.eventDate, today))
+    .map((item) => toEventFamilyOpportunity(item, location, today))
+    .filter((item) => isWithinRadius(item.distanceMiles, location.radiusMiles))
     .sort((left, right) => {
-      if (left.distanceMiles === null && right.distanceMiles === null) {
-        return left.title.localeCompare(right.title);
+      if (left.isThisWeek !== right.isThisWeek) {
+        return left.isThisWeek ? -1 : 1;
       }
-      if (left.distanceMiles === null) return 1;
-      if (right.distanceMiles === null) return -1;
-      return left.distanceMiles - right.distanceMiles;
+      if (left.eventDate !== right.eventDate) {
+        return String(left.eventDate).localeCompare(String(right.eventDate));
+      }
+      return compareByDistanceThenTitle(left, right);
     })
-    .slice(0, 10);
+    .slice(0, 6);
+
+  const placeItems = OPPORTUNITIES.map((item) => toFamilyOpportunity(item, location))
+    .filter((item) => isWithinRadius(item.distanceMiles, location.radiusMiles))
+    .sort(compareByDistanceThenTitle)
+    .slice(0, 8);
+
+  return [...eventItems, ...placeItems];
 }
 
 export function getPlannerOpportunityMatches({

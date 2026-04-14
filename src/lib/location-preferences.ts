@@ -3,6 +3,9 @@ import { resolveLocationContext, type ResolvedLocationContext } from "@/lib/cont
 
 export type LocationMode = "zipcode" | "current";
 
+export const SEARCH_RADIUS_OPTIONS = [10, 25, 50, 100, 200, 300] as const;
+export type SearchRadiusMiles = (typeof SEARCH_RADIUS_OPTIONS)[number];
+
 export type LocationPreferences = {
   locationMode: LocationMode;
   homeZipcode: string | null;
@@ -11,7 +14,7 @@ export type LocationPreferences = {
   currentLat: number | null;
   currentLng: number | null;
   locationLabel: string | null;
-  searchRadiusMiles: 10 | 25 | 50;
+  searchRadiusMiles: SearchRadiusMiles;
 };
 
 type ProfileLocationRow = {
@@ -46,6 +49,10 @@ export function getDefaultLocationPreferences(): LocationPreferences {
   };
 }
 
+export function isSearchRadiusMiles(value: number | null | undefined): value is SearchRadiusMiles {
+  return SEARCH_RADIUS_OPTIONS.some((option) => option === value);
+}
+
 export function parseLocationPreferences(row: ProfileLocationRow | null | undefined): LocationPreferences {
   const defaults = getDefaultLocationPreferences();
   const radius = row?.search_radius_miles;
@@ -57,7 +64,7 @@ export function parseLocationPreferences(row: ProfileLocationRow | null | undefi
     currentLat: typeof row?.current_lat === "number" ? row.current_lat : null,
     currentLng: typeof row?.current_lng === "number" ? row.current_lng : null,
     locationLabel: row?.location_label?.trim() || defaults.locationLabel,
-    searchRadiusMiles: radius === 10 || radius === 25 || radius === 50 ? radius : defaults.searchRadiusMiles
+    searchRadiusMiles: isSearchRadiusMiles(radius) ? radius : defaults.searchRadiusMiles
   };
 }
 

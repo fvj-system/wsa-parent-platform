@@ -1,20 +1,26 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { LocationMode, LocationPreferences, ResolvedUserLocationPreference } from "@/lib/location-preferences";
+import {
+  SEARCH_RADIUS_OPTIONS,
+  type LocationMode,
+  type LocationPreferences,
+  type ResolvedUserLocationPreference,
+  type SearchRadiusMiles
+} from "@/lib/location-preferences";
 
 type LocationPreferencesCardProps = {
   initialPreferences: LocationPreferences;
   resolvedLocation: ResolvedUserLocationPreference;
 };
 
-const radiusOptions = [10, 25, 50] as const;
+const radiusOptions = SEARCH_RADIUS_OPTIONS;
 
 export function LocationPreferencesCard({ initialPreferences, resolvedLocation }: LocationPreferencesCardProps) {
   const zipInputRef = useRef<HTMLInputElement | null>(null);
   const [locationMode, setLocationMode] = useState<LocationMode>(initialPreferences.locationMode);
   const [homeZipcode, setHomeZipcode] = useState(initialPreferences.homeZipcode ?? "");
-  const [searchRadiusMiles, setSearchRadiusMiles] = useState<(typeof radiusOptions)[number]>(initialPreferences.searchRadiusMiles);
+  const [searchRadiusMiles, setSearchRadiusMiles] = useState<SearchRadiusMiles>(initialPreferences.searchRadiusMiles);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -151,7 +157,7 @@ export function LocationPreferencesCard({ initialPreferences, resolvedLocation }
 
           <label>
             Search radius
-            <select value={searchRadiusMiles} onChange={(event) => setSearchRadiusMiles(Number(event.target.value) as 10 | 25 | 50)}>
+            <select value={searchRadiusMiles} onChange={(event) => setSearchRadiusMiles(Number(event.target.value) as SearchRadiusMiles)}>
               {radiusOptions.map((radius) => (
                 <option key={radius} value={radius}>
                   {radius} miles
@@ -164,7 +170,7 @@ export function LocationPreferencesCard({ initialPreferences, resolvedLocation }
         <div className="split-grid location-preferences-grid">
           <label>
             Search radius
-            <select value={searchRadiusMiles} onChange={(event) => setSearchRadiusMiles(Number(event.target.value) as 10 | 25 | 50)}>
+            <select value={searchRadiusMiles} onChange={(event) => setSearchRadiusMiles(Number(event.target.value) as SearchRadiusMiles)}>
               {radiusOptions.map((radius) => (
                 <option key={radius} value={radius}>
                   {radius} miles
