@@ -16,6 +16,7 @@ const primaryNavItems = [
 const utilityNavItems = [
   { href: "/planner", label: "Weekly Planner" },
   { href: "/students", label: "Student Profiles" },
+  { href: "/household", label: "Household Sharing" },
   { href: "/nearby-opportunities", label: "Nearby Opportunities" },
   { href: "/discover/catalog", label: "Creature Log" },
   { href: "/portfolio", label: "Homeschool Review" },

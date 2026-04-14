@@ -29,6 +29,7 @@ export type ClassBookingRecord = {
   id: string;
   class_id: string;
   user_id: string;
+  household_id?: string;
   student_id: string | null;
   booking_status: BookingStatus;
   payment_status: PaymentStatus;

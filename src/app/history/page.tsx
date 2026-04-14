@@ -2,13 +2,15 @@ import { HistoryList } from "@/components/history-list";
 import { PageShell } from "@/components/page-shell";
 import { requireUser } from "@/lib/auth";
 import type { GenerationRecord } from "@/lib/generations";
+import { getHouseholdContext } from "@/lib/households";
 
 export default async function HistoryPage() {
   const { supabase, user } = await requireUser();
+  const household = await getHouseholdContext(supabase, user.id);
   const { data } = await supabase
     .from("generations")
     .select("id, user_id, student_id, tool_type, title, input_json, output_json, created_at")
-    .eq("user_id", user.id)
+    .eq("household_id", household.householdId)
     .order("created_at", { ascending: false })
     .limit(30);
 

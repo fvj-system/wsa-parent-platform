@@ -6,6 +6,7 @@ export type StudentRank = (typeof rankLevels)[number];
 export type StudentRecord = {
   id: string;
   user_id: string;
+  household_id?: string;
   name: string;
   age: number;
   interests: string[];

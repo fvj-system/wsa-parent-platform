@@ -81,11 +81,26 @@ export function DashboardApp({ initialProfile, initialWaiver, initialPhotos, ini
         setError("Your session expired. Please sign in again.");
         return;
       }
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("household_id")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (profileError) {
+        setError(profileError.message);
+        return;
+      }
+
+      if (!profile?.household_id) {
+        setError("Your household could not be loaded yet. Refresh and try again.");
+        return;
+      }
 
       const { data, error: saveError } = await supabase
         .from("waivers")
-        .insert({ user_id: userId, ...payload })
-        .select("id, child_name, emergency_contact, medical_notes, signature_name, signed_at")
+        .insert({ user_id: userId, household_id: profile.household_id, ...payload })
+        .select("id, household_id, child_name, emergency_contact, medical_notes, signature_name, signed_at")
         .single();
 
       if (saveError) {

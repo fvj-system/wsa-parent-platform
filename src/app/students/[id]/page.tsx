@@ -11,6 +11,7 @@ import {
 } from "@/lib/badges";
 import type { DiscoveryRecord } from "@/lib/discoveries";
 import type { GenerationRecord } from "@/lib/generations";
+import { getHouseholdContext } from "@/lib/households";
 import { createSignedStorageUrl, extractStoragePathFromLegacyUrl } from "@/lib/storage";
 import type { ClassBookingRecord, ClassRecord } from "@/lib/classes";
 import type { StudentRecord } from "@/lib/students";
@@ -18,11 +19,12 @@ import type { StudentRecord } from "@/lib/students";
 export default async function StudentProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase, user } = await requireUser();
+  const household = await getHouseholdContext(supabase, user.id);
 
   const { data: student } = await supabase
     .from("students")
-    .select("id, user_id, name, age, interests, current_rank, completed_adventures_count, created_at, updated_at")
-    .eq("user_id", user.id)
+    .select("id, user_id, household_id, name, age, interests, current_rank, completed_adventures_count, created_at, updated_at")
+    .eq("household_id", household.householdId)
     .eq("id", id)
     .maybeSingle();
 
@@ -33,7 +35,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
   const { data: completions } = await supabase
     .from("activity_completions")
     .select("id, user_id, student_id, generation_id, class_booking_id, activity_type, title, completed_at, notes, parent_rating, created_at")
-    .eq("user_id", user.id)
+    .eq("household_id", household.householdId)
     .eq("student_id", id)
     .order("completed_at", { ascending: false });
 
@@ -55,7 +57,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
   const { data: linkedGenerationRows } = await supabase
     .from("generations")
     .select("id, user_id, student_id, tool_type, title, input_json, output_json, created_at")
-    .eq("user_id", user.id)
+    .eq("household_id", household.householdId)
     .eq("student_id", id)
     .order("created_at", { ascending: false })
     .limit(8);
@@ -71,19 +73,19 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
     supabase
       .from("student_achievements")
       .select("id, user_id, student_id, achievement_id, earned_at, created_at, achievements:achievements(id, key, name, description, earning_criteria, created_at)")
-      .eq("user_id", user.id)
+      .eq("household_id", household.householdId)
       .eq("student_id", id)
       .order("earned_at", { ascending: false }),
     supabase
       .from("class_bookings")
-      .select("id, class_id, user_id, student_id, booking_status, payment_status, stripe_checkout_session_id, stripe_payment_intent_id, amount_paid_cents, booked_at, notes, created_at, updated_at, classes:classes(id, title, description, class_type, date, start_time, end_time, location, age_min, age_max, price_cents, max_capacity, spots_remaining, what_to_bring, weather_note, waiver_required, status, created_at, updated_at)")
-      .eq("user_id", user.id)
+      .select("id, class_id, user_id, household_id, student_id, booking_status, payment_status, stripe_checkout_session_id, stripe_payment_intent_id, amount_paid_cents, booked_at, notes, created_at, updated_at, classes:classes(id, title, description, class_type, date, start_time, end_time, location, age_min, age_max, price_cents, max_capacity, spots_remaining, what_to_bring, weather_note, waiver_required, status, created_at, updated_at)")
+      .eq("household_id", household.householdId)
       .eq("student_id", id)
       .order("booked_at", { ascending: false }),
     supabase
       .from("discoveries")
-      .select("id, user_id, student_id, category, image_path, common_name, scientific_name, confidence_level, image_url, image_alt, notes, result_json, location_label, latitude, longitude, observed_at, created_at")
-      .eq("user_id", user.id)
+      .select("id, user_id, household_id, student_id, category, image_path, common_name, scientific_name, confidence_level, image_url, image_alt, notes, result_json, location_label, latitude, longitude, observed_at, created_at")
+      .eq("household_id", household.householdId)
       .or(`student_id.eq.${id},student_id.is.null`)
       .order("observed_at", { ascending: false })
       .limit(6)

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { generateAnimalBriefing } from "@/lib/animal-of-the-day";
 import { createClient } from "@/lib/supabase/server";
 import { animalInputSchema } from "@/lib/generations";
+import { getHouseholdContext } from "@/lib/households";
 
 export async function POST(request: Request) {
   try {
@@ -19,12 +20,13 @@ export async function POST(request: Request) {
     if (!parsedInput.success) {
       return NextResponse.json({ error: "Invalid animal request." }, { status: 400 });
     }
+    const household = await getHouseholdContext(supabase, user.id);
 
     if (parsedInput.data.studentId) {
       const { data: student, error: studentError } = await supabase
         .from("students")
         .select("id, name")
-        .eq("user_id", user.id)
+        .eq("household_id", household.householdId)
         .eq("id", parsedInput.data.studentId)
         .maybeSingle();
 

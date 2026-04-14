@@ -6,6 +6,7 @@ import type { ActivityCompletionRecord } from "@/lib/activity-completions";
 import { normalizeStudentAchievementRows, normalizeStudentBadgeRows, type StudentAchievementRecord, type StudentBadgeRecord } from "@/lib/badges";
 import type { ClassBookingRecord, ClassRecord } from "@/lib/classes";
 import type { GenerationRecord } from "@/lib/generations";
+import { getHouseholdContext } from "@/lib/households";
 import { getPortfolioRange, isWithinRange, type PortfolioNoteRecord } from "@/lib/portfolio";
 import type { StudentRecord } from "@/lib/students";
 
@@ -19,11 +20,12 @@ export default async function PortfolioStudentPage({ params, searchParams }: Por
   const rangeParams = await searchParams;
   const range = getPortfolioRange(rangeParams);
   const { supabase, user } = await requireUser();
+  const household = await getHouseholdContext(supabase, user.id);
 
   const { data: student } = await supabase
     .from("students")
-    .select("id, user_id, name, age, interests, current_rank, completed_adventures_count, created_at, updated_at")
-    .eq("user_id", user.id)
+    .select("id, user_id, household_id, name, age, interests, current_rank, completed_adventures_count, created_at, updated_at")
+    .eq("household_id", household.householdId)
     .eq("id", studentId)
     .maybeSingle();
 
@@ -36,13 +38,13 @@ export default async function PortfolioStudentPage({ params, searchParams }: Por
       supabase
         .from("activity_completions")
         .select("id, user_id, student_id, generation_id, class_booking_id, activity_type, title, completed_at, notes, parent_rating, created_at")
-        .eq("user_id", user.id)
+        .eq("household_id", household.householdId)
         .eq("student_id", studentId)
         .order("completed_at", { ascending: false }),
       supabase
         .from("generations")
         .select("id, user_id, student_id, tool_type, title, input_json, output_json, created_at")
-        .eq("user_id", user.id)
+        .eq("household_id", household.householdId)
         .eq("student_id", studentId)
         .order("created_at", { ascending: false }),
       supabase
@@ -53,7 +55,7 @@ export default async function PortfolioStudentPage({ params, searchParams }: Por
       supabase
         .from("student_achievements")
         .select("id, user_id, student_id, achievement_id, earned_at, created_at, achievements:achievements(id, key, name, description, earning_criteria, created_at)")
-        .eq("user_id", user.id)
+        .eq("household_id", household.householdId)
         .eq("student_id", studentId)
         .order("earned_at", { ascending: false }),
       supabase
@@ -64,8 +66,8 @@ export default async function PortfolioStudentPage({ params, searchParams }: Por
         .order("created_at", { ascending: false }),
       supabase
         .from("class_bookings")
-        .select("id, class_id, user_id, student_id, booking_status, payment_status, stripe_checkout_session_id, stripe_payment_intent_id, amount_paid_cents, booked_at, notes, classes:classes(id, title, description, class_type, date, start_time, end_time, location, age_min, age_max, price_cents, max_capacity, spots_remaining, what_to_bring, weather_note, waiver_required, status, created_at, updated_at)")
-        .eq("user_id", user.id)
+        .select("id, class_id, user_id, household_id, student_id, booking_status, payment_status, stripe_checkout_session_id, stripe_payment_intent_id, amount_paid_cents, booked_at, notes, classes:classes(id, title, description, class_type, date, start_time, end_time, location, age_min, age_max, price_cents, max_capacity, spots_remaining, what_to_bring, weather_note, waiver_required, status, created_at, updated_at)")
+        .eq("household_id", household.householdId)
         .eq("student_id", studentId)
         .order("booked_at", { ascending: false })
     ]);

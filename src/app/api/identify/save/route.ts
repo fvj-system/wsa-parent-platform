@@ -5,6 +5,7 @@ import { z } from "zod";
 import { completeDiscovery } from "@/lib/activity-completions";
 import { getDiscoveryLocationMeta } from "@/lib/discover/location";
 import { buildMushroomSafetyNote, mapDiscoverModeToCatalogCategory } from "@/lib/discoveries";
+import { getHouseholdContext } from "@/lib/households";
 import { discoverCategorySchema, identifyResponseSchema } from "@/lib/identify";
 import { createSignedStorageUrl } from "@/lib/storage";
 import { getRankForCompletedAdventures } from "@/lib/students";
@@ -24,6 +25,7 @@ const saveIdentifySchema = z.object({
 type SavedDiscoveryRecord = {
   id: string;
   user_id: string;
+  household_id?: string;
   student_id: string | null;
   category: string;
   image_path?: string | null;
@@ -77,14 +79,14 @@ function buildDiscoveryRequestFingerprint(input: {
 }
 
 function getDiscoverySelect() {
-  return "id, user_id, student_id, category, image_path, common_name, scientific_name, confidence_level, image_url, image_alt, notes, result_json, location_label, latitude, longitude, observed_at, created_at";
+  return "id, user_id, household_id, student_id, category, image_path, common_name, scientific_name, confidence_level, image_url, image_alt, notes, result_json, location_label, latitude, longitude, observed_at, created_at";
 }
 
-async function loadDiscoveryByFingerprint(supabase: Awaited<ReturnType<typeof createClient>>, userId: string, requestFingerprint: string) {
+async function loadDiscoveryByFingerprint(supabase: Awaited<ReturnType<typeof createClient>>, householdId: string, requestFingerprint: string) {
   const { data, error } = await supabase
     .from("discoveries")
     .select(getDiscoverySelect())
-    .eq("user_id", userId)
+    .eq("household_id", householdId)
     .eq("request_fingerprint", requestFingerprint)
     .maybeSingle();
 
@@ -94,13 +96,13 @@ async function loadDiscoveryByFingerprint(supabase: Awaited<ReturnType<typeof cr
 
 async function loadDiscoveryById(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
+  householdId: string,
   discoveryId: string
 ) {
   const { data, error } = await supabase
     .from("discoveries")
     .select(getDiscoverySelect())
-    .eq("user_id", userId)
+    .eq("household_id", householdId)
     .eq("id", discoveryId)
     .maybeSingle();
 
@@ -115,6 +117,7 @@ export async function POST(request: Request) {
   let createdCompletionId: string | null = null;
   let rollbackStudentId: string | null = null;
   let rollbackUserId: string | null = null;
+  let rollbackHouseholdId: string | null = null;
   let rollbackNewBadgeIds: string[] = [];
   let rollbackNewAchievementIds: string[] = [];
 
@@ -127,6 +130,8 @@ export async function POST(request: Request) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const household = await getHouseholdContext(supabase, user.id);
+    rollbackHouseholdId = household.householdId;
 
     const formData = await request.formData();
     const rawPayload = formData.get("payload");
@@ -150,7 +155,7 @@ export async function POST(request: Request) {
       const { data: studentRow } = await supabase
         .from("students")
         .select("id, name")
-        .eq("user_id", user.id)
+        .eq("household_id", household.householdId)
         .eq("id", parsed.data.studentId)
         .maybeSingle();
 
@@ -216,7 +221,7 @@ export async function POST(request: Request) {
       longitude: parsed.data.longitude
     });
 
-    let discovery = await loadDiscoveryByFingerprint(supabase, user.id, requestFingerprint);
+    let discovery = await loadDiscoveryByFingerprint(supabase, household.householdId, requestFingerprint);
     let imageUrl = discovery?.image_url ?? "";
 
     if (!discovery) {
@@ -239,6 +244,7 @@ export async function POST(request: Request) {
         .from("discoveries")
         .insert({
           user_id: user.id,
+          household_id: household.householdId,
           student_id: parsed.data.studentId ?? null,
           request_fingerprint: requestFingerprint,
           category: catalogCategory,
@@ -261,7 +267,7 @@ export async function POST(request: Request) {
       if (discoveryError) {
         const lower = discoveryError.message.toLowerCase();
         if (lower.includes("duplicate") || lower.includes("unique")) {
-          discovery = await loadDiscoveryByFingerprint(supabase, user.id, requestFingerprint);
+          discovery = await loadDiscoveryByFingerprint(supabase, household.householdId, requestFingerprint);
           if (!discovery) {
             throw new Error(discoveryError.message);
           }
@@ -283,7 +289,7 @@ export async function POST(request: Request) {
       throw new Error("Discovery could not be saved.");
     }
 
-    const persistedDiscovery = await loadDiscoveryById(supabase, user.id, discovery.id);
+    const persistedDiscovery = await loadDiscoveryById(supabase, household.householdId, discovery.id);
     if (!persistedDiscovery) {
       console.error("[identify/save] discovery missing after successful save attempt", {
         userId: user.id,
@@ -320,7 +326,7 @@ export async function POST(request: Request) {
       const existingCompletion = await supabase
         .from("activity_completions")
         .select("id")
-        .eq("user_id", user.id)
+        .eq("household_id", household.householdId)
         .eq("student_id", parsed.data.studentId)
         .eq("source_discovery_id", discovery.id)
         .maybeSingle();
@@ -333,6 +339,7 @@ export async function POST(request: Request) {
         createdCompletionId = completionResult.completion.id;
         rollbackStudentId = parsed.data.studentId;
         rollbackUserId = user.id;
+        rollbackHouseholdId = household.householdId;
         rollbackNewBadgeIds = completionResult.newBadges.map((badge) => badge.id);
         rollbackNewAchievementIds = completionResult.newAchievements.map((achievement) => achievement.id);
       }
@@ -462,17 +469,17 @@ export async function POST(request: Request) {
             .from("student_achievements")
             .delete()
             .eq("student_id", rollbackStudentId)
-            .eq("user_id", rollbackUserId)
+            .eq("household_id", rollbackHouseholdId)
             .in("achievement_id", rollbackNewAchievementIds);
         }
 
         await supabase.from("activity_completions").delete().eq("id", createdCompletionId);
 
-        if (rollbackStudentId && rollbackUserId) {
+        if (rollbackStudentId && rollbackHouseholdId) {
           const { data: completionRows } = await supabase
             .from("activity_completions")
             .select("id, activity_type")
-            .eq("user_id", rollbackUserId)
+            .eq("household_id", rollbackHouseholdId)
             .eq("student_id", rollbackStudentId);
 
           const remainingAdventureCount =
@@ -484,7 +491,7 @@ export async function POST(request: Request) {
               completed_adventures_count: remainingAdventureCount,
               current_rank: getRankForCompletedAdventures(remainingAdventureCount)
             })
-            .eq("user_id", rollbackUserId)
+            .eq("household_id", rollbackHouseholdId)
             .eq("id", rollbackStudentId);
         }
       }

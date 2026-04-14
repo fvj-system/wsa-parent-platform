@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { ensureHouseholdBriefing } from "@/lib/daily-briefing";
 import type { GenerationRecord } from "@/lib/generations";
+import { getHouseholdContext } from "@/lib/households";
 import { getUserLocationPreferences, resolveUserLocationPreference } from "@/lib/location-preferences";
 
 export default async function AnimalOfTheDayPage({
@@ -11,11 +12,12 @@ export default async function AnimalOfTheDayPage({
 }) {
   await searchParams;
   const { supabase, user } = await requireUser();
+  const household = await getHouseholdContext(supabase, user.id);
   const [{ data: generations }, locationPreferences] = await Promise.all([
     supabase
       .from("generations")
       .select("id, user_id, student_id, tool_type, title, input_json, output_json, created_at")
-      .eq("user_id", user.id)
+      .eq("household_id", household.householdId)
       .order("created_at", { ascending: false })
       .limit(16),
     getUserLocationPreferences(supabase, user.id)

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { generateFishBriefing } from "@/lib/fish-of-the-day";
+import { getHouseholdContext } from "@/lib/households";
 
 const generateFishSchema = z.object({
   requestDate: z.string().trim().min(1),
@@ -23,12 +24,13 @@ export async function POST(request: Request) {
     if (!parsedInput.success) {
       return NextResponse.json({ error: "Invalid fish request." }, { status: 400 });
     }
+    const household = await getHouseholdContext(supabase, user.id);
 
     if (parsedInput.data.studentId) {
       const { data: student, error } = await supabase
         .from("students")
         .select("id")
-        .eq("user_id", user.id)
+        .eq("household_id", household.householdId)
         .eq("id", parsedInput.data.studentId)
         .maybeSingle();
 

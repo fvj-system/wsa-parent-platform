@@ -3,6 +3,7 @@ import { DiscoveryDetailView } from "@/components/discovery-detail-view";
 import { PageShell } from "@/components/page-shell";
 import { requireUser } from "@/lib/auth";
 import type { DiscoveryRecord } from "@/lib/discoveries";
+import { getHouseholdContext } from "@/lib/households";
 import { createSignedStorageUrl, extractStoragePathFromLegacyUrl } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
@@ -10,11 +11,12 @@ export const dynamic = "force-dynamic";
 export default async function DiscoveryDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase, user } = await requireUser();
+  const household = await getHouseholdContext(supabase, user.id);
 
   const { data: discovery } = await supabase
     .from("discoveries")
-    .select("id, user_id, student_id, category, image_path, common_name, scientific_name, confidence_level, image_url, image_alt, notes, result_json, location_label, latitude, longitude, observed_at, created_at")
-    .eq("user_id", user.id)
+    .select("id, user_id, household_id, student_id, category, image_path, common_name, scientific_name, confidence_level, image_url, image_alt, notes, result_json, location_label, latitude, longitude, observed_at, created_at")
+    .eq("household_id", household.householdId)
     .eq("id", id)
     .maybeSingle();
 
@@ -31,7 +33,7 @@ export default async function DiscoveryDetailPage({ params }: { params: Promise<
     const { data: student } = await supabase
       .from("students")
       .select("name")
-      .eq("user_id", user.id)
+      .eq("household_id", household.householdId)
       .eq("id", discovery.student_id)
       .maybeSingle();
     studentName = student?.name ?? null;

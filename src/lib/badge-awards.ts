@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getHouseholdContext } from "@/lib/households";
 import { getRankForCompletedAdventures, type StudentRecord } from "@/lib/students";
 import {
   normalizeStudentAchievementRows,
@@ -172,10 +173,13 @@ function getEarnedAchievementKeys(
 }
 
 export async function awardStudentRewards({ supabase, userId, student, sourceCompletionId }: AwardStudentRewardsInput): Promise<RewardSummary> {
+  const householdId =
+    student.household_id ?? (await getHouseholdContext(supabase, userId)).householdId;
+
   const { data: completionLinks, error: completionError } = await supabase
     .from("activity_completions")
     .select("id, generation_id, activity_type")
-    .eq("user_id", userId)
+    .eq("household_id", householdId)
     .eq("student_id", student.id);
 
   if (completionError) throw new Error(completionError.message);
@@ -256,7 +260,7 @@ export async function awardStudentRewards({ supabase, userId, student, sourceCom
     supabase
       .from("student_achievements")
       .select("id, user_id, student_id, achievement_id, earned_at, achievements:achievements(id, key, name, description, earning_criteria, created_at)")
-      .eq("user_id", userId)
+      .eq("household_id", householdId)
       .eq("student_id", student.id)
   ]);
 
@@ -274,6 +278,7 @@ export async function awardStudentRewards({ supabase, userId, student, sourceCom
     const { error } = await supabase.from("student_achievements").insert(
       newAchievementRows.map((achievement) => ({
         user_id: userId,
+        household_id: householdId,
         student_id: student.id,
         achievement_id: achievement.id
       }))
@@ -294,7 +299,7 @@ export async function awardStudentRewards({ supabase, userId, student, sourceCom
       completed_adventures_count: updatedStudent.completed_adventures_count,
       current_rank: updatedStudent.current_rank
     })
-    .eq("user_id", userId)
+    .eq("household_id", householdId)
     .eq("id", student.id);
 
   if (studentUpdateError) throw new Error(studentUpdateError.message);

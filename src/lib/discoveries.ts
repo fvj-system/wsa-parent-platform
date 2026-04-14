@@ -8,6 +8,7 @@ export const discoveryCatalogCategorySchema = z.enum(discoveryCatalogCategories)
 export type DiscoveryRecord = {
   id: string;
   user_id: string;
+  household_id?: string;
   student_id: string | null;
   category: DiscoveryCatalogCategory;
   image_path?: string | null;

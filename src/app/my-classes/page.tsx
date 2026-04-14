@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import type { ActivityCompletionRecord } from "@/lib/activity-completions";
 import { confirmClassBookingFromSession } from "@/lib/class-bookings";
 import type { ClassBookingRecord, ClassRecord } from "@/lib/classes";
+import { getHouseholdContext } from "@/lib/households";
 import type { StudentRecord } from "@/lib/students";
 
 export default async function MyClassesPage({
@@ -13,6 +14,7 @@ export default async function MyClassesPage({
 }) {
   const { session_id: sessionId, booking_id: bookingId } = await searchParams;
   const { supabase, user } = await requireUser();
+  const household = await getHouseholdContext(supabase, user.id);
 
   let successMessage = "";
   let errorMessage = "";
@@ -34,17 +36,17 @@ export default async function MyClassesPage({
   const [{ data: bookings }, { data: students }, { data: completions }] = await Promise.all([
     supabase
       .from("class_bookings")
-      .select("id, class_id, user_id, student_id, booking_status, payment_status, stripe_checkout_session_id, stripe_payment_intent_id, amount_paid_cents, booked_at, notes, created_at, updated_at, classes:classes(id, title, description, class_type, date, start_time, end_time, location, age_min, age_max, price_cents, max_capacity, spots_remaining, what_to_bring, weather_note, waiver_required, status, created_at, updated_at)")
-      .eq("user_id", user.id)
+      .select("id, class_id, user_id, household_id, student_id, booking_status, payment_status, stripe_checkout_session_id, stripe_payment_intent_id, amount_paid_cents, booked_at, notes, created_at, updated_at, classes:classes(id, title, description, class_type, date, start_time, end_time, location, age_min, age_max, price_cents, max_capacity, spots_remaining, what_to_bring, weather_note, waiver_required, status, created_at, updated_at)")
+      .eq("household_id", household.householdId)
       .order("booked_at", { ascending: false }),
     supabase
       .from("students")
-      .select("id, user_id, name, age, interests, current_rank, completed_adventures_count, created_at, updated_at")
-      .eq("user_id", user.id),
+      .select("id, user_id, household_id, name, age, interests, current_rank, completed_adventures_count, created_at, updated_at")
+      .eq("household_id", household.householdId),
     supabase
       .from("activity_completions")
       .select("id, user_id, student_id, generation_id, class_booking_id, activity_type, title, completed_at, notes, parent_rating, created_at")
-      .eq("user_id", user.id)
+      .eq("household_id", household.householdId)
       .eq("activity_type", "in_person_class")
   ]);
 

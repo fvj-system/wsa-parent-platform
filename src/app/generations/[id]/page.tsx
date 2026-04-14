@@ -3,6 +3,7 @@ import { GenerationDetailView } from "@/components/generation-detail-view";
 import { PrintButton } from "@/components/print-button";
 import { requireUser } from "@/lib/auth";
 import type { GenerationRecord } from "@/lib/generations";
+import { getHouseholdContext } from "@/lib/households";
 import type { StudentRecord } from "@/lib/students";
 
 export default async function GenerationDetailPage({
@@ -15,11 +16,12 @@ export default async function GenerationDetailPage({
   const { id } = await params;
   const { print } = await searchParams;
   const { supabase, user } = await requireUser();
+  const household = await getHouseholdContext(supabase, user.id);
 
   const { data: generation } = await supabase
     .from("generations")
     .select("id, user_id, student_id, tool_type, title, input_json, output_json, created_at")
-    .eq("user_id", user.id)
+    .eq("household_id", household.householdId)
     .eq("id", id)
     .maybeSingle();
 
@@ -34,8 +36,8 @@ export default async function GenerationDetailPage({
   if (studentId) {
     const { data } = await supabase
       .from("students")
-      .select("id, user_id, name, age, interests, current_rank, completed_adventures_count, created_at, updated_at")
-      .eq("user_id", user.id)
+      .select("id, user_id, household_id, name, age, interests, current_rank, completed_adventures_count, created_at, updated_at")
+      .eq("household_id", household.householdId)
       .eq("id", studentId)
       .maybeSingle();
 
@@ -47,7 +49,7 @@ export default async function GenerationDetailPage({
       ? await supabase
           .from("activity_completions")
           .select("id")
-          .eq("user_id", user.id)
+          .eq("household_id", household.householdId)
           .eq("student_id", studentId)
           .eq("generation_id", id)
           .maybeSingle()

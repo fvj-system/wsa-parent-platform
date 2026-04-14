@@ -2,11 +2,13 @@ export type Profile = {
   id: string;
   full_name: string;
   household_name: string | null;
+  household_id?: string;
   phone: string | null;
 };
 
 export type Waiver = {
   id: string;
+  household_id?: string;
   child_name: string;
   emergency_contact: string;
   medical_notes: string | null;

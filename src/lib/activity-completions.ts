@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { awardStudentRewards } from "@/lib/badge-awards";
+import { getHouseholdContext } from "@/lib/households";
 import { getRankForCompletedAdventures, type StudentRecord } from "@/lib/students";
 import type { AchievementRecord, BadgeRecord } from "@/lib/badges";
 import type { GenerationKind, GenerationRecord } from "@/lib/generations";
@@ -20,6 +21,7 @@ export type CompletionActivityType = (typeof completionActivityTypes)[number];
 export type ActivityCompletionRecord = {
   id: string;
   user_id: string;
+  household_id?: string;
   student_id: string;
   generation_id: string | null;
   class_booking_id: string | null;
@@ -98,14 +100,14 @@ type CompletionLookupRecord = Pick<
 
 async function loadExistingDiscoveryCompletion(
   supabase: SupabaseClient,
-  userId: string,
+  householdId: string,
   studentId: string,
   sourceDiscoveryId: string
 ) {
   const { data, error } = await supabase
     .from("activity_completions")
     .select("id, user_id, student_id, generation_id, class_booking_id, activity_type, title, completed_at, notes, parent_rating, created_at")
-    .eq("user_id", userId)
+    .eq("household_id", householdId)
     .eq("student_id", studentId)
     .eq("source_discovery_id", sourceDiscoveryId)
     .maybeSingle();
@@ -115,10 +117,11 @@ async function loadExistingDiscoveryCompletion(
 }
 
 export async function loadStudentForCompletion(supabase: SupabaseClient, userId: string, studentId: string) {
+  const household = await getHouseholdContext(supabase, userId);
   const { data: student, error } = await supabase
     .from("students")
-    .select("id, user_id, name, age, interests, current_rank, completed_adventures_count, created_at, updated_at")
-    .eq("user_id", userId)
+    .select("id, user_id, household_id, name, age, interests, current_rank, completed_adventures_count, created_at, updated_at")
+    .eq("household_id", household.householdId)
     .eq("id", studentId)
     .maybeSingle();
 
@@ -128,11 +131,11 @@ export async function loadStudentForCompletion(supabase: SupabaseClient, userId:
   return student as StudentRecord;
 }
 
-async function loadGenerationForCompletion(supabase: SupabaseClient, userId: string, generationId: string) {
+async function loadGenerationForCompletion(supabase: SupabaseClient, householdId: string, generationId: string) {
   const { data: generation, error } = await supabase
     .from("generations")
     .select("id, user_id, student_id, tool_type, title, input_json, output_json, created_at")
-    .eq("user_id", userId)
+    .eq("household_id", householdId)
     .eq("id", generationId)
     .maybeSingle();
 
@@ -142,11 +145,11 @@ async function loadGenerationForCompletion(supabase: SupabaseClient, userId: str
   return generation as GenerationRecord;
 }
 
-async function loadClassBookingForCompletion(supabase: SupabaseClient, userId: string, classBookingId: string) {
+async function loadClassBookingForCompletion(supabase: SupabaseClient, householdId: string, classBookingId: string) {
   const { data: booking, error } = await supabase
     .from("class_bookings")
-    .select("id, class_id, user_id, student_id, booking_status, payment_status, stripe_checkout_session_id, stripe_payment_intent_id, amount_paid_cents, booked_at, notes")
-    .eq("user_id", userId)
+    .select("id, class_id, user_id, household_id, student_id, booking_status, payment_status, stripe_checkout_session_id, stripe_payment_intent_id, amount_paid_cents, booked_at, notes")
+    .eq("household_id", householdId)
     .eq("id", classBookingId)
     .maybeSingle();
 
@@ -166,6 +169,8 @@ export async function completeActivity({
   parentRating
 }: CompleteActivityInput): Promise<CompletionResult> {
   const student = await loadStudentForCompletion(supabase, userId, studentId);
+  const householdId =
+    student.household_id ?? (await getHouseholdContext(supabase, userId)).householdId;
   const previousRank = student.current_rank;
 
   let activityType: CompletionActivityType;
@@ -175,7 +180,7 @@ export async function completeActivity({
     const { data: existingCompletion, error: existingCompletionError } = await supabase
       .from("activity_completions")
       .select("id")
-      .eq("user_id", userId)
+      .eq("household_id", householdId)
       .eq("student_id", studentId)
       .eq("generation_id", generationId)
       .maybeSingle();
@@ -188,7 +193,7 @@ export async function completeActivity({
     const { data: existingCompletion, error: existingCompletionError } = await supabase
       .from("activity_completions")
       .select("id")
-      .eq("user_id", userId)
+      .eq("household_id", householdId)
       .eq("student_id", studentId)
       .eq("class_booking_id", classBookingId)
       .maybeSingle();
@@ -198,7 +203,7 @@ export async function completeActivity({
   }
 
   if (generationId) {
-    const generation = await loadGenerationForCompletion(supabase, userId, generationId);
+    const generation = await loadGenerationForCompletion(supabase, householdId, generationId);
 
     if (!generation.student_id || generation.student_id !== studentId) {
       throw new Error("Select a student for this generation before marking it complete.");
@@ -207,7 +212,7 @@ export async function completeActivity({
     activityType = mapGenerationKindToActivityType(generation.tool_type);
     title = generation.title;
   } else if (classBookingId) {
-    const booking = await loadClassBookingForCompletion(supabase, userId, classBookingId);
+    const booking = await loadClassBookingForCompletion(supabase, householdId, classBookingId);
 
     if (!booking.student_id || booking.student_id !== studentId) {
       throw new Error("This class booking is not linked to the selected student.");
@@ -231,6 +236,7 @@ export async function completeActivity({
     .from("activity_completions")
     .insert({
       user_id: userId,
+      household_id: householdId,
       student_id: studentId,
       generation_id: generationId ?? null,
       class_booking_id: classBookingId ?? null,
@@ -269,7 +275,7 @@ export async function completeActivity({
     const { data: completionRows, error: completionError } = await supabase
       .from("activity_completions")
       .select("id")
-      .eq("user_id", userId)
+      .eq("household_id", householdId)
       .eq("student_id", studentId)
       .in("activity_type", ["daily_adventure", "animal_of_the_day", "week_planner", "lesson_generator"]);
 
@@ -289,7 +295,7 @@ export async function completeActivity({
         completed_adventures_count: nextCount,
         current_rank: nextRank
       })
-      .eq("user_id", userId)
+      .eq("household_id", householdId)
       .eq("id", studentId);
 
     if (updateError) throw new Error(updateError.message);
@@ -317,10 +323,12 @@ export async function completeDiscovery({
   sourceDiscoveryId
 }: CompleteDiscoveryInput): Promise<CompletionResult> {
   const student = await loadStudentForCompletion(supabase, userId, studentId);
+  const householdId =
+    student.household_id ?? (await getHouseholdContext(supabase, userId)).householdId;
   const previousRank = student.current_rank;
 
   if (sourceDiscoveryId) {
-    const existingCompletion = await loadExistingDiscoveryCompletion(supabase, userId, studentId, sourceDiscoveryId);
+    const existingCompletion = await loadExistingDiscoveryCompletion(supabase, householdId, studentId, sourceDiscoveryId);
     if (existingCompletion) {
       return {
         completion: existingCompletion as ActivityCompletionRecord,
@@ -338,6 +346,7 @@ export async function completeDiscovery({
     .from("activity_completions")
     .insert({
       user_id: userId,
+      household_id: householdId,
       student_id: studentId,
       generation_id: null,
       class_booking_id: null,
@@ -353,7 +362,7 @@ export async function completeDiscovery({
   if (insertError) {
     const lower = insertError.message.toLowerCase();
     if (sourceDiscoveryId && (lower.includes("duplicate") || lower.includes("unique"))) {
-      const existingCompletion = await loadExistingDiscoveryCompletion(supabase, userId, studentId, sourceDiscoveryId);
+      const existingCompletion = await loadExistingDiscoveryCompletion(supabase, householdId, studentId, sourceDiscoveryId);
       if (existingCompletion) {
         return {
           completion: existingCompletion as ActivityCompletionRecord,

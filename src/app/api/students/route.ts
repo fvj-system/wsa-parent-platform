@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getHouseholdContext } from "@/lib/households";
 import { createClient } from "@/lib/supabase/server";
 import { createStudentSchema, parseInterests } from "@/lib/students";
 
@@ -14,6 +15,7 @@ export async function POST(request: Request) {
     }
 
     const parsed = createStudentSchema.safeParse(await request.json());
+    const household = await getHouseholdContext(supabase, user.id);
 
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid student profile request." }, { status: 400 });
@@ -23,11 +25,12 @@ export async function POST(request: Request) {
       .from("students")
       .insert({
         user_id: user.id,
+        household_id: household.householdId,
         name: parsed.data.name,
         age: parsed.data.age,
         interests: parseInterests(parsed.data.interests)
       })
-      .select("id, user_id, name, age, interests, current_rank, completed_adventures_count, created_at, updated_at")
+      .select("id, user_id, household_id, name, age, interests, current_rank, completed_adventures_count, created_at, updated_at")
       .single();
 
     if (error) {

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { GenerationKind } from "@/lib/generations";
+import { getHouseholdContext } from "@/lib/households";
 
 type SaveGenerationInput = {
   supabase: SupabaseClient;
@@ -20,10 +21,13 @@ export async function saveGeneration({
   inputJson,
   outputJson
 }: SaveGenerationInput) {
+  const household = await getHouseholdContext(supabase, userId);
+
   const { data, error } = await supabase
     .from("generations")
     .insert({
       user_id: userId,
+      household_id: household.householdId,
       student_id: studentId ?? null,
       kind: toolType,
       tool_type: toolType,

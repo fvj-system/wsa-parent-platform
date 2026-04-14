@@ -3,6 +3,7 @@ import { ClassBookingForm } from "@/components/class-booking-form";
 import { PageShell } from "@/components/page-shell";
 import { requireUser } from "@/lib/auth";
 import type { ClassBookingRecord, ClassRecord } from "@/lib/classes";
+import { getHouseholdContext } from "@/lib/households";
 import type { StudentRecord } from "@/lib/students";
 
 export default async function ClassDetailPage({
@@ -15,6 +16,7 @@ export default async function ClassDetailPage({
   const { id } = await params;
   const { canceled } = await searchParams;
   const { supabase, user } = await requireUser();
+  const household = await getHouseholdContext(supabase, user.id);
 
   const [{ data: classItem }, { data: students }, { data: bookings }] = await Promise.all([
     supabase
@@ -24,13 +26,13 @@ export default async function ClassDetailPage({
       .maybeSingle(),
     supabase
       .from("students")
-      .select("id, user_id, name, age, interests, current_rank, completed_adventures_count, created_at, updated_at")
-      .eq("user_id", user.id)
+      .select("id, user_id, household_id, name, age, interests, current_rank, completed_adventures_count, created_at, updated_at")
+      .eq("household_id", household.householdId)
       .order("created_at", { ascending: false }),
     supabase
       .from("class_bookings")
-      .select("id, class_id, user_id, student_id, booking_status, payment_status, stripe_checkout_session_id, stripe_payment_intent_id, amount_paid_cents, booked_at, notes, created_at, updated_at")
-      .eq("user_id", user.id)
+      .select("id, class_id, user_id, household_id, student_id, booking_status, payment_status, stripe_checkout_session_id, stripe_payment_intent_id, amount_paid_cents, booked_at, notes, created_at, updated_at")
+      .eq("household_id", household.householdId)
       .eq("class_id", id)
   ]);
 

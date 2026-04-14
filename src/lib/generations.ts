@@ -569,6 +569,7 @@ export type PlantOutput = z.infer<typeof plantOutputSchema>;
 export type GenerationRecord = {
   id: string;
   user_id: string;
+  household_id?: string;
   student_id: string | null;
   tool_type: GenerationKind;
   title: string;

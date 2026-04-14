@@ -29,6 +29,7 @@ export function AuthLoginPoster({ mode = "root" }: AuthLoginPosterProps) {
     searchParams.get("confirmed") === "1"
       ? "Email confirmed. You can sign in now."
       : "";
+  const inviteToken = searchParams.get("invite") ?? "";
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -108,7 +109,7 @@ export function AuthLoginPoster({ mode = "root" }: AuthLoginPosterProps) {
                     }
                   }
 
-                  router.push("/dashboard");
+                  router.push(inviteToken ? `/household?invite=${encodeURIComponent(inviteToken)}` : "/dashboard");
                   router.refresh();
                 });
               }}
@@ -156,12 +157,15 @@ export function AuthLoginPoster({ mode = "root" }: AuthLoginPosterProps) {
 
               {resetMessage ? <p className="success">{resetMessage}</p> : null}
               {confirmationMessage ? <p className="success">{confirmationMessage}</p> : null}
+              {inviteToken ? <p className="success">You were invited to join a shared family household. Sign in to accept it.</p> : null}
               {error ? <p className="error">{error}</p> : null}
             </form>
 
             <div className={styles.links}>
               <Link href="/auth/forgot-password">Forgot password?</Link>
-              <Link href="/auth/sign-up">Create family account</Link>
+              <Link href={inviteToken ? `/auth/sign-up?invite=${encodeURIComponent(inviteToken)}` : "/auth/sign-up"}>
+                Create family account
+              </Link>
             </div>
 
             <p className={styles.tagline}>
