@@ -14,6 +14,7 @@ import { ensureHouseholdBriefing } from "@/lib/daily-briefing";
 import type { GenerationRecord } from "@/lib/generations";
 import { getHouseholdContext } from "@/lib/households";
 import { getUserLocationPreferences, resolveUserLocationPreference } from "@/lib/location-preferences";
+import { getFamilyOpportunityEventsForDate } from "@/lib/nearby/family-opportunities";
 import { rankLevels, type StudentRecord } from "@/lib/students";
 
 type DashboardPageProps = {
@@ -112,6 +113,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     // Fall back to lightweight local conditions so the dashboard still loads.
   }
 
+  const todayEvents = getFamilyOpportunityEventsForDate(environmental.location, today);
   const tideSummary = getTideSummary(today, environmental.location);
   const historyFact = getHistoryFactForDate(today);
   const natureQuote = getNatureQuoteForDate(today);
@@ -175,6 +177,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         weather={environmental.weather}
         fallbackSummary={environmental.fallbackWeatherSummary.summary}
         tide={tideSummary}
+        todayEvents={todayEvents}
       />
 
       {studentRows.length === 0 ? (

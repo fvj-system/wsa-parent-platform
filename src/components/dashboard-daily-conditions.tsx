@@ -1,18 +1,34 @@
 import type { TideSummary } from "@/lib/context/tides";
 import type { WeatherContext } from "@/lib/context/weather/nws";
+import type { FamilyOpportunity } from "@/lib/nearby/family-opportunities";
 
 type DashboardDailyConditionsProps = {
   weather: WeatherContext | null;
   fallbackSummary: string;
   tide: TideSummary;
+  todayEvents: FamilyOpportunity[];
 };
 
-export function DashboardDailyConditions({ weather, fallbackSummary, tide }: DashboardDailyConditionsProps) {
+function formatEventDateTime(item: FamilyOpportunity) {
+  if (!item.eventDate) return item.eventTime;
+
+  const date = new Date(`${item.eventDate}T12:00:00`);
+  const dateLabel = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric"
+  }).format(date);
+
+  return item.eventTime ? `${dateLabel} - ${item.eventTime}` : dateLabel;
+}
+
+export function DashboardDailyConditions({ weather, fallbackSummary, tide, todayEvents }: DashboardDailyConditionsProps) {
   const weatherLabel = weather?.shortForecast ?? "Mixed conditions";
   const high = weather?.temperature ?? "--";
   const low = weather?.lowTemperature ?? "--";
   const nextHigh = tide.highTides[0] ?? "--";
   const nextLow = tide.lowTides[0] ?? "--";
+  const featuredEvents = todayEvents.slice(0, 2);
+  const hasEventsToday = featuredEvents.length > 0;
 
   return (
     <section className="specimen-card daily-conditions-panel">
@@ -22,7 +38,9 @@ export function DashboardDailyConditions({ weather, fallbackSummary, tide }: Das
           <h3>Today&apos;s field read</h3>
         </div>
         <p className="panel-copy" style={{ margin: 0 }}>
-          Weather, tides, and the quick nature read in one spot.
+          {hasEventsToday
+            ? "Weather, tides, and today's local event brief in one spot."
+            : "Weather, tides, and the quick nature read in one spot."}
         </p>
       </div>
 
@@ -40,8 +58,26 @@ export function DashboardDailyConditions({ weather, fallbackSummary, tide }: Das
         </article>
 
         <article className="daily-condition-item daily-condition-item-wide">
-          <span className="eyebrow">Field Read</span>
-          <strong className="daily-condition-field-read">{fallbackSummary}</strong>
+          <span className="eyebrow">{hasEventsToday ? "Today Events" : "Field Read"}</span>
+          {hasEventsToday ? (
+            <>
+              <strong className="daily-condition-field-read">
+                {todayEvents.length === 1 ? "1 official event is on the calendar today." : `${todayEvents.length} official events are on the calendar today.`}
+              </strong>
+              <div className="daily-events-list">
+                {featuredEvents.map((item) => (
+                  <div className="daily-event-line" key={item.id}>
+                    <span className="daily-event-title">{item.title}</span>
+                    <span className="muted">
+                      {[formatEventDateTime(item), item.locationLabel, item.sourceLabel].filter(Boolean).join(" - ")}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <strong className="daily-condition-field-read">{fallbackSummary}</strong>
+          )}
         </article>
       </div>
     </section>

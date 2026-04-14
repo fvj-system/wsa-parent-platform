@@ -993,6 +993,19 @@ function toEventFamilyOpportunity(
   };
 }
 
+export function getFamilyOpportunityEventsForDate(
+  location: ResolvedLocationContext,
+  dateValue: string,
+) {
+  const referenceDate = parseEventDate(dateValue);
+
+  return CURATED_EVENT_OPPORTUNITIES
+    .filter((item) => item.eventDate === dateValue)
+    .map((item) => toEventFamilyOpportunity(item, location, referenceDate))
+    .filter((item) => isWithinRadius(item.distanceMiles, location.radiusMiles))
+    .sort(compareByDistanceThenTitle);
+}
+
 export function getNearbyFamilyOpportunities(location: ResolvedLocationContext) {
   const today = new Date();
   const eventItems = CURATED_EVENT_OPPORTUNITIES

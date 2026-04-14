@@ -31,9 +31,7 @@ type AdventureItem = {
   scientificName?: string;
   imageUrl?: string;
   imageAlt?: string;
-  bestTime: string;
-  lookFor: string[];
-  where: string[];
+  coolFact: string;
   startHref: string;
   fullHref: string;
 };
@@ -46,24 +44,12 @@ function buildAdventureHref(studentId: string | null, preset?: "animal" | "bird"
   return query ? `/daily-adventure?${query}` : "/daily-adventure";
 }
 
-function cleanCue(value?: string | null) {
-  return String(value ?? "")
-    .replace(/^Quick ID tip:\s*/i, "")
-    .trim();
-}
-
 function summarizeForAdventure(value?: string | null) {
   const text = String(value ?? "").replace(/\s+/g, " ").trim();
   if (!text) return "";
   const firstSentence = text.match(/[^.!?]+[.!?]?/)?.[0]?.trim() ?? text;
   const shortened = firstSentence.length > 120 ? `${firstSentence.slice(0, 117).trimEnd()}...` : firstSentence;
   return shortened;
-}
-
-function shortenCue(value?: string | null) {
-  const cue = cleanCue(value);
-  if (!cue) return "";
-  return cue.length > 64 ? `${cue.slice(0, 61).trimEnd()}...` : cue;
 }
 
 const imageStyles: Record<AdventureCategory, string> = {
@@ -104,15 +90,10 @@ export function DashboardDailyBriefing({
         scientificName: briefing.animalOutput.scientificName,
         imageUrl: briefing.animalOutput.imageUrl ?? "/field-guide/mammals.png",
         imageAlt: briefing.animalOutput.imageAlt ?? `${briefing.animalOutput.animalName} field-guide image`,
-        bestTime: summarizeForAdventure(briefing.animalOutput.bestTimeWindow ?? "Morning or late afternoon tend to be the best windows."),
-        lookFor: [
-          shortenCue(briefing.animalOutput.quickIdTip),
-          shortenCue(briefing.animalOutput.tracksAndSign)
-        ],
-        where: [
-          shortenCue(`Look near ${briefing.animalOutput.bestNearbyPlaceType ?? briefing.animalOutput.likelyHabitatType ?? "nearby habitat"}`),
-          shortenCue(briefing.animalOutput.habitat)
-        ],
+        coolFact:
+          summarizeForAdventure(briefing.animalOutput.funFacts[0]) ||
+          summarizeForAdventure(briefing.animalOutput.whyThisPlaceFits) ||
+          "This species is worth watching because small habitat clues can reveal a lot about how it survives.",
         startHref: buildAdventureHref(activeStudent?.id ?? null, "animal"),
         fullHref: `/generations/${briefing.animalGeneration.id}`
       },
@@ -123,15 +104,10 @@ export function DashboardDailyBriefing({
         scientificName: briefing.birdOutput.scientificName,
         imageUrl: briefing.birdOutput.imageUrl,
         imageAlt: briefing.birdOutput.imageAlt,
-        bestTime: summarizeForAdventure(briefing.birdOutput.bestTimeWindow),
-        lookFor: [
-          shortenCue(briefing.birdOutput.quickIdTip || briefing.birdOutput.fieldMarks[0]),
-          shortenCue(`Listen for ${briefing.birdOutput.listeningFor.toLowerCase()}`)
-        ],
-        where: [
-          shortenCue(`Watch ${briefing.birdOutput.bestNearbyPlaceType.toLowerCase()}`),
-          shortenCue(briefing.birdOutput.likelyHabitat)
-        ],
+        coolFact:
+          summarizeForAdventure(briefing.birdOutput.broadExplanation) ||
+          summarizeForAdventure(briefing.birdOutput.fieldMarks[0]) ||
+          "Birds often give themselves away by movement and sound before they are easy to see.",
         startHref: buildAdventureHref(activeStudent?.id ?? null, "bird"),
         fullHref: `/generations/${briefing.birdGeneration.id}`
       },
@@ -142,15 +118,10 @@ export function DashboardDailyBriefing({
         scientificName: briefing.plantOutput.scientificName,
         imageUrl: briefing.plantOutput.imageUrl,
         imageAlt: briefing.plantOutput.imageAlt,
-        bestTime: summarizeForAdventure(briefing.plantOutput.bestTimeWindow),
-        lookFor: [
-          shortenCue(briefing.plantOutput.quickIdTip || briefing.plantOutput.keyFeatures[0]),
-          shortenCue(briefing.plantOutput.keyFeatures[1] ?? "")
-        ],
-        where: [
-          shortenCue(`Check ${briefing.plantOutput.bestNearbyPlaceType.toLowerCase()}`),
-          shortenCue(briefing.plantOutput.likelyHabitat)
-        ],
+        coolFact:
+          summarizeForAdventure(briefing.plantOutput.seasonalNote) ||
+          summarizeForAdventure(briefing.plantOutput.broadExplanation) ||
+          "Plants tell a story through leaf shape, season, and the places where they thrive.",
         startHref: buildAdventureHref(activeStudent?.id ?? null, "plant"),
         fullHref: `/generations/${briefing.plantGeneration.id}`
       },
@@ -161,15 +132,10 @@ export function DashboardDailyBriefing({
         scientificName: briefing.fishOutput.scientificName,
         imageUrl: briefing.fishOutput.imageUrl,
         imageAlt: briefing.fishOutput.imageAlt,
-        bestTime: summarizeForAdventure(briefing.fishOutput.bestTimeWindow),
-        lookFor: [
-          shortenCue(briefing.fishOutput.quickIdTip || briefing.fishOutput.bestBeginnerBait),
-          shortenCue(briefing.fishOutput.likelyHabitat)
-        ],
-        where: [
-          shortenCue(`Fish ${briefing.fishOutput.waterType.toLowerCase()} water`),
-          shortenCue(briefing.fishOutput.bestNearbyPlaceType)
-        ],
+        coolFact:
+          summarizeForAdventure(briefing.fishOutput.whyThisFitsToday) ||
+          summarizeForAdventure(briefing.fishOutput.wsaAnglerTip) ||
+          "Fish respond fast to water conditions, cover, and small changes in how food moves.",
         startHref: buildAdventureHref(activeStudent?.id ?? null, "fish"),
         fullHref: `/generations/${briefing.fishGeneration.id}`
       }
@@ -178,8 +144,6 @@ export function DashboardDailyBriefing({
   );
 
   const selectedItem = adventureItems[selectedCategory];
-  const uniqueLookForCues = Array.from(new Set(selectedItem.lookFor.filter(Boolean)));
-  const uniqueWhereCues = Array.from(new Set(selectedItem.where.filter(Boolean)));
   const statusLabel = `${activeStudent?.name ?? "Household"} | ${activeStudent?.current_rank ?? "Colt"} Trail Status`;
   const historyPreview = summarizeForAdventure(historyFact) || historyFact;
 
@@ -224,7 +188,7 @@ export function DashboardDailyBriefing({
 
       <section className="specimen-card today-adventure-module">
         <div className="today-adventure-module-header">
-          <p className="eyebrow today-adventure-module-kicker">Today&apos;s Adventure</p>
+          <p className="eyebrow today-adventure-module-kicker">Species of the Day</p>
           <div className="today-adventure-category-switcher" role="tablist" aria-label="Daily adventure category">
             {(Object.keys(adventureItems) as AdventureCategory[]).map((key) => (
               <button
@@ -259,26 +223,8 @@ export function DashboardDailyBriefing({
 
             <div className="today-adventure-sections">
               <div className="today-adventure-section">
-                <p className="today-adventure-section-label">Best time</p>
-                <p className="panel-copy today-adventure-why">{selectedItem.bestTime}</p>
-              </div>
-
-              <div className="today-adventure-section">
-                <p className="today-adventure-section-label">Look for</p>
-                <ul className="today-adventure-cues">
-                  {uniqueLookForCues.slice(0, 2).map((cue, index) => (
-                    <li key={`${cue}-${index}`}>{cue}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="today-adventure-section">
-                <p className="today-adventure-section-label">Where</p>
-                <ul className="today-adventure-cues">
-                  {uniqueWhereCues.slice(0, 2).map((cue, index) => (
-                    <li key={`${cue}-${index}`}>{cue}</li>
-                  ))}
-                </ul>
+                <p className="today-adventure-section-label">Cool fact</p>
+                <p className="panel-copy today-adventure-why">{selectedItem.coolFact}</p>
               </div>
             </div>
 
