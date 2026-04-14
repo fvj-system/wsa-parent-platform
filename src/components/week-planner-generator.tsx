@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { BuckStallionNote } from "@/components/buck-stallion-note";
 import { HistoryList } from "@/components/history-list";
 import { PrintButton } from "@/components/print-button";
 import type { GenerationRecord, WeekPlannerOutput } from "@/lib/generations";
@@ -52,12 +51,6 @@ export function WeekPlannerGenerator({ initialHistory, students }: WeekPlannerGe
             </p>
           </div>
         </div>
-
-        <BuckStallionNote
-          compact
-          title="Start with the family rhythm, then personalize."
-          body="Use Family Week for the shared backbone first. Once that looks right, student pages and daily briefings can carry the age-specific detail."
-        />
 
         <div className="planner-command-links">
           <Link className="button button-ghost" href="/discover/catalog">

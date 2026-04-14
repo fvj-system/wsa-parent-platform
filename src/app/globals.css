@@ -3353,6 +3353,34 @@ select {
   padding-top: 6px;
 }
 
+.students-page-header {
+  display: grid;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.students-page-header .eyebrow,
+.students-page-header .page-title {
+  margin: 0;
+}
+
+.students-roster-panel {
+  gap: 12px;
+}
+
+.students-create-inline {
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(68, 47, 28, 0.12);
+  background: rgba(255, 250, 243, 0.72);
+}
+
+.students-create-inline-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
 .panel h3,
 .panel h4,
 .hero h1,
@@ -3781,6 +3809,10 @@ select {
 
   .page-header {
     padding: 16px 18px;
+  }
+
+  .students-create-inline-grid {
+    grid-template-columns: 1fr;
   }
 
   .field-section-heading {
@@ -4262,6 +4294,10 @@ select {
 
   .page-header {
     padding: 14px 16px;
+  }
+
+  .students-page-header {
+    gap: 4px;
   }
 
   .page-title {

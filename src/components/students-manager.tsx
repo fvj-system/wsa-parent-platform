@@ -19,29 +19,35 @@ export function StudentsManager({ initialStudents }: StudentsManagerProps) {
   const [isPending, startTransition] = useTransition();
 
   return (
-    <section className="content-grid">
-      <article className="panel stack">
+    <section className="stack">
+      <article className="panel stack students-roster-panel">
         <div className="header-row">
           <div>
-            <p className="eyebrow">Add student</p>
-            <h3>Create a new trail companion</h3>
-            <p className="panel-copy">Add each child once so daily adventures and rank progress can stay connected to the right learner.</p>
+            <p className="eyebrow">Student roster</p>
+            <h3>{students.length ? "Open a student profile" : "No students added yet"}</h3>
+            <p className="panel-copy">
+              {students.length
+                ? "Open current student profiles here, then add another child only when you need to."
+                : "Add your first child profile to start connecting daily adventures to progress."}
+            </p>
           </div>
-          <button
-            type="button"
-            className={isCreateOpen ? "button button-ghost" : "button button-primary"}
-            onClick={() => {
-              setError("");
-              setIsCreateOpen((current) => !current);
-            }}
-          >
-            {isCreateOpen ? "Hide form" : "Add student"}
-          </button>
+          <div className="nav-actions print-hide">
+            <button
+              type="button"
+              className={isCreateOpen ? "button button-ghost" : "button button-primary"}
+              onClick={() => {
+                setError("");
+                setIsCreateOpen((current) => !current);
+              }}
+            >
+              {isCreateOpen ? "Close add student" : "Add student"}
+            </button>
+          </div>
         </div>
 
         {isCreateOpen ? (
           <form
-            className="stack student-create-form"
+            className="stack student-create-form students-create-inline"
             onSubmit={(event) => {
               event.preventDefault();
               setError("");
@@ -73,18 +79,20 @@ export function StudentsManager({ initialStudents }: StudentsManagerProps) {
               });
             }}
           >
-            <label>
-              Name
-              <input name="name" placeholder="Avery" required />
-            </label>
-            <label>
-              Age
-              <input name="age" type="number" min={3} max={18} defaultValue={8} required />
-            </label>
-            <label>
-              Interests
-              <input name="interests" placeholder="birds, drawing, bugs, hiking" />
-            </label>
+            <div className="students-create-inline-grid">
+              <label>
+                Name
+                <input name="name" placeholder="Avery" required />
+              </label>
+              <label>
+                Age
+                <input name="age" type="number" min={3} max={18} defaultValue={8} required />
+              </label>
+              <label>
+                Interests
+                <input name="interests" placeholder="birds, drawing, bugs, hiking" />
+              </label>
+            </div>
             <div className="cta-row">
               <button type="submit" disabled={isPending}>
                 {isPending ? "Creating..." : "Create student"}
@@ -102,27 +110,7 @@ export function StudentsManager({ initialStudents }: StudentsManagerProps) {
             </div>
             {error ? <p className="error">{error}</p> : null}
           </form>
-        ) : students.length ? (
-          <p className="panel-copy" style={{ margin: 0 }}>
-            Keep the page tidy until you need the form. Tap <strong>Add student</strong> whenever you want to add another child.
-          </p>
-        ) : (
-          <p className="panel-copy" style={{ margin: 0 }}>
-            Start by adding the first child profile, then the roster and trail records will fill in underneath.
-          </p>
-        )}
-      </article>
-
-      <article className="panel stack">
-        <div>
-          <p className="eyebrow">Student roster</p>
-          <h3>{students.length ? "Open a student profile" : "No students added yet"}</h3>
-          <p className="panel-copy">
-            {students.length
-              ? "Each profile is the proud student-facing record for rank, badges, creature logs, and homeschool review."
-              : "Add your first child profile to start connecting daily adventures to progress."}
-          </p>
-        </div>
+        ) : null}
 
         {students.length ? (
           <div className="content-grid">
@@ -130,7 +118,11 @@ export function StudentsManager({ initialStudents }: StudentsManagerProps) {
               <StudentCard key={student.id} student={student} />
             ))}
           </div>
-        ) : null}
+        ) : (
+          <p className="panel-copy" style={{ margin: 0 }}>
+            Use <strong>Add student</strong> to create the first profile, then the roster will appear here.
+          </p>
+        )}
       </article>
     </section>
   );

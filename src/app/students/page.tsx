@@ -1,4 +1,4 @@
-import { PageShell } from "@/components/page-shell";
+import { AppShell } from "@/components/app-shell";
 import { StudentsManager } from "@/components/students-manager";
 import { requireUser } from "@/lib/auth";
 import { getHouseholdContext } from "@/lib/households";
@@ -14,13 +14,12 @@ export default async function StudentsPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <PageShell
-      userLabel={user.email ?? "WSA family"}
-      eyebrow="Students"
-      title="Student profiles"
-      description="Open each child's profile, keep their trail records organized, and move cleanly between proud student pages and parent review documentation."
-    >
+    <AppShell userLabel={user.email ?? "WSA family"}>
+      <section className="students-page-header">
+        <p className="eyebrow">Students</p>
+        <h1 className="page-title">Student profiles</h1>
+      </section>
       <StudentsManager initialStudents={(data ?? []) as StudentRecord[]} />
-    </PageShell>
+    </AppShell>
   );
 }
