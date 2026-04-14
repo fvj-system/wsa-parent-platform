@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { BadgeCard } from "@/components/badge-card";
-import { BuckStallionNote } from "@/components/buck-stallion-note";
 import { HomeschoolReviewBuilder } from "@/components/homeschool-review-builder";
 import { PortfolioNoteForm } from "@/components/portfolio-note-form";
 import { PortfolioEntryForm } from "@/components/portfolio-entry-form";
@@ -118,12 +117,6 @@ export function PortfolioStudentView({
             <PrintButton label="Print homeschool review" />
           </div>
         </div>
-
-        <BuckStallionNote
-          compact
-          title="Keep this review clean and evidence-based."
-          body="Use this packet as the parent-facing summary for progress, participation, and educational relevance when it's time to document the year."
-        />
 
         <div className="stats-grid">
           <article className="stat">
