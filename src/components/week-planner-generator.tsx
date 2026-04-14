@@ -278,91 +278,177 @@ export function WeekPlannerGenerator({ initialHistory, students }: WeekPlannerGe
         </div>
 
         {result ? (
-          <div className="stack">
-            {printContext ? (
-              <section className="week-planner-print-context">
-                <h4>Plan setup</h4>
-                <div className="week-planner-print-meta">
-                  <p>
-                    <strong>Plan type:</strong>{" "}
-                    {printContext.planningMode === "family" ? "Family Week" : "Student Week"}
-                  </p>
-                  <p>
-                    <strong>Learners:</strong> {printContext.learnerNames.join(", ")}
-                  </p>
-                  <p>
-                    <strong>Focus area:</strong> {printContext.focusArea}
-                  </p>
-                  <p>
-                    <strong>Home region:</strong> {printContext.locationLabel}
-                  </p>
-                  <p>
-                    <strong>Days per week:</strong> {printContext.daysPerWeek}
-                  </p>
-                  <p>
-                    <strong>Lesson length:</strong> {printContext.preferredLessonLength}
-                  </p>
-                  <p>
-                    <strong>Setting preference:</strong> {printContext.settingPreference}
-                  </p>
+          <>
+            <div className="stack print-hide">
+              {printContext ? (
+                <section className="week-planner-print-context">
+                  <h4>Plan setup</h4>
+                  <div className="week-planner-print-meta">
+                    <p>
+                      <strong>Plan type:</strong>{" "}
+                      {printContext.planningMode === "family" ? "Family Week" : "Student Week"}
+                    </p>
+                    <p>
+                      <strong>Learners:</strong> {printContext.learnerNames.join(", ")}
+                    </p>
+                    <p>
+                      <strong>Focus area:</strong> {printContext.focusArea}
+                    </p>
+                    <p>
+                      <strong>Home region:</strong> {printContext.locationLabel}
+                    </p>
+                    <p>
+                      <strong>Days per week:</strong> {printContext.daysPerWeek}
+                    </p>
+                    <p>
+                      <strong>Lesson length:</strong> {printContext.preferredLessonLength}
+                    </p>
+                    <p>
+                      <strong>Setting preference:</strong> {printContext.settingPreference}
+                    </p>
+                  </div>
+                </section>
+              ) : null}
+
+              <section>
+                <h4>This Week at a Glance</h4>
+                <p>{result.weeklyOverview}</p>
+              </section>
+
+              <section>
+                <h4>Daily family rhythm</h4>
+                <div className="stack">
+                  {result.dailyPlan.map((day) => (
+                    <article className="note-card" key={day.dayLabel}>
+                      <div className="copy">
+                        <h4>{day.dayLabel}</h4>
+                        <p className="muted">{day.focus}</p>
+                        <ul className="result-list">
+                          {day.activities.map((activity) => (
+                            <li key={activity}>{activity}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </article>
+                  ))}
                 </div>
               </section>
-            ) : null}
 
-            <section>
-              <h4>This Week at a Glance</h4>
-              <p>{result.weeklyOverview}</p>
-            </section>
+              <section>
+                <h4>Outings and field ideas</h4>
+                <ul className="result-list">
+                  {result.suggestedFieldTrips.map((trip) => (
+                    <li key={trip}>{trip}</li>
+                  ))}
+                </ul>
+              </section>
 
-            <section>
-              <h4>Daily family rhythm</h4>
-              <div className="stack">
-                {result.dailyPlan.map((day) => (
-                  <article className="note-card" key={day.dayLabel}>
-                    <div className="copy">
-                      <h4>{day.dayLabel}</h4>
-                      <p className="muted">{day.focus}</p>
-                      <ul className="result-list">
+              <section>
+                <h4>Parent prep list</h4>
+                <ul className="result-list">
+                  {result.materialsList.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </section>
+
+              <section>
+                <h4>Parent notes</h4>
+                <p>{result.parentNotes}</p>
+              </section>
+
+              {result.printableSummary ? (
+                <section>
+                  <h4>Printable summary</h4>
+                  <p>{result.printableSummary}</p>
+                </section>
+              ) : null}
+            </div>
+
+            <div className="week-planner-print-document print-only">
+              {printContext ? (
+                <section className="week-planner-print-block">
+                  <h2>Plan setup</h2>
+                  <div className="week-planner-print-meta">
+                    <p>
+                      <strong>Plan type:</strong>{" "}
+                      {printContext.planningMode === "family" ? "Family Week" : "Student Week"}
+                    </p>
+                    <p>
+                      <strong>Learners:</strong> {printContext.learnerNames.join(", ")}
+                    </p>
+                    <p>
+                      <strong>Focus area:</strong> {printContext.focusArea}
+                    </p>
+                    <p>
+                      <strong>Home region:</strong> {printContext.locationLabel}
+                    </p>
+                    <p>
+                      <strong>Days per week:</strong> {printContext.daysPerWeek}
+                    </p>
+                    <p>
+                      <strong>Lesson length:</strong> {printContext.preferredLessonLength}
+                    </p>
+                    <p>
+                      <strong>Setting preference:</strong> {printContext.settingPreference}
+                    </p>
+                  </div>
+                </section>
+              ) : null}
+
+              <section className="week-planner-print-block">
+                <h2>Weekly overview</h2>
+                <p>{result.weeklyOverview}</p>
+              </section>
+
+              <section className="week-planner-print-block">
+                <h2>Daily rhythm / plan</h2>
+                <div className="week-planner-print-days">
+                  {result.dailyPlan.map((day) => (
+                    <article className="week-planner-print-day" key={day.dayLabel}>
+                      <h3>{day.dayLabel}</h3>
+                      <p className="week-planner-print-focus">{day.focus}</p>
+                      <ul>
                         {day.activities.map((activity) => (
                           <li key={activity}>{activity}</li>
                         ))}
                       </ul>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-
-            <section>
-              <h4>Outings and field ideas</h4>
-              <ul className="result-list">
-                {result.suggestedFieldTrips.map((trip) => (
-                  <li key={trip}>{trip}</li>
-                ))}
-              </ul>
-            </section>
-
-            <section>
-              <h4>Parent prep list</h4>
-              <ul className="result-list">
-                {result.materialsList.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </section>
-
-            <section>
-              <h4>Parent notes</h4>
-              <p>{result.parentNotes}</p>
-            </section>
-
-            {result.printableSummary ? (
-              <section>
-                <h4>Printable summary</h4>
-                <p>{result.printableSummary}</p>
+                    </article>
+                  ))}
+                </div>
               </section>
-            ) : null}
-          </div>
+
+              <section className="week-planner-print-block">
+                <h2>Outings and field ideas</h2>
+                <ul>
+                  {result.suggestedFieldTrips.map((trip) => (
+                    <li key={trip}>{trip}</li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="week-planner-print-block">
+                <h2>Parent prep list</h2>
+                <ul>
+                  {result.materialsList.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="week-planner-print-block">
+                <h2>Parent notes</h2>
+                <p>{result.parentNotes}</p>
+              </section>
+
+              {result.printableSummary ? (
+                <section className="week-planner-print-block">
+                  <h2>Printable summary</h2>
+                  <p>{result.printableSummary}</p>
+                </section>
+              ) : null}
+            </div>
+          </>
         ) : null}
       </article>
 

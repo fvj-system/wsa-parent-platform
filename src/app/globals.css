@@ -3192,6 +3192,38 @@ select {
   margin: 0;
 }
 
+.week-planner-print-document {
+  gap: 12px;
+}
+
+.week-planner-print-block,
+.week-planner-print-day {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.week-planner-print-days {
+  display: grid;
+  gap: 10px;
+}
+
+.week-planner-print-day {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(68, 47, 28, 0.14);
+  background: rgba(255, 250, 243, 0.72);
+}
+
+.week-planner-print-day h3,
+.week-planner-print-block h2 {
+  margin: 0 0 8px;
+}
+
+.week-planner-print-focus {
+  margin: 0 0 8px;
+  color: var(--muted);
+}
+
 .student-section-nav {
   display: flex;
   flex-wrap: wrap;
@@ -4453,5 +4485,44 @@ select {
 
   .week-planner-print-meta {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .week-planner-print-document {
+    display: grid !important;
+    gap: 10px;
+  }
+
+  .week-planner-print-block {
+    display: block;
+    padding: 14px 16px;
+    border: 1px solid #ddd;
+    border-radius: 14px;
+    background: white;
+  }
+
+  .week-planner-print-days {
+    display: grid;
+    gap: 8px;
+  }
+
+  .week-planner-print-day {
+    padding: 10px 12px;
+    border: 1px solid #d7d2c8;
+    border-radius: 10px;
+    background: white;
+  }
+
+  .week-planner-print-day ul,
+  .week-planner-print-block ul {
+    margin: 8px 0 0;
+    padding-left: 20px;
+  }
+
+  .week-planner-print-day li,
+  .week-planner-print-block li,
+  .week-planner-print-block p,
+  .week-planner-print-focus {
+    font-size: 12px;
+    line-height: 1.45;
   }
 }
