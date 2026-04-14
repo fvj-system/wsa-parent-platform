@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { BuckStallionNote } from "@/components/buck-stallion-note";
 import { HistoryList } from "@/components/history-list";
+import { PrintButton } from "@/components/print-button";
 import type { GenerationRecord, WeekPlannerOutput } from "@/lib/generations";
 import type { StudentRecord } from "@/lib/students";
 
@@ -17,9 +18,20 @@ type WeekPlannerResponse = {
   output: WeekPlannerOutput;
 };
 
+type WeekPlannerPrintContext = {
+  planningMode: "student" | "family";
+  learnerNames: string[];
+  focusArea: string;
+  daysPerWeek: number;
+  preferredLessonLength: string;
+  settingPreference: string;
+  locationLabel: string;
+};
+
 export function WeekPlannerGenerator({ initialHistory, students }: WeekPlannerGeneratorProps) {
   const [history, setHistory] = useState(initialHistory);
   const [result, setResult] = useState<WeekPlannerOutput | null>(null);
+  const [printContext, setPrintContext] = useState<WeekPlannerPrintContext | null>(null);
   const [error, setError] = useState("");
   const [planningMode, setPlanningMode] = useState<"student" | "family">(students.length > 1 ? "family" : "student");
   const [selectedIds, setSelectedIds] = useState<string[]>(students[0] ? [students[0].id] : []);
@@ -30,7 +42,7 @@ export function WeekPlannerGenerator({ initialHistory, students }: WeekPlannerGe
 
   return (
     <section className="content-grid">
-      <article className="panel stack planner-panel">
+      <article className="panel stack planner-panel print-hide">
         <div className="field-section-header">
           <div>
             <p className="eyebrow">Parent planning</p>
@@ -97,6 +109,12 @@ export function WeekPlannerGenerator({ initialHistory, students }: WeekPlannerGe
             }
 
             startTransition(async () => {
+              const focusArea = String(formData.get("focusArea") || "");
+              const daysPerWeek = Number(formData.get("daysPerWeek") || 5);
+              const preferredLessonLength = String(formData.get("preferredLessonLength") || "");
+              const interests = String(formData.get("interests") || "");
+              const settingPreference = String(formData.get("settingPreference") || "");
+              const locationLabel = String(formData.get("locationLabel") || "Southern Maryland");
               const response = await fetch("/api/generate-week-plan", {
                 method: "POST",
                 headers: {
@@ -108,12 +126,12 @@ export function WeekPlannerGenerator({ initialHistory, students }: WeekPlannerGe
                   selectedStudentIds: plannerStudents.map((student) => student.id),
                   selectedStudentNames: plannerStudents.map((student) => student.name),
                   selectedStudentAges: plannerStudents.map((student) => student.age),
-                  focusArea: String(formData.get("focusArea") || ""),
-                  daysPerWeek: Number(formData.get("daysPerWeek") || 5),
-                  preferredLessonLength: String(formData.get("preferredLessonLength") || ""),
-                  interests: String(formData.get("interests") || ""),
-                  settingPreference: String(formData.get("settingPreference") || ""),
-                  locationLabel: String(formData.get("locationLabel") || "Southern Maryland")
+                  focusArea,
+                  daysPerWeek,
+                  preferredLessonLength,
+                  interests,
+                  settingPreference,
+                  locationLabel
                 })
               });
 
@@ -125,6 +143,15 @@ export function WeekPlannerGenerator({ initialHistory, students }: WeekPlannerGe
               }
 
               setResult(payload.output);
+              setPrintContext({
+                planningMode,
+                learnerNames: plannerStudents.map((student) => student.name),
+                focusArea,
+                daysPerWeek,
+                preferredLessonLength,
+                settingPreference,
+                locationLabel,
+              });
               setHistory((current) => [payload.generation, ...current]);
             });
           }}
@@ -236,19 +263,52 @@ export function WeekPlannerGenerator({ initialHistory, students }: WeekPlannerGe
         </form>
       </article>
 
-      <article className="panel stack planner-result-panel">
-        <div>
-          <p className="eyebrow">This week's plan</p>
-          <h3>{result ? "Parent-ready weekly overview" : "No plan generated yet"}</h3>
-          <p className="panel-copy" style={{ marginBottom: 0 }}>
-            {result
-              ? "Use this as the shared weekly backbone, then let Today and each student profile carry the day-by-day detail."
-              : "Your generated weekly plan will appear here after you submit the planner."}
-          </p>
+      <article className="panel stack planner-result-panel print-sheet week-planner-print-sheet">
+        <div className="header-row">
+          <div>
+            <p className="eyebrow">This week's plan</p>
+            <h3>{result ? "Parent-ready weekly overview" : "No plan generated yet"}</h3>
+            <p className="panel-copy" style={{ marginBottom: 0 }}>
+              {result
+                ? "Use this as the shared weekly backbone, then let Today and each student profile carry the day-by-day detail."
+                : "Your generated weekly plan will appear here after you submit the planner."}
+            </p>
+          </div>
+          {result ? <PrintButton label="Print weekly planner" /> : null}
         </div>
 
         {result ? (
           <div className="stack">
+            {printContext ? (
+              <section className="week-planner-print-context">
+                <h4>Plan setup</h4>
+                <div className="week-planner-print-meta">
+                  <p>
+                    <strong>Plan type:</strong>{" "}
+                    {printContext.planningMode === "family" ? "Family Week" : "Student Week"}
+                  </p>
+                  <p>
+                    <strong>Learners:</strong> {printContext.learnerNames.join(", ")}
+                  </p>
+                  <p>
+                    <strong>Focus area:</strong> {printContext.focusArea}
+                  </p>
+                  <p>
+                    <strong>Home region:</strong> {printContext.locationLabel}
+                  </p>
+                  <p>
+                    <strong>Days per week:</strong> {printContext.daysPerWeek}
+                  </p>
+                  <p>
+                    <strong>Lesson length:</strong> {printContext.preferredLessonLength}
+                  </p>
+                  <p>
+                    <strong>Setting preference:</strong> {printContext.settingPreference}
+                  </p>
+                </div>
+              </section>
+            ) : null}
+
             <section>
               <h4>This Week at a Glance</h4>
               <p>{result.weeklyOverview}</p>
@@ -295,11 +355,18 @@ export function WeekPlannerGenerator({ initialHistory, students }: WeekPlannerGe
               <h4>Parent notes</h4>
               <p>{result.parentNotes}</p>
             </section>
+
+            {result.printableSummary ? (
+              <section>
+                <h4>Printable summary</h4>
+                <p>{result.printableSummary}</p>
+              </section>
+            ) : null}
           </div>
         ) : null}
       </article>
 
-      <article className="panel stack" style={{ gridColumn: "1 / -1" }}>
+      <article className="panel stack planner-history-panel print-hide" style={{ gridColumn: "1 / -1" }}>
         <div>
           <p className="eyebrow">History</p>
           <h3>Recent week planners</h3>

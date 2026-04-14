@@ -3177,6 +3177,21 @@ select {
   gap: 10px;
 }
 
+.week-planner-print-context {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.week-planner-print-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 18px;
+}
+
+.week-planner-print-meta p {
+  margin: 0;
+}
+
 .student-section-nav {
   display: flex;
   flex-wrap: wrap;
@@ -4374,5 +4389,69 @@ select {
 
   .daily-adventure-print-watermark {
     position: absolute !important;
+  }
+}
+
+@media print {
+  .planner-panel,
+  .planner-history-panel {
+    display: none !important;
+  }
+
+  .planner-result-panel,
+  .week-planner-print-sheet {
+    grid-column: 1 / -1 !important;
+    gap: 12px;
+    padding: 0;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+  }
+
+  .week-planner-print-sheet > section,
+  .week-planner-print-sheet .note-card,
+  .week-planner-print-sheet .result-list,
+  .week-planner-print-context {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .week-planner-print-sheet .header-row {
+    display: block;
+  }
+
+  .week-planner-print-sheet .eyebrow {
+    margin-bottom: 6px;
+  }
+
+  .week-planner-print-sheet h3,
+  .week-planner-print-sheet h4 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .week-planner-print-sheet .stack {
+    gap: 10px;
+  }
+
+  .week-planner-print-sheet .note-card {
+    border: 1px solid #d7d2c8;
+    box-shadow: none;
+    background: white;
+  }
+
+  .week-planner-print-sheet .note-card .copy {
+    padding: 12px;
+  }
+
+  .week-planner-print-sheet section {
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid #ddd;
+    background: white;
+  }
+
+  .week-planner-print-meta {
+    grid-template-columns: 1fr 1fr;
   }
 }
