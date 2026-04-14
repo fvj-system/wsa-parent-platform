@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getHouseholdContext } from "@/lib/households";
 import { createClient } from "@/lib/supabase/server";
 
 const createPortfolioNoteSchema = z.object({
@@ -21,6 +22,7 @@ export async function POST(request: Request) {
     }
 
     const parsed = createPortfolioNoteSchema.safeParse(await request.json());
+    const household = await getHouseholdContext(supabase, user.id);
 
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid portfolio note." }, { status: 400 });
@@ -29,7 +31,7 @@ export async function POST(request: Request) {
     const { data: student, error: studentError } = await supabase
       .from("students")
       .select("id")
-      .eq("user_id", user.id)
+      .eq("household_id", household.householdId)
       .eq("id", parsed.data.studentId)
       .maybeSingle();
 
@@ -45,12 +47,13 @@ export async function POST(request: Request) {
       .from("portfolio_notes")
       .insert({
         user_id: user.id,
+        household_id: household.householdId,
         student_id: parsed.data.studentId,
         related_completion_id: parsed.data.relatedCompletionId ?? null,
         related_generation_id: parsed.data.relatedGenerationId ?? null,
         note: parsed.data.note
       })
-      .select("id, user_id, student_id, related_completion_id, related_generation_id, note, created_at")
+      .select("id, user_id, household_id, student_id, related_completion_id, related_generation_id, note, created_at")
       .single();
 
     if (error) {

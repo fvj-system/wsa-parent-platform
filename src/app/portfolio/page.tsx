@@ -47,7 +47,7 @@ export default async function PortfolioPage() {
       userLabel={user.email ?? "WSA family"}
       eyebrow="Homeschool review"
       title="Student review exports"
-      description="Choose a child and open a clean homeschool review packet built from real activity, badges, classes, and parent notes."
+      description="Choose a child and open a clean homeschool review packet built from discoveries, projects, worksheets, classes, field trips, badges, and parent notes."
     >
       <section className="content-grid">
         {cards.length ? (
@@ -56,7 +56,7 @@ export default async function PortfolioPage() {
           <section className="panel stack">
             <h3>No student portfolios yet</h3>
             <p className="panel-copy">
-              Add a student and start marking adventures complete. Portfolio pages will automatically build from the real activity trail.
+              Add a student and start saving learning evidence. Portfolio pages will automatically build from discoveries, completed activities, classes, badges, and parent documentation.
             </p>
           </section>
         )}

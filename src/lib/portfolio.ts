@@ -7,6 +7,7 @@ import type { StudentRecord } from "@/lib/students";
 export type PortfolioNoteRecord = {
   id: string;
   user_id: string;
+  household_id?: string;
   student_id: string;
   related_completion_id: string | null;
   related_generation_id: string | null;

@@ -346,7 +346,8 @@ export async function POST(request: Request) {
 
       const { data: existingPortfolioEntry, error: existingPortfolioError } = await supabase
         .from("portfolio_entries")
-        .select("id, completion_id")
+        .select("id, completion_id, household_id, occurred_at")
+        .eq("household_id", household.householdId)
         .eq("student_id", parsed.data.studentId)
         .eq("source_discovery_id", discovery.id)
         .maybeSingle();
@@ -356,10 +357,18 @@ export async function POST(request: Request) {
       }
 
       if (existingPortfolioEntry) {
-        if (!existingPortfolioEntry.completion_id) {
+        if (
+          !existingPortfolioEntry.completion_id ||
+          existingPortfolioEntry.household_id !== household.householdId ||
+          existingPortfolioEntry.occurred_at !== savedAt
+        ) {
           const { error: portfolioLinkError } = await supabase
             .from("portfolio_entries")
-            .update({ completion_id: completionResult.completion.id })
+            .update({
+              household_id: household.householdId,
+              completion_id: completionResult.completion.id,
+              occurred_at: savedAt
+            })
             .eq("id", existingPortfolioEntry.id);
 
           if (portfolioLinkError) {
@@ -372,18 +381,23 @@ export async function POST(request: Request) {
         const { data: portfolioEntry, error: portfolioError } = await supabase
           .from("portfolio_entries")
           .insert({
+            household_id: household.householdId,
             student_id: parsed.data.studentId,
             completion_id: completionResult.completion.id,
             source_discovery_id: discovery.id,
             title: `${result.possible_identification} discovery`,
             entry_type: "field_identification",
             summary: `${result.possible_identification}. ${result.wsa_observation_challenge}`,
+            parent_note: parsed.data.notes?.trim() || null,
+            occurred_at: savedAt,
             artifact_json: {
               source: "discover",
               discoveryId: discovery.id,
               selectedCategory: parsed.data.selectedCategory,
               catalogCategory,
+              imagePath: discovery.image_path ?? null,
               imageUrl,
+              imageAlt: discovery.image_alt ?? `${result.possible_identification} discovery photo`,
               identification: result.possible_identification,
               scientificName: result.scientific_name || null,
               savedAt,
@@ -405,6 +419,7 @@ export async function POST(request: Request) {
             const { data: duplicatePortfolioEntry, error: duplicatePortfolioError } = await supabase
               .from("portfolio_entries")
               .select("id")
+              .eq("household_id", household.householdId)
               .eq("student_id", parsed.data.studentId)
               .eq("source_discovery_id", discovery.id)
               .maybeSingle();

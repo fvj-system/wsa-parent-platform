@@ -1,13 +1,20 @@
 import Link from "next/link";
 import { BadgeCard } from "@/components/badge-card";
 import { BuckStallionNote } from "@/components/buck-stallion-note";
+import { HomeschoolReviewBuilder } from "@/components/homeschool-review-builder";
 import { PortfolioNoteForm } from "@/components/portfolio-note-form";
+import { PortfolioEntryForm } from "@/components/portfolio-entry-form";
 import { PortfolioSummaryControls } from "@/components/portfolio-summary-controls";
 import { PrintButton } from "@/components/print-button";
 import type { ActivityCompletionRecord } from "@/lib/activity-completions";
 import type { StudentAchievementRecord, StudentBadgeRecord } from "@/lib/badges";
 import type { ClassBookingRecord, ClassRecord } from "@/lib/classes";
 import { generationKindLabel, type GenerationRecord } from "@/lib/generations";
+import {
+  getPortfolioEvidenceLabel,
+  type PortfolioEntryRecord,
+  type ReviewEvidenceItem
+} from "@/lib/homeschool-review";
 import {
   type PortfolioNoteRecord,
   type PortfolioRange,
@@ -29,6 +36,8 @@ type PortfolioStudentViewProps = {
   badges: StudentBadgeRecord[];
   achievements: StudentAchievementRecord[];
   notes: PortfolioNoteRecord[];
+  documentationEntries: Array<PortfolioEntryRecord & { resolvedImageUrl: string | null; resolvedImageAlt: string }>;
+  reviewEvidenceItems: ReviewEvidenceItem[];
 };
 
 function SectionList({
@@ -75,7 +84,9 @@ export function PortfolioStudentView({
   classBookings,
   badges,
   achievements,
-  notes
+  notes,
+  documentationEntries,
+  reviewEvidenceItems,
 }: PortfolioStudentViewProps) {
   const groupedGenerations = groupCompletedGenerations(completions, completionGenerations);
   const savedGenerations = filterPortfolioGenerations(linkedGenerations, completions, range);
@@ -104,7 +115,7 @@ export function PortfolioStudentView({
             <Link className="button button-ghost" href={`/students/${student.id}`}>
               Back to student dashboard
             </Link>
-            <PrintButton label="Export homeschool PDF" />
+            <PrintButton label="Print homeschool review" />
           </div>
         </div>
 
@@ -136,6 +147,27 @@ export function PortfolioStudentView({
 
       <PortfolioSummaryControls range={range.key} startDate={range.startDate} endDate={range.endDate} />
 
+      <section className="panel stack print-hide">
+        <div>
+          <p className="eyebrow">Documentation evidence</p>
+          <h3>Add homeschool proof to this student record</h3>
+          <p className="panel-copy">
+            Use this log for projects, worksheets, classes, field trips, landmarks, discoveries, and other educational evidence tied to photo documentation.
+          </p>
+        </div>
+        <PortfolioEntryForm studentId={student.id} studentName={student.name} />
+      </section>
+
+      <HomeschoolReviewBuilder
+        studentName={student.name}
+        studentId={student.id}
+        rangeLabel={range.label}
+        startDate={range.startDate}
+        endDate={range.endDate}
+        evidenceItems={reviewEvidenceItems}
+        parentNotes={notes.map((note) => note.note)}
+      />
+
       <section className="panel stack print-sheet">
         <div>
           <p className="eyebrow">Educational significance</p>
@@ -144,6 +176,54 @@ export function PortfolioStudentView({
             {narrative}
           </p>
         </div>
+      </section>
+
+      <section className="panel stack">
+        <div>
+          <p className="eyebrow">Evidence log</p>
+          <h3>Documented homeschool entries</h3>
+          <p className="panel-copy">
+            These entries are the picture-backed proof layer for projects, field trips, worksheets, classes, and nature documentation.
+          </p>
+        </div>
+        {documentationEntries.length ? (
+          <div className="content-grid">
+            {documentationEntries.map((entry) => (
+              <article className="note-card homeschool-evidence-card" key={entry.id}>
+                {entry.resolvedImageUrl ? (
+                  <img
+                    src={entry.resolvedImageUrl}
+                    alt={entry.resolvedImageAlt}
+                  />
+                ) : null}
+                <div className="copy">
+                  <div className="field-guide-meta-row">
+                    <span className="badge">{getPortfolioEvidenceLabel(entry.entry_type)}</span>
+                    <span className="muted">
+                      {formatDateLabel(entry.occurred_at.slice(0, 10))}
+                    </span>
+                  </div>
+                  <h4>{entry.title}</h4>
+                  {entry.summary ? (
+                    <p className="panel-copy" style={{ margin: "8px 0 0" }}>
+                      {entry.summary}
+                    </p>
+                  ) : null}
+                  {entry.parent_note ? (
+                    <p className="muted" style={{ margin: "10px 0 0" }}>
+                      Note: {entry.parent_note}
+                    </p>
+                  ) : null}
+                  <p className="muted" style={{ margin: "10px 0 0" }}>
+                    {entry.student_id ? "Student entry" : "Household evidence entry"}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="panel-copy">No extra homeschool evidence entries were saved in this period yet.</p>
+        )}
       </section>
 
       <SectionList
