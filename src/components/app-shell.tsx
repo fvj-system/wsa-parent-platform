@@ -38,6 +38,7 @@ type AppShellProps = {
 
 export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
   const pathname = usePathname();
+  const isAdminPath = pathname.startsWith("/admin");
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -45,6 +46,11 @@ export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
   const [students, setStudents] = useState<ShellStudent[]>([]);
 
   useEffect(() => {
+    if (isAdminPath) {
+      setStudents([]);
+      return;
+    }
+
     let isMounted = true;
 
     async function loadStudents() {
@@ -63,7 +69,7 @@ export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isAdminPath]);
 
   const selectedStudentId = searchParams.get("student") ?? searchParams.get("studentId");
   const selectedAudience = searchParams.get("audience");
@@ -71,6 +77,19 @@ export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
     selectedAudience === "household"
       ? "Household"
       : students.find((student) => student.id === selectedStudentId)?.name ?? "Household";
+  const visiblePrimaryNavItems = isAdminPath
+    ? [{ href: "/admin", label: "Admin", className: "nav-pill-primary-link" }]
+    : primaryNavItems;
+  const visibleUtilityNavItems = isAdminPath
+    ? [
+        { href: "/admin", label: "Overview" },
+        { href: "/admin/classes", label: "Classes" },
+        { href: "/admin/families", label: "Families" },
+        { href: "/admin/attendees", label: "Attendees" },
+        { href: "/admin/analytics", label: "Analytics" },
+        { href: "/admin/engagement", label: "Engagement" },
+      ]
+    : utilityNavItems;
 
   return (
     <main className="shell layout-grid">
@@ -87,7 +106,7 @@ export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
 
         <div className="shell-nav-groups">
           <div className="nav-actions nav-actions-shell">
-            {primaryNavItems.map((item) => (
+            {visiblePrimaryNavItems.map((item) => (
               <Link
                 key={item.href}
                 className={`button nav-pill ${item.className ?? ""} ${pathname === item.href ? "nav-pill-active" : "nav-pill-idle"}`}
@@ -98,35 +117,37 @@ export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
               </Link>
             ))}
 
-            <details className="shell-utility-menu shell-profile-menu">
-              <summary className="button nav-pill nav-pill-secondary nav-pill-idle">
-                <span className="nav-summary-label">Profile</span>
-                <span className="nav-summary-value">{activeProfileLabel}</span>
-              </summary>
-              <div className="mobile-nav-more-panel shell-utility-panel">
-                <Link
-                  className={`button nav-pill nav-pill-secondary ${selectedAudience === "household" ? "nav-pill-active" : "nav-pill-idle"}`}
-                  href="/dashboard?audience=household"
-                >
-                  Household
-                </Link>
-                {students.map((student) => (
+            {!isAdminPath ? (
+              <details className="shell-utility-menu shell-profile-menu">
+                <summary className="button nav-pill nav-pill-secondary nav-pill-idle">
+                  <span className="nav-summary-label">Profile</span>
+                  <span className="nav-summary-value">{activeProfileLabel}</span>
+                </summary>
+                <div className="mobile-nav-more-panel shell-utility-panel">
                   <Link
-                    key={student.id}
-                    className={`button nav-pill nav-pill-secondary ${selectedStudentId === student.id ? "nav-pill-active" : "nav-pill-idle"}`}
-                    href={`/dashboard?student=${student.id}`}
+                    className={`button nav-pill nav-pill-secondary ${selectedAudience === "household" ? "nav-pill-active" : "nav-pill-idle"}`}
+                    href="/dashboard?audience=household"
                   >
-                    {student.name}
+                    Household
                   </Link>
-                ))}
-              </div>
-            </details>
+                  {students.map((student) => (
+                    <Link
+                      key={student.id}
+                      className={`button nav-pill nav-pill-secondary ${selectedStudentId === student.id ? "nav-pill-active" : "nav-pill-idle"}`}
+                      href={`/dashboard?student=${student.id}`}
+                    >
+                      {student.name}
+                    </Link>
+                  ))}
+                </div>
+              </details>
+            ) : null}
           </div>
 
           <details className="shell-utility-menu">
             <summary className="button nav-pill nav-pill-secondary nav-pill-more nav-pill-idle">More</summary>
             <div className="mobile-nav-more-panel shell-utility-panel">
-              {utilityNavItems.map((item) =>
+              {visibleUtilityNavItems.map((item) =>
                 item.external ? (
                   <a
                     key={item.href}
@@ -153,6 +174,11 @@ export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
                 className="button nav-pill nav-pill-secondary nav-pill-idle"
                 onClick={() => {
                   startTransition(async () => {
+                    if (isAdminPath) {
+                      await fetch("/api/admin/logout", {
+                        method: "POST",
+                      });
+                    }
                     const supabase = createClient();
                     await supabase.auth.signOut();
                     router.push("/");
@@ -169,30 +195,34 @@ export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
 
       {children}
 
-      <Link href="/students" className="global-student-fab" aria-label="Open student profiles">
-        <svg viewBox="0 0 24 24" aria-hidden="true" className="global-camera-icon">
-          <path
-            d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4.2 0-7.5 2.1-7.5 4.7 0 .4.3.8.8.8h13.4c.5 0 .8-.4.8-.8 0-2.6-3.3-4.7-7.5-4.7Z"
-            fill="currentColor"
-          />
-        </svg>
-      </Link>
+      {!isAdminPath ? (
+        <>
+          <Link href="/students" className="global-student-fab" aria-label="Open student profiles">
+            <svg viewBox="0 0 24 24" aria-hidden="true" className="global-camera-icon">
+              <path
+                d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4.2 0-7.5 2.1-7.5 4.7 0 .4.3.8.8.8h13.4c.5 0 .8-.4.8-.8 0-2.6-3.3-4.7-7.5-4.7Z"
+                fill="currentColor"
+              />
+            </svg>
+          </Link>
 
-      <button
-        type="button"
-        className="global-camera-fab"
-        aria-label="Open camera"
-        onClick={() => setIsCameraOpen(true)}
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true" className="global-camera-icon">
-          <path
-            d="M8.5 5.5 10 4h4l1.5 1.5H18A2.5 2.5 0 0 1 20.5 8v8A2.5 2.5 0 0 1 18 18.5H6A2.5 2.5 0 0 1 3.5 16V8A2.5 2.5 0 0 1 6 5.5Zm3.5 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 1.8a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4Z"
-            fill="currentColor"
-          />
-        </svg>
-      </button>
+          <button
+            type="button"
+            className="global-camera-fab"
+            aria-label="Open camera"
+            onClick={() => setIsCameraOpen(true)}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" className="global-camera-icon">
+              <path
+                d="M8.5 5.5 10 4h4l1.5 1.5H18A2.5 2.5 0 0 1 20.5 8v8A2.5 2.5 0 0 1 18 18.5H6A2.5 2.5 0 0 1 3.5 16V8A2.5 2.5 0 0 1 6 5.5Zm3.5 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 1.8a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4Z"
+                fill="currentColor"
+              />
+            </svg>
+          </button>
 
-      <QuickDiscoverCamera isOpen={isCameraOpen} onClose={() => setIsCameraOpen(false)} />
+          <QuickDiscoverCamera isOpen={isCameraOpen} onClose={() => setIsCameraOpen(false)} />
+        </>
+      ) : null}
     </main>
   );
 }

@@ -246,6 +246,7 @@
 }
 
 .form input[type="email"],
+.form input[type="text"],
 .form input[type="password"] {
   width: 100%;
   min-height: 52px;
@@ -300,6 +301,41 @@
   opacity: 0.72;
 }
 
+.modeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.modeButton {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(61, 35, 18, 0.18);
+  font: 800 0.84rem/1 var(--font-sans);
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease;
+}
+
+.modeButtonActive {
+  background: rgba(53, 82, 59, 0.12);
+  color: #254031;
+  border-color: rgba(53, 82, 59, 0.32);
+}
+
+.modeButtonIdle {
+  background: rgba(255, 252, 245, 0.72);
+  color: #5b4938;
+}
+
+.adminHint {
+  margin: 0;
+  color: #4c3c2d;
+  font: 700 0.86rem/1.5 var(--font-sans);
+}
+
 .links {
   display: flex;
   flex-wrap: wrap;
@@ -310,6 +346,17 @@
 }
 
 .links a {
+  text-decoration: underline;
+  text-decoration-color: rgba(61, 95, 85, 0.34);
+  text-underline-offset: 3px;
+}
+
+.staffBackLink {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #3d5f55;
+  font: 700 0.88rem/1.35 var(--font-sans);
   text-decoration: underline;
   text-decoration-color: rgba(61, 95, 85, 0.34);
   text-underline-offset: 3px;

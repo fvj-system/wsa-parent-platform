@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { createAdminClient, readAdminSession } from "@/lib/admin-session";
 import { createClient } from "@/lib/supabase/server";
 
 export async function requireUser() {
@@ -15,7 +16,29 @@ export async function requireUser() {
 }
 
 export async function requireAdmin() {
-  const { supabase, user } = await requireUser();
+  const supabase = await createClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    const adminSession = await readAdminSession();
+
+    if (!adminSession) {
+      redirect("/");
+    }
+
+    return {
+      supabase: createAdminClient(),
+      user: {
+        id: "wsa-admin-session",
+        email: adminSession.username,
+      },
+      profile: null,
+      adminSession,
+    };
+  }
+
   const adminEmails = (process.env.ADMIN_EMAIL_ALLOWLIST || "")
     .split(",")
     .map((item) => item.trim().toLowerCase())
@@ -37,5 +60,5 @@ export async function requireAdmin() {
     redirect("/dashboard");
   }
 
-  return { supabase, user, profile };
+  return { supabase: createAdminClient(), user, profile };
 }

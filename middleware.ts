@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 
+const ADMIN_SESSION_COOKIE = "wsa-admin-session";
+
 const PUBLIC_ROUTES = [
   "/",
   "/auth/sign-in",
@@ -17,6 +19,7 @@ function isPublicRoute(pathname: string) {
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const hasAdminSession = Boolean(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
 
   // Allow static files to pass through
   if (
@@ -31,6 +34,13 @@ export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request,
   });
+
+  const publicRoute = isPublicRoute(pathname);
+
+  if (pathname.startsWith("/admin") && hasAdminSession) {
+    return response;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -59,12 +69,13 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const publicRoute = isPublicRoute(pathname);
-
   if (!user && !publicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     url.searchParams.delete("redirectedFrom");
+    if (hasAdminSession) {
+      url.pathname = "/admin";
+    }
     return NextResponse.redirect(url);
   }
 
