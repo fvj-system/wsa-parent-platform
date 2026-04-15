@@ -123,7 +123,7 @@ export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
                   <span className="nav-summary-label">Profile</span>
                   <span className="nav-summary-value">{activeProfileLabel}</span>
                 </summary>
-                <div className="mobile-nav-more-panel shell-utility-panel">
+                <div className="mobile-nav-more-panel shell-utility-panel shell-profile-panel">
                   <Link
                     className={`button nav-pill nav-pill-secondary ${selectedAudience === "household" ? "nav-pill-active" : "nav-pill-idle"}`}
                     href="/dashboard?audience=household"

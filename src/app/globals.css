@@ -2616,6 +2616,15 @@ select {
   overflow: hidden;
 }
 
+.daily-condition-action {
+  margin-top: 10px;
+}
+
+.daily-condition-action .button {
+  width: 100%;
+  justify-content: center;
+}
+
 .daily-briefing-intro,
 .daily-briefing-student-layer {
   padding: 16px;
@@ -3884,6 +3893,11 @@ select {
     overflow-y: auto;
   }
 
+  .shell-profile-panel {
+    left: 0;
+    right: auto;
+  }
+
   .nav-pill {
     flex: 0 0 auto;
     min-height: 32px;
@@ -4456,6 +4470,11 @@ select {
     max-width: calc(100vw - 24px);
     margin-top: 8px;
     box-shadow: 0 12px 20px rgba(18, 10, 6, 0.12);
+  }
+
+  .shell-profile-panel {
+    left: 0;
+    right: auto;
   }
 
   .page-header {

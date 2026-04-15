@@ -71,18 +71,14 @@ export function DashboardTodayNextStep({
 
   let statusLabel = "Not started";
   let statusCopy = "Generate today&apos;s adventure to anchor the homeschool day with one clear mission.";
-  let primaryActionLabel = "Start today&apos;s adventure";
-
   if (todayAdventure && !todayAdventureCompleted) {
     statusLabel = "Ready to go";
     statusCopy = "Today&apos;s mission is already prepared. Open it, print it, or mark it complete after you head outside.";
-    primaryActionLabel = "Continue today&apos;s adventure";
   }
 
   if (todayAdventureCompleted) {
     statusLabel = "Completed today";
     statusCopy = "Today&apos;s adventure has already been logged. You can print it, revisit it, or plan the next one.";
-    primaryActionLabel = "Open today&apos;s adventure";
   }
 
   return (
@@ -134,16 +130,6 @@ export function DashboardTodayNextStep({
             ) : null}
           </div>
           <div className="cta-row">
-            <Link
-              className="button button-primary button-strong"
-              href={
-                todayAdventure
-                  ? `/generations/${todayAdventure.id}`
-                  : `/daily-adventure${activeStudent ? `?studentId=${activeStudent.id}` : ""}`
-              }
-            >
-              {primaryActionLabel}
-            </Link>
             {todayAdventure ? (
               <Link className="button button-ghost" href={`/generations/${todayAdventure.id}?print=1`}>
                 Print

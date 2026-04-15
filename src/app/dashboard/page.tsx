@@ -158,6 +158,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         ((item.input_json as Record<string, unknown>)?.requestDate as string | undefined) === today
     ) ??
     null;
+  const todayAdventureCompleted = todayAdventure
+    ? completionRows.some((completion) => completion.generation_id === todayAdventure.id)
+    : false;
 
   const totalCompletedAdventures = studentRows.reduce((sum, student) => sum + student.completed_adventures_count, 0);
   const totalBadgeCount = Object.values(badgeCounts).reduce((sum, count) => sum + count, 0);
@@ -170,6 +173,17 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const recentBadgeName =
     (studentBadges?.[0] as { badges?: { name?: string } } | undefined)?.badges?.name ??
     "No badges earned yet";
+  const startAdventureHref =
+    studentRows.length > 0
+      ? todayAdventure
+        ? `/generations/${todayAdventure.id}`
+        : `/daily-adventure${activeStudent ? `?studentId=${activeStudent.id}` : ""}`
+      : null;
+  const startAdventureLabel = todayAdventure
+    ? todayAdventureCompleted
+      ? "Open today's adventure"
+      : "Continue today's adventure"
+    : "Start today's adventure";
 
   return (
     <AppShell userLabel={user.email ?? "WSA family"}>
@@ -178,6 +192,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         fallbackSummary={environmental.fallbackWeatherSummary.summary}
         tide={tideSummary}
         todayEvents={todayEvents}
+        startAdventureHref={startAdventureHref}
+        startAdventureLabel={startAdventureLabel}
       />
 
       {studentRows.length === 0 ? (

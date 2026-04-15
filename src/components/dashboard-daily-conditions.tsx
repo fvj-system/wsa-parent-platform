@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { TideSummary } from "@/lib/context/tides";
 import type { WeatherContext } from "@/lib/context/weather/nws";
 import type { FamilyOpportunity } from "@/lib/nearby/family-opportunities";
@@ -7,6 +8,8 @@ type DashboardDailyConditionsProps = {
   fallbackSummary: string;
   tide: TideSummary;
   todayEvents: FamilyOpportunity[];
+  startAdventureHref?: string | null;
+  startAdventureLabel?: string;
 };
 
 function formatEventDateTime(item: FamilyOpportunity) {
@@ -21,7 +24,14 @@ function formatEventDateTime(item: FamilyOpportunity) {
   return item.eventTime ? `${dateLabel} - ${item.eventTime}` : dateLabel;
 }
 
-export function DashboardDailyConditions({ weather, fallbackSummary, tide, todayEvents }: DashboardDailyConditionsProps) {
+export function DashboardDailyConditions({
+  weather,
+  fallbackSummary,
+  tide,
+  todayEvents,
+  startAdventureHref,
+  startAdventureLabel = "Start today's adventure",
+}: DashboardDailyConditionsProps) {
   const weatherLabel = weather?.shortForecast ?? "Mixed conditions";
   const high = weather?.temperature ?? "--";
   const low = weather?.lowTemperature ?? "--";
@@ -55,6 +65,13 @@ export function DashboardDailyConditions({ weather, fallbackSummary, tide, today
           <span className="eyebrow">Tides</span>
           <strong>{tide.hasTideData ? `High ${nextHigh}` : "No tide pressure"}</strong>
           <span className="muted">{tide.hasTideData ? `Low ${nextLow}` : tide.summary}</span>
+          {startAdventureHref ? (
+            <div className="daily-condition-action">
+              <Link className="button button-primary" href={startAdventureHref}>
+                {startAdventureLabel}
+              </Link>
+            </div>
+          ) : null}
         </article>
 
         <article className="daily-condition-item daily-condition-item-wide">
