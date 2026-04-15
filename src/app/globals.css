@@ -659,6 +659,70 @@ select {
   border: 0;
 }
 
+.classes-hub-card-toggle {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.classes-hub-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.classes-hub-card-open {
+  border-color: rgba(96, 61, 31, 0.18);
+}
+
+.classes-registration-panel {
+  padding: 16px 18px;
+}
+
+.classes-student-picker {
+  display: grid;
+  gap: 10px;
+}
+
+.classes-student-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(68, 47, 28, 0.12);
+  background: rgba(255, 252, 246, 0.9);
+}
+
+.classes-student-option input {
+  margin-top: 2px;
+}
+
+.classes-student-option span {
+  display: grid;
+  gap: 3px;
+}
+
+.classes-student-option-disabled {
+  opacity: 0.66;
+}
+
+.classes-waiver-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.classes-waiver-toggle input {
+  margin-top: 3px;
+}
+
 .note-card {
   overflow: hidden;
   background-image:
@@ -4628,5 +4692,20 @@ select {
   .week-planner-print-focus {
     font-size: 12px;
     line-height: 1.45;
+  }
+}
+
+@media (max-width: 720px) {
+  .classes-hub-card-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .classes-registration-panel {
+    padding: 14px;
+  }
+
+  .classes-student-option {
+    padding: 11px 12px;
   }
 }

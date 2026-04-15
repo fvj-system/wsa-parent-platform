@@ -31,6 +31,11 @@ export type ClassBookingRecord = {
   user_id: string;
   household_id?: string;
   student_id: string | null;
+  registration_group_id?: string;
+  group_lead?: boolean;
+  attendee_count?: number;
+  pricing_mode?: "per_child" | "family";
+  waiver_id?: string | null;
   booking_status: BookingStatus;
   payment_status: PaymentStatus;
   stripe_checkout_session_id: string | null;

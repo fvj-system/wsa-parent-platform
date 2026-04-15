@@ -22,7 +22,6 @@ const utilityNavItems = [
   { href: "/portfolio", label: "Homeschool Review" },
   { href: "/history", label: "History" },
   { href: "/classes", label: "Classes" },
-  { href: "/my-classes", label: "My Classes" },
   { href: "/animal-of-the-day", label: "Animal of the Day" },
   { href: WSA_FACEBOOK_URL, label: "WSA Facebook", external: true }
 ];

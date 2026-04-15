@@ -9,6 +9,12 @@ export type Profile = {
 export type Waiver = {
   id: string;
   household_id?: string;
+  user_id?: string;
+  student_id?: string | null;
+  waiver_type?: string;
+  accepted_at?: string;
+  version?: string;
+  save_on_file?: boolean;
   child_name: string;
   emergency_contact: string;
   medical_notes: string | null;

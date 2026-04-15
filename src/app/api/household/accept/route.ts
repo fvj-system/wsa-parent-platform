@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     revalidatePath("/history");
     revalidatePath("/discover");
     revalidatePath("/discover/catalog");
-    revalidatePath("/my-classes");
+    revalidatePath("/classes");
     revalidatePath("/household");
 
     return NextResponse.json({ success: true });

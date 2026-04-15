@@ -11,7 +11,7 @@ const secondaryTools = [
   { title: "Week Planner", href: "/planner" },
   { title: "Animal of the Day", href: "/animal-of-the-day" },
   { title: "History", href: "/history" },
-  { title: "My Classes", href: "/my-classes" }
+  { title: "Classes", href: "/classes" }
 ];
 
 export function DashboardQuickTools() {

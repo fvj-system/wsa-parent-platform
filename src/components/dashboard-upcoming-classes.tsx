@@ -19,8 +19,8 @@ export function DashboardUpcomingClasses({ items }: DashboardUpcomingClassesProp
           <Link className="button button-ghost" href="/classes">
             Browse classes
           </Link>
-          <Link className="button button-ghost" href="/my-classes">
-            My classes
+          <Link className="button button-ghost" href="/classes">
+            Family registrations
           </Link>
         </div>
       </div>
@@ -41,12 +41,12 @@ export function DashboardUpcomingClasses({ items }: DashboardUpcomingClassesProp
             </p>
             <div className="cta-row">
               {nextClass.classes ? (
-                <Link className="button button-primary button-strong" href={`/classes/${nextClass.classes.id}`}>
+                <Link className="button button-primary button-strong" href={`/classes?class=${nextClass.classes.id}`}>
                   View details
                 </Link>
               ) : null}
-              <Link className="button button-ghost" href="/my-classes">
-                View all bookings
+              <Link className="button button-ghost" href="/classes">
+                View all registrations
               </Link>
             </div>
           </article>
