@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { AdminClassForm } from "@/components/admin-class-form";
-import { PageShell } from "@/components/page-shell";
+import { AdminShell } from "@/components/admin-shell";
 import { requireAdmin } from "@/lib/auth";
 import type { ClassRecord } from "@/lib/classes";
 
@@ -19,13 +19,12 @@ export default async function AdminEditClassPage({ params }: { params: Promise<{
   }
 
   return (
-    <PageShell
+    <AdminShell
       userLabel={user.email ?? "WSA admin"}
-      eyebrow="Admin"
       title={`Edit ${(classItem as ClassRecord).title}`}
       description="Update the published class details, availability, and internal notes."
     >
       <AdminClassForm mode="edit" initialValues={classItem as ClassRecord} />
-    </PageShell>
+    </AdminShell>
   );
 }

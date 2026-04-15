@@ -723,6 +723,40 @@ select {
   margin-top: 3px;
 }
 
+.admin-tabs-panel {
+  padding: 18px 20px;
+}
+
+.admin-tab-row {
+  gap: 10px;
+}
+
+.admin-chart-shell {
+  overflow-x: auto;
+}
+
+.admin-line-chart {
+  display: block;
+  width: 100%;
+  min-width: 620px;
+  height: auto;
+}
+
+.admin-line-chart-label,
+.admin-line-chart-value {
+  fill: #4b392a;
+  font-family: var(--font-sans);
+  font-weight: 700;
+}
+
+.admin-line-chart-label {
+  font-size: 12px;
+}
+
+.admin-line-chart-value {
+  font-size: 11px;
+}
+
 .note-card {
   overflow: hidden;
   background-image:
@@ -4696,6 +4730,18 @@ select {
 }
 
 @media (max-width: 720px) {
+  .admin-tabs-panel {
+    padding: 16px;
+  }
+
+  .admin-tab-row {
+    gap: 8px;
+  }
+
+  .admin-line-chart {
+    min-width: 540px;
+  }
+
   .classes-hub-card-head {
     flex-direction: column;
     align-items: flex-start;

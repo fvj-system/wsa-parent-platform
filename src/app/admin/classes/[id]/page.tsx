@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminBookingActions } from "@/components/admin-booking-actions";
-import { PageShell } from "@/components/page-shell";
+import { AdminShell } from "@/components/admin-shell";
+import { listAdminUsers } from "@/lib/admin-portal";
 import { requireAdmin } from "@/lib/auth";
 import type { ActivityCompletionRecord } from "@/lib/activity-completions";
 import type { ClassBookingRecord, ClassRecord } from "@/lib/classes";
@@ -11,7 +12,7 @@ export default async function AdminClassDetailPage({ params }: { params: Promise
   const { id } = await params;
   const { supabase, user } = await requireAdmin();
 
-  const [{ data: classItem }, { data: bookings }, { data: students }, { data: profiles }, { data: completions }] = await Promise.all([
+  const [{ data: classItem }, { data: bookings }, { data: students }, { data: profiles }, { data: completions }, authUsers] = await Promise.all([
     supabase
       .from("classes")
       .select("id, title, description, class_type, date, start_time, end_time, location, age_min, age_max, price_cents, max_capacity, spots_remaining, what_to_bring, weather_note, internal_notes, waiver_required, status, created_at, updated_at")
@@ -31,7 +32,8 @@ export default async function AdminClassDetailPage({ params }: { params: Promise
     supabase
       .from("activity_completions")
       .select("id, user_id, student_id, generation_id, class_booking_id, activity_type, title, completed_at, notes, parent_rating, created_at")
-      .eq("activity_type", "in_person_class")
+      .eq("activity_type", "in_person_class"),
+    listAdminUsers(supabase)
   ]);
 
   if (!classItem) {
@@ -43,9 +45,8 @@ export default async function AdminClassDetailPage({ params }: { params: Promise
   const completionMap = new Set(((completions ?? []) as ActivityCompletionRecord[]).map((item) => item.class_booking_id).filter(Boolean));
 
   return (
-    <PageShell
+    <AdminShell
       userLabel={user.email ?? "WSA admin"}
-      eyebrow="Admin"
       title={(classItem as ClassRecord).title}
       description="Review operational details, registrations, payments, and attendance from one admin workspace."
     >
@@ -85,6 +86,7 @@ export default async function AdminClassDetailPage({ params }: { params: Promise
               const student = booking.student_id ? studentMap.get(booking.student_id) : null;
               const profile = profileMap.get(booking.user_id);
               const attended = completionMap.has(booking.id);
+              const email = authUsers.get(booking.user_id)?.email ?? "No email found";
 
               return (
                 <article className="note-card" key={booking.id}>
@@ -102,7 +104,7 @@ export default async function AdminClassDetailPage({ params }: { params: Promise
                       Payment: {booking.payment_status} • Paid ${(booking.amount_paid_cents / 100).toFixed(2)}
                     </p>
                     <p className="muted" style={{ margin: "10px 0 0" }}>
-                      {profile?.phone ? `Phone: ${profile.phone} • ` : ""}Stripe session: {booking.stripe_checkout_session_id || "none"}
+                      {email} {profile?.phone ? `• Phone: ${profile.phone}` : ""} • Stripe session: {booking.stripe_checkout_session_id || "none"}
                     </p>
                     <div style={{ marginTop: 14 }}>
                       <AdminBookingActions bookingId={booking.id} disabled={attended} />
@@ -116,6 +118,6 @@ export default async function AdminClassDetailPage({ params }: { params: Promise
           <p className="panel-copy">No registrations yet for this class.</p>
         )}
       </section>
-    </PageShell>
+    </AdminShell>
   );
 }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AdminClassStatusActions } from "@/components/admin-class-status-actions";
 import { AdminClassImportCard } from "@/components/admin-class-import-card";
-import { PageShell } from "@/components/page-shell";
+import { AdminShell } from "@/components/admin-shell";
 import { requireAdmin } from "@/lib/auth";
 import type { ClassBookingRecord, ClassRecord } from "@/lib/classes";
 
@@ -51,10 +51,9 @@ export default async function AdminClassesPage({
   };
 
   return (
-    <PageShell
+    <AdminShell
       userLabel={user.email ?? "WSA admin"}
-      eyebrow="Admin"
-      title="Class management"
+      title="Classes"
       description="An operator cockpit for class publishing, registrations, attendance, and class status."
     >
       <section className="stats-grid">
@@ -111,6 +110,6 @@ export default async function AdminClassesPage({
           </article>
         ))}
       </section>
-    </PageShell>
+    </AdminShell>
   );
 }
