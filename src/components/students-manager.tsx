@@ -16,6 +16,7 @@ export function StudentsManager({ initialStudents }: StudentsManagerProps) {
   const [students, setStudents] = useState(initialStudents);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [isPending, startTransition] = useTransition();
 
   return (
@@ -37,6 +38,7 @@ export function StudentsManager({ initialStudents }: StudentsManagerProps) {
               className={isCreateOpen ? "button button-ghost" : "button button-primary"}
               onClick={() => {
                 setError("");
+                setSuccessMessage("");
                 setIsCreateOpen((current) => !current);
               }}
             >
@@ -51,6 +53,7 @@ export function StudentsManager({ initialStudents }: StudentsManagerProps) {
             onSubmit={(event) => {
               event.preventDefault();
               setError("");
+              setSuccessMessage("");
               const form = event.currentTarget;
               const formData = new FormData(form);
 
@@ -77,6 +80,7 @@ export function StudentsManager({ initialStudents }: StudentsManagerProps) {
                 setStudents((current) => [payload.student, ...current]);
                 form.reset();
                 setIsCreateOpen(false);
+                setSuccessMessage(`${payload.student.name} was added to your student roster.`);
               });
             }}
           >
@@ -113,6 +117,7 @@ export function StudentsManager({ initialStudents }: StudentsManagerProps) {
                 className="button button-ghost"
                 onClick={() => {
                   setError("");
+                  setSuccessMessage("");
                   setIsCreateOpen(false);
                 }}
               >
@@ -122,6 +127,8 @@ export function StudentsManager({ initialStudents }: StudentsManagerProps) {
             {error ? <p className="error">{error}</p> : null}
           </form>
         ) : null}
+
+        {successMessage ? <p className="success">{successMessage}</p> : null}
 
         {students.length ? (
           <div className="content-grid">

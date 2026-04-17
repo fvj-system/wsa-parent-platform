@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { AchievementCard } from "@/components/achievement-card";
 import { BadgeCard } from "@/components/badge-card";
-import { BuckStallionNote } from "@/components/buck-stallion-note";
 import { HistoryList } from "@/components/history-list";
 import { MarkCompleteCard } from "@/components/mark-complete-card";
 import { StudentReadingLevelEditor } from "@/components/student-reading-level-editor";
@@ -129,7 +128,7 @@ export function StudentProfileView({
               Start today's adventure
             </Link>
             <Link className="button button-ghost" href={`/portfolio/${student.id}`}>
-              Homeschool review PDF
+              Homeschool review
             </Link>
             <Link className="button button-ghost" href="/discover/catalog">
               Creature log
@@ -149,11 +148,6 @@ export function StudentProfileView({
               {nextRankMessage}
             </p>
           </div>
-          <BuckStallionNote
-            compact
-            title="Use this page as the proud student snapshot."
-            body="The family creature log, recent activities, and homeschool review export all support this same story instead of competing with it."
-          />
           <StudentReadingLevelEditor
             studentId={student.id}
             studentName={student.name}

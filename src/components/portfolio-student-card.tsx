@@ -17,7 +17,7 @@ export function PortfolioStudentCard({ item }: PortfolioStudentCardProps) {
       </div>
 
       <p className="panel-copy" style={{ margin: 0 }}>
-        Age {item.student.age} • {item.completionCount} completed activities • {item.badgeCount} badges • {item.classCount} classes
+        Age {item.student.age} | {item.completionCount} completed activities | {item.badgeCount} badges | {item.classCount} classes
       </p>
 
       <p className="panel-copy" style={{ margin: 0 }}>
@@ -26,7 +26,7 @@ export function PortfolioStudentCard({ item }: PortfolioStudentCardProps) {
 
       <div className="cta-row">
         <Link className="button button-primary" href={`/portfolio/${item.student.id}`}>
-          Open portfolio
+          Open homeschool review
         </Link>
         <Link className="button button-ghost" href={`/daily-adventure?studentId=${item.student.id}`}>
           Start today&apos;s adventure

@@ -261,7 +261,7 @@ export function ClassesHub({
                 </div>
                 <h4 className="dashboard-opportunity-title">{group.classItem?.title ?? "Class registration"}</h4>
                 <p className="dashboard-opportunity-description">
-                  {group.studentNames.join(", ")} • {formatClassTime(group.classItem)} • {group.classItem?.location || "Location TBD"}
+                  {group.studentNames.join(", ")} | {formatClassTime(group.classItem)} | {group.classItem?.location || "Location TBD"}
                 </p>
                 <div className="chip-list">
                   <li>{group.attendeeCount} attendee{group.attendeeCount === 1 ? "" : "s"}</li>
@@ -346,7 +346,7 @@ export function ClassesHub({
                     <div className="result-sections">
                       <section>
                         <h4>When</h4>
-                        <p>{formatClassDate(classItem)} • {formatClassTime(classItem)}</p>
+                        <p>{formatClassDate(classItem)} | {formatClassTime(classItem)}</p>
                       </section>
                       <section>
                         <h4>Where</h4>
@@ -355,8 +355,8 @@ export function ClassesHub({
                       <section>
                         <h4>Cost</h4>
                         <p>
-                          $15 for 1 child • $25 family rate for 2-4 children
-                          {students.length > CLASS_PRICING.familyChildCap ? " • larger households add $15 per extra child" : ""}
+                          $15 for 1 child | $25 family rate for 2-4 children
+                          {students.length > CLASS_PRICING.familyChildCap ? " | larger households add $15 per extra child" : ""}
                         </p>
                       </section>
                       <section>
@@ -398,7 +398,7 @@ export function ClassesHub({
                               </div>
                               <h4 className="dashboard-opportunity-title">{group.studentNames.join(", ")}</h4>
                               <p className="dashboard-opportunity-description">
-                                {group.attendeeCount} attendee{group.attendeeCount === 1 ? "" : "s"} • {group.waiverId ? "Waiver linked" : "No waiver linked"}
+                                {group.attendeeCount} attendee{group.attendeeCount === 1 ? "" : "s"} | {group.waiverId ? "Waiver linked" : "No waiver linked"}
                               </p>
                             </article>
                           ))}
@@ -446,9 +446,9 @@ export function ClassesHub({
                                   <span className="muted">
                                     age {student.age}
                                     {isAlreadyRegistered
-                                      ? " • already registered"
+                                      ? " | already registered"
                                       : outOfRange
-                                        ? " • outside age range"
+                                        ? " | outside age range"
                                         : ""}
                                   </span>
                                 </span>

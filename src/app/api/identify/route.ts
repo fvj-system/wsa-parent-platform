@@ -82,7 +82,7 @@ export async function POST(request: Request) {
       "For animal mode, stay broader across mammals, reptiles, and amphibians.",
       "Include stronger caution for uncertain plants, mushrooms, insects, tracks, or animals that could be risky to handle.",
       "Always return a scientific_name field. Use an empty string if you are not confident.",
-      typeof studentName === "string" && studentName ? `Student name: ${studentName}` : "No student selected.",
+      typeof studentName === "string" && studentName ? `Student name: ${studentName}` : "Household discovery.",
       typeof notes === "string" && notes ? `Parent notes: ${notes}` : "No extra notes."
     ].join("\n");
 

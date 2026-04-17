@@ -210,7 +210,7 @@ export function WeekPlannerGenerator({
                 <div className="copy">
                   <h4>No students added yet</h4>
                   <p className="panel-copy" style={{ marginBottom: 0 }}>
-                    Add a student first if you want age-aware week plans. You can still build a broad family plan later.
+                    Add a student first, then come back here to build a weekly plan around a real learner.
                   </p>
                 </div>
               </div>
@@ -259,8 +259,14 @@ export function WeekPlannerGenerator({
             Home region
             <input name="locationLabel" defaultValue={initialLocationLabel} required />
           </label>
-          <button type="submit" disabled={isPending}>
-            {isPending ? "Planning..." : familyMode ? "Generate family week" : "Generate student week"}
+          <button type="submit" disabled={isPending || !students.length}>
+            {isPending
+              ? "Planning..."
+              : !students.length
+                ? "Add a student to start planning"
+                : familyMode
+                  ? "Generate family week"
+                  : "Generate student week"}
           </button>
           {error ? <p className="error">{error}</p> : null}
         </form>

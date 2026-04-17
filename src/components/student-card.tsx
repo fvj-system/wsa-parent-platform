@@ -20,6 +20,8 @@ function getRankClassName(rank: string) {
 }
 
 export function StudentCard({ student, badgeCount = 0 }: StudentCardProps) {
+  const showBadgeCount = typeof badgeCount === "number" && badgeCount > 0;
+
   return (
     <article className="panel stack specimen-card">
       <div className="header-row">
@@ -43,7 +45,7 @@ export function StudentCard({ student, badgeCount = 0 }: StudentCardProps) {
       </p>
       <div className="chip-list">
         <li>{student.current_rank}</li>
-        <li>{badgeCount} badge{badgeCount === 1 ? "" : "s"}</li>
+        {showBadgeCount ? <li>{badgeCount} badge{badgeCount === 1 ? "" : "s"}</li> : null}
       </div>
       <div className="cta-row">
         <Link className="button button-ghost" href={`/students/${student.id}`}>

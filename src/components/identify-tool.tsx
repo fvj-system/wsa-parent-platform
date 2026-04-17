@@ -113,9 +113,9 @@ export function IdentifyTool({ students, preselectedStudentId }: IdentifyToolPro
 
         {students.length ? (
           <label>
-            Student
+            Save for
             <select value={selectedStudentId} onChange={(event) => setSelectedStudentId(event.target.value)}>
-              <option value="">No student selected</option>
+              <option value="">Household only</option>
               {students.map((student) => (
                 <option key={student.id} value={student.id}>
                   {student.name}
@@ -315,7 +315,7 @@ export function IdentifyTool({ students, preselectedStudentId }: IdentifyToolPro
             <div className="copy">
               <h4>No image selected yet</h4>
               <p className="panel-copy" style={{ marginBottom: 0 }}>
-                On a phone, this upload field can open the camera so you can take the photo right where you are.
+                Choose a photo from your library here, or use the quick camera tool when you want to snap one live.
               </p>
             </div>
           </div>
