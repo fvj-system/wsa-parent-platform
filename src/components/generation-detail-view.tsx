@@ -158,6 +158,22 @@ export function GenerationDetailView({ generation, student, isCompleted = false 
               {renderSection("Safety note", output.safetyNote)}
               {renderSection("Location summary", output.locationSummary)}
               {renderSection("Why these spots work", output.whyTheseSpotsWork)}
+              {renderSection(
+                "Library book idea",
+                output.bookRecommendation && typeof output.bookRecommendation === "object"
+                  ? [
+                      (output.bookRecommendation as { label?: string }).label,
+                      (output.bookRecommendation as { author?: string | null }).author
+                        ? `by ${(output.bookRecommendation as { author?: string | null }).author}`
+                        : "",
+                      `Reading level: ${(output.bookRecommendation as { readingLevelLabel?: string }).readingLevelLabel ?? ""}`,
+                      (output.bookRecommendation as { librarySystem?: string | null }).librarySystem ?? "",
+                      (output.bookRecommendation as { libraryTip?: string }).libraryTip ?? ""
+                    ]
+                      .filter(Boolean)
+                      .join(". ")
+                  : null
+              )}
               {renderSection("Recommended nearby spots", output.recommendedNearbySpots)}
               {renderSection("Fishing outlook", output.fishingOutlook)}
               {renderSection("Likely species", output.likelySpecies)}
@@ -299,6 +315,30 @@ export function GenerationDetailView({ generation, student, isCompleted = false 
               </div>
             </section>
             {renderSection("Suggested field trips", output.suggestedFieldTrips)}
+            {renderSection(
+              "Library book ideas",
+              Array.isArray(output.bookRecommendations)
+                ? output.bookRecommendations.map((item) => {
+                    const book = item as {
+                      label?: string;
+                      author?: string | null;
+                      readingLevelLabel?: string;
+                      librarySystem?: string | null;
+                      libraryTip?: string;
+                    };
+
+                    return [
+                      book.label,
+                      book.author ? `by ${book.author}` : "",
+                      book.readingLevelLabel ? `Reading level: ${book.readingLevelLabel}` : "",
+                      book.librarySystem ?? "",
+                      book.libraryTip ?? ""
+                    ]
+                      .filter(Boolean)
+                      .join(". ");
+                  })
+                : null
+            )}
             {renderSection("Materials list", output.materialsList)}
             {renderSection("Parent notes", output.parentNotes)}
             {renderSection("Printable summary", output.printableSummary)}

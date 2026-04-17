@@ -2,6 +2,18 @@ import { z } from "zod";
 
 export const rankLevels = ["Colt", "Bronco", "Mustang", "Stallion"] as const;
 export type StudentRank = (typeof rankLevels)[number];
+export const readingLevelOptions = [
+  "just starting",
+  "knows letter sounds",
+  "knows simple words (3-5 letters)",
+  "knows more complex words (5-12 letters)",
+  "reads small books with a little help",
+  "reads small books without help",
+  "reads any book with some help",
+  "reads any book without help"
+] as const;
+export type StudentReadingLevel = (typeof readingLevelOptions)[number];
+export const defaultStudentReadingLevel: StudentReadingLevel = "reads small books with a little help";
 
 export type StudentRecord = {
   id: string;
@@ -10,6 +22,7 @@ export type StudentRecord = {
   name: string;
   age: number;
   interests: string[];
+  reading_level?: StudentReadingLevel | null;
   current_rank: StudentRank;
   completed_adventures_count: number;
   created_at: string;
@@ -33,7 +46,12 @@ export type StudentProgressMilestone = {
 export const createStudentSchema = z.object({
   name: z.string().trim().min(1).max(80),
   age: z.coerce.number().int().min(3).max(18),
-  interests: z.string().trim().max(240)
+  interests: z.string().trim().max(240),
+  readingLevel: z.enum(readingLevelOptions).default(defaultStudentReadingLevel)
+});
+
+export const updateStudentReadingLevelSchema = z.object({
+  readingLevel: z.enum(readingLevelOptions)
 });
 
 export const completeAdventureSchema = z.object({
@@ -47,6 +65,10 @@ export function parseInterests(input: string) {
     .map((item) => item.trim())
     .filter(Boolean)
     .slice(0, 8);
+}
+
+export function normalizeStudentReadingLevel(value: string | null | undefined): StudentReadingLevel {
+  return readingLevelOptions.find((option) => option === value) ?? defaultStudentReadingLevel;
 }
 
 export function getRankForCompletedAdventures(count: number): StudentRank {

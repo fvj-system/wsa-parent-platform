@@ -28,6 +28,7 @@ type DailyAdventureGeneratorProps = {
   initialLatitude?: number | null;
   initialLongitude?: number | null;
   weatherHelperText?: string;
+  homeZipcode?: string | null;
 };
 
 type DailyAdventureResponse = {
@@ -117,6 +118,7 @@ export function DailyAdventureGenerator({
   initialLatitude,
   initialLongitude,
   weatherHelperText = "",
+  homeZipcode,
 }: DailyAdventureGeneratorProps) {
   const [result, setResult] = useState<DailyAdventureOutput | null>(null);
   const [latestGenerationId, setLatestGenerationId] = useState("");
@@ -636,6 +638,10 @@ export function DailyAdventureGenerator({
                         selectedTarget.targetType === "student"
                           ? selectedStudent?.interests ?? []
                           : [],
+                      studentReadingLevel:
+                        selectedTarget.targetType === "student"
+                          ? selectedStudent?.reading_level ?? undefined
+                          : undefined,
                       householdStudents:
                         selectedTarget.targetType === "household"
                           ? students.map((student) => ({
@@ -643,6 +649,7 @@ export function DailyAdventureGenerator({
                               name: student.name,
                               age: student.age,
                               interests: student.interests ?? [],
+                              readingLevel: student.reading_level ?? undefined,
                             }))
                           : [],
                       preset: selectedPreset || undefined,
@@ -654,6 +661,7 @@ export function DailyAdventureGenerator({
                       weatherCondition,
                       latitude,
                       longitude,
+                      homeZipcode: homeZipcode ?? undefined,
                       timeAvailable,
                       budget,
                       energyLevel,

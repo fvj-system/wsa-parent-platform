@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { StudentCard } from "@/components/student-card";
-import type { StudentRecord } from "@/lib/students";
+import { defaultStudentReadingLevel, readingLevelOptions, type StudentRecord } from "@/lib/students";
 
 type StudentsManagerProps = {
   initialStudents: StudentRecord[];
@@ -63,7 +63,8 @@ export function StudentsManager({ initialStudents }: StudentsManagerProps) {
                   body: JSON.stringify({
                     name: String(formData.get("name") || ""),
                     age: Number(formData.get("age") || 8),
-                    interests: String(formData.get("interests") || "")
+                    interests: String(formData.get("interests") || ""),
+                    readingLevel: String(formData.get("readingLevel") || defaultStudentReadingLevel)
                   })
                 });
 
@@ -91,6 +92,16 @@ export function StudentsManager({ initialStudents }: StudentsManagerProps) {
               <label>
                 Interests
                 <input name="interests" placeholder="birds, drawing, bugs, hiking" />
+              </label>
+              <label>
+                Reading level
+                <select name="readingLevel" defaultValue={defaultStudentReadingLevel}>
+                  {readingLevelOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
               </label>
             </div>
             <div className="cta-row">

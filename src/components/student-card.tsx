@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { StudentRecord } from "@/lib/students";
+import { normalizeStudentReadingLevel, type StudentRecord } from "@/lib/students";
 
 type StudentCardProps = {
   student: StudentRecord;
@@ -37,6 +37,9 @@ export function StudentCard({ student, badgeCount = 0 }: StudentCardProps) {
       </p>
       <p className="panel-copy" style={{ margin: 0 }}>
         Interests: {student.interests.length ? student.interests.join(", ") : "Still exploring"}
+      </p>
+      <p className="panel-copy" style={{ margin: 0 }}>
+        Reading level: {normalizeStudentReadingLevel(student.reading_level)}
       </p>
       <div className="chip-list">
         <li>{student.current_rank}</li>

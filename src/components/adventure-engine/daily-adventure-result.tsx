@@ -199,6 +199,24 @@ export function DailyAdventureResult({ result, generationId }: DailyAdventureRes
                   <p>{result.challengeActivity}</p>
                 </section>
               ) : null}
+              {result.bookRecommendation ? (
+                <section className="mission-panel fishing-mission-span">
+                  <div className="section-heading"><MissionIcon /><h4>Library book idea</h4></div>
+                  <p style={{ marginBottom: 8 }}>
+                    <strong>{result.bookRecommendation.label}</strong>
+                    {result.bookRecommendation.author ? ` by ${result.bookRecommendation.author}` : ""}
+                  </p>
+                  <p>{result.bookRecommendation.whyItFits}</p>
+                  <p className="muted" style={{ marginBottom: 0 }}>
+                    Reading level: {result.bookRecommendation.readingLevelLabel}.{" "}
+                    {result.bookRecommendation.librarySystem ? `${result.bookRecommendation.librarySystem}. ` : ""}
+                    {result.bookRecommendation.libraryTip}
+                  </p>
+                  <p className="muted" style={{ marginBottom: 0 }}>
+                    {result.bookRecommendation.catalogHint}
+                  </p>
+                </section>
+              ) : null}
             </div>
 
             <div className="fishing-mission-footer">
@@ -341,6 +359,27 @@ export function DailyAdventureResult({ result, generationId }: DailyAdventureRes
                           <li key={item}>{item}</li>
                         ))}
                       </ul>
+                    </section>
+                  ) : null}
+                  {result.bookRecommendation ? (
+                    <section className="mission-panel">
+                      <div className="section-heading">
+                        <MissionIcon />
+                        <h4>Library book idea</h4>
+                      </div>
+                      <p style={{ marginBottom: 8 }}>
+                        <strong>{result.bookRecommendation.label}</strong>
+                        {result.bookRecommendation.author ? ` by ${result.bookRecommendation.author}` : ""}
+                      </p>
+                      <p>{result.bookRecommendation.whyItFits}</p>
+                      <p className="muted" style={{ marginBottom: 0 }}>
+                        Reading level: {result.bookRecommendation.readingLevelLabel}.{" "}
+                        {result.bookRecommendation.librarySystem ? `${result.bookRecommendation.librarySystem}. ` : ""}
+                        {result.bookRecommendation.libraryTip}
+                      </p>
+                      <p className="muted" style={{ marginBottom: 0 }}>
+                        {result.bookRecommendation.catalogHint}
+                      </p>
                     </section>
                   ) : null}
                   {result.specialExhibitNote ? (

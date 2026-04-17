@@ -4,12 +4,13 @@ import { BadgeCard } from "@/components/badge-card";
 import { BuckStallionNote } from "@/components/buck-stallion-note";
 import { HistoryList } from "@/components/history-list";
 import { MarkCompleteCard } from "@/components/mark-complete-card";
+import { StudentReadingLevelEditor } from "@/components/student-reading-level-editor";
 import type { ActivityCompletionRecord } from "@/lib/activity-completions";
 import type { StudentAchievementRecord, StudentBadgeRecord } from "@/lib/badges";
 import type { ClassBookingRecord, ClassRecord } from "@/lib/classes";
 import { getDiscoveryCategoryLabel, type DiscoveryRecord } from "@/lib/discoveries";
 import { generationKindLabel, type GenerationRecord } from "@/lib/generations";
-import { getRankDescription, getRankProgress, type StudentRecord } from "@/lib/students";
+import { getRankDescription, getRankProgress, normalizeStudentReadingLevel, type StudentRecord } from "@/lib/students";
 
 type StudentProfileViewProps = {
   student: StudentRecord;
@@ -120,6 +121,7 @@ export function StudentProfileView({
           <div className="chip-list">
             <li>{student.completed_adventures_count} completed adventures</li>
             <li>{badges.length} badge{badges.length === 1 ? "" : "s"} earned</li>
+            <li>Reading: {normalizeStudentReadingLevel(student.reading_level)}</li>
             <li>{student.interests.length ? student.interests.join(", ") : "Still exploring interests"}</li>
           </div>
           <div className="cta-row">
@@ -151,6 +153,11 @@ export function StudentProfileView({
             compact
             title="Use this page as the proud student snapshot."
             body="The family creature log, recent activities, and homeschool review export all support this same story instead of competing with it."
+          />
+          <StudentReadingLevelEditor
+            studentId={student.id}
+            studentName={student.name}
+            currentReadingLevel={student.reading_level}
           />
         </div>
       </section>

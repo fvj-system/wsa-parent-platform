@@ -313,6 +313,22 @@ export function DailyAdventurePrintSheet({
           <p>{printMission}</p>
         </section>
 
+        {result.bookRecommendation ? (
+          <section className="daily-adventure-print-section">
+            <h3>Library Book Idea</h3>
+            <p>
+              <strong>{result.bookRecommendation.label}</strong>
+              {result.bookRecommendation.author ? ` by ${result.bookRecommendation.author}` : ""}
+            </p>
+            <p>
+              Reading level: {result.bookRecommendation.readingLevelLabel}.{" "}
+              {result.bookRecommendation.librarySystem ? `${result.bookRecommendation.librarySystem}. ` : ""}
+              {result.bookRecommendation.libraryTip}
+            </p>
+            <p>{result.bookRecommendation.catalogHint}</p>
+          </section>
+        ) : null}
+
         <div className="daily-adventure-print-grid">
           <section className="daily-adventure-print-section">
             <h3>Step-by-Step Plan</h3>

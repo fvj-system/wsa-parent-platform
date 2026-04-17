@@ -17,6 +17,7 @@ import {
   getPlannerOpportunityMatches
 } from "@/lib/nearby/family-opportunities";
 import { createOpenAIClient, getOpenAIModel } from "@/lib/openai";
+import { buildDailyPlannerBookRecommendation } from "@/lib/library-recommendations";
 import {
   buildSmithsonianRecommendedStops,
   getSelectedSmithsonianMuseums,
@@ -757,6 +758,26 @@ export async function POST(request: Request) {
         resolvedTemplate === "fish" ? baseOutput.artificialBaitImageUrl ?? fishingImages.artificialBaitImageUrl : null,
       artificialBaitImageAlt:
         resolvedTemplate === "fish" ? baseOutput.artificialBaitImageAlt ?? fishingImages.artificialBaitImageAlt : null,
+      bookRecommendation: buildDailyPlannerBookRecommendation({
+        locationLabel: location.displayLabel,
+        homeZipcode: parsedInput.data.homeZipcode,
+        topicText: [
+          parsedInput.data.mainGoal,
+          parsedInput.data.preset,
+          baseOutput.animalOfTheDay,
+          baseOutput.outdoorObservationActivity,
+          baseOutput.challengeActivity
+        ]
+          .filter(Boolean)
+          .join(". "),
+        studentReadingLevel: isHouseholdTarget
+          ? undefined
+          : parsedInput.data.studentReadingLevel,
+        householdReadingLevels: isHouseholdTarget
+          ? parsedInput.data.householdStudents.map((student) => student.readingLevel)
+          : [],
+        householdMode: isHouseholdTarget
+      }),
       outingMode: resolvedTemplate === "fish" ? fishingRecommendation?.outingMode : undefined,
       fallbackPlan:
         resolvedTemplate === "fish"

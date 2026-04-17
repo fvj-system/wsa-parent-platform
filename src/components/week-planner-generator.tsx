@@ -5,11 +5,13 @@ import Link from "next/link";
 import { HistoryList } from "@/components/history-list";
 import { PrintButton } from "@/components/print-button";
 import type { GenerationRecord, WeekPlannerOutput } from "@/lib/generations";
-import type { StudentRecord } from "@/lib/students";
+import { normalizeStudentReadingLevel, type StudentRecord } from "@/lib/students";
 
 type WeekPlannerGeneratorProps = {
   initialHistory: GenerationRecord[];
   students: StudentRecord[];
+  initialLocationLabel?: string;
+  homeZipcode?: string | null;
 };
 
 type WeekPlannerResponse = {
@@ -27,7 +29,12 @@ type WeekPlannerPrintContext = {
   locationLabel: string;
 };
 
-export function WeekPlannerGenerator({ initialHistory, students }: WeekPlannerGeneratorProps) {
+export function WeekPlannerGenerator({
+  initialHistory,
+  students,
+  initialLocationLabel = "Southern Maryland",
+  homeZipcode
+}: WeekPlannerGeneratorProps) {
   const [history, setHistory] = useState(initialHistory);
   const [result, setResult] = useState<WeekPlannerOutput | null>(null);
   const [printContext, setPrintContext] = useState<WeekPlannerPrintContext | null>(null);
@@ -107,7 +114,7 @@ export function WeekPlannerGenerator({ initialHistory, students }: WeekPlannerGe
               const preferredLessonLength = String(formData.get("preferredLessonLength") || "");
               const interests = String(formData.get("interests") || "");
               const settingPreference = String(formData.get("settingPreference") || "");
-              const locationLabel = String(formData.get("locationLabel") || "Southern Maryland");
+              const locationLabel = String(formData.get("locationLabel") || initialLocationLabel);
               const response = await fetch("/api/generate-week-plan", {
                 method: "POST",
                 headers: {
@@ -119,12 +126,14 @@ export function WeekPlannerGenerator({ initialHistory, students }: WeekPlannerGe
                   selectedStudentIds: plannerStudents.map((student) => student.id),
                   selectedStudentNames: plannerStudents.map((student) => student.name),
                   selectedStudentAges: plannerStudents.map((student) => student.age),
+                  selectedStudentReadingLevels: plannerStudents.map((student) => normalizeStudentReadingLevel(student.reading_level)),
                   focusArea,
                   daysPerWeek,
                   preferredLessonLength,
                   interests,
                   settingPreference,
-                  locationLabel
+                  locationLabel,
+                  homeZipcode: homeZipcode ?? undefined
                 })
               });
 
@@ -190,6 +199,7 @@ export function WeekPlannerGenerator({ initialHistory, students }: WeekPlannerGe
                     >
                       <strong>{student.name}</strong>
                       <span>Age {student.age}</span>
+                      <span>Reading: {normalizeStudentReadingLevel(student.reading_level)}</span>
                       <span>{student.interests.slice(0, 2).join(", ") || "General nature study"}</span>
                     </button>
                   );
@@ -247,7 +257,7 @@ export function WeekPlannerGenerator({ initialHistory, students }: WeekPlannerGe
           </label>
           <label>
             Home region
-            <input name="locationLabel" defaultValue="Southern Maryland" required />
+            <input name="locationLabel" defaultValue={initialLocationLabel} required />
           </label>
           <button type="submit" disabled={isPending}>
             {isPending ? "Planning..." : familyMode ? "Generate family week" : "Generate student week"}
@@ -336,6 +346,28 @@ export function WeekPlannerGenerator({ initialHistory, students }: WeekPlannerGe
                 </ul>
               </section>
 
+              {result.bookRecommendations.length ? (
+                <section>
+                  <h4>Library book ideas</h4>
+                  <div className="stack">
+                    {result.bookRecommendations.map((book) => (
+                      <article className="note-card" key={`${book.label}-${book.readingLevelLabel}`}>
+                        <div className="copy">
+                          <h4>{book.label}</h4>
+                          {book.author ? <p className="muted">by {book.author}</p> : null}
+                          <p>{book.whyItFits}</p>
+                          <p className="muted" style={{ marginBottom: 0 }}>
+                            Reading level: {book.readingLevelLabel}. {book.librarySystem ? `${book.librarySystem}. ` : ""}
+                            {book.libraryTip}
+                          </p>
+                          <p className="muted" style={{ marginBottom: 0 }}>{book.catalogHint}</p>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
               <section>
                 <h4>Parent prep list</h4>
                 <ul className="result-list">
@@ -419,6 +451,21 @@ export function WeekPlannerGenerator({ initialHistory, students }: WeekPlannerGe
                   ))}
                 </ul>
               </section>
+
+              {result.bookRecommendations.length ? (
+                <section className="week-planner-print-block">
+                  <h2>Library book ideas</h2>
+                  <ul>
+                    {result.bookRecommendations.map((book) => (
+                      <li key={`${book.label}-${book.readingLevelLabel}`}>
+                        <strong>{book.label}</strong>
+                        {book.author ? ` by ${book.author}` : ""}. Reading level: {book.readingLevelLabel}. {book.librarySystem ? `${book.librarySystem}. ` : ""}
+                        {book.libraryTip} {book.catalogHint}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
 
               <section className="week-planner-print-block">
                 <h2>Parent prep list</h2>

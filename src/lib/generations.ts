@@ -2,6 +2,7 @@ import { z } from "zod";
 import { dailyAdventurePresetKeys } from "@/lib/daily-adventure-presets";
 import { getRegulationStatusLabel } from "@/lib/regulations/types";
 import { smithsonianMuseumKeys } from "@/lib/smithsonian-museums";
+import { readingLevelOptions } from "@/lib/students";
 
 export const generationKinds = [
   "lesson",
@@ -82,12 +83,14 @@ export const weekPlannerInputSchema = z.object({
   selectedStudentIds: z.array(z.string().uuid()).default([]),
   selectedStudentNames: z.array(z.string().trim().min(1).max(80)).default([]),
   selectedStudentAges: z.array(z.coerce.number().int().min(3).max(18)).default([]),
+  selectedStudentReadingLevels: z.array(z.enum(readingLevelOptions)).default([]),
   focusArea: z.string().trim().min(2).max(120),
   daysPerWeek: z.coerce.number().int().min(1).max(7),
   preferredLessonLength: z.string().trim().min(2).max(60),
   interests: z.string().trim().min(2).max(240),
   settingPreference: z.string().trim().min(2).max(80),
-  locationLabel: z.string().trim().min(2).max(120).default("Southern Maryland")
+  locationLabel: z.string().trim().min(2).max(120).default("Southern Maryland"),
+  homeZipcode: z.string().trim().max(10).optional()
 });
 
 export const dailyPlanItemSchema = z.object({
@@ -96,13 +99,25 @@ export const dailyPlanItemSchema = z.object({
   activities: z.array(z.string().min(1)).min(2).max(4)
 });
 
+export const plannerBookRecommendationSchema = z.object({
+  label: z.string().min(1),
+  author: z.string().trim().nullable(),
+  readingLevelLabel: z.enum(readingLevelOptions),
+  formatFit: z.string().min(1),
+  whyItFits: z.string().min(1),
+  librarySystem: z.string().trim().nullable(),
+  libraryTip: z.string().min(1),
+  catalogHint: z.string().min(1)
+});
+
 export const weekPlannerOutputSchema = z.object({
   weeklyOverview: z.string().min(1),
   dailyPlan: z.array(dailyPlanItemSchema).min(1).max(7),
   suggestedFieldTrips: z.array(z.string().min(1)).min(2).max(5),
   materialsList: z.array(z.string().min(1)).min(3).max(12),
   parentNotes: z.string().min(1),
-  printableSummary: z.string().min(1)
+  printableSummary: z.string().min(1),
+  bookRecommendations: z.array(plannerBookRecommendationSchema).max(3).default([])
 });
 
 export const dailyAdventureInputSchema = z.object({
@@ -121,7 +136,8 @@ export const dailyAdventureInputSchema = z.object({
         id: z.string().uuid().optional(),
         name: z.string().trim().min(1).max(80),
         age: z.coerce.number().int().min(3).max(18),
-        interests: z.array(z.string().trim().min(1).max(80)).default([])
+        interests: z.array(z.string().trim().min(1).max(80)).default([]),
+        readingLevel: z.enum(readingLevelOptions).optional()
       })
     )
     .default([]),
@@ -132,6 +148,8 @@ export const dailyAdventureInputSchema = z.object({
   longitude: z.coerce.number().min(-180).max(180).optional(),
   radiusMiles: z.coerce.number().int().min(1).max(50).default(10),
   weatherCondition: z.string().trim().max(60).default("clear"),
+  studentReadingLevel: z.enum(readingLevelOptions).optional(),
+  homeZipcode: z.string().trim().max(10).optional(),
   timeAvailable: z.string().trim().min(1).max(40).optional(),
   budget: z.string().trim().min(1).max(40).optional(),
   energyLevel: z.string().trim().min(1).max(40).optional(),
@@ -178,6 +196,7 @@ export type DailyAdventureOutput = {
   liveBaitImageAlt: string | null;
   artificialBaitImageUrl: string | null;
   artificialBaitImageAlt: string | null;
+  bookRecommendation: z.infer<typeof plannerBookRecommendationSchema> | null;
   outingMode: string | null;
   fallbackPlan: string | null;
 };
@@ -217,6 +236,7 @@ export const EMPTY_DAILY_ADVENTURE: DailyAdventureOutput = {
   liveBaitImageAlt: null,
   artificialBaitImageUrl: null,
   artificialBaitImageAlt: null,
+  bookRecommendation: null,
   outingMode: null,
   fallbackPlan: null
 };
@@ -256,6 +276,7 @@ export function coerceNearbySpots(value: unknown): DailyAdventureOutput["recomme
 
 export function normalizeDailyAdventure(raw: unknown): DailyAdventureOutput {
   const source = isPlainObject(raw) ? raw : {};
+  const bookRecommendation = plannerBookRecommendationSchema.safeParse(source.bookRecommendation);
 
   return {
     animalOfTheDay: coerceString(source.animalOfTheDay),
@@ -292,6 +313,7 @@ export function normalizeDailyAdventure(raw: unknown): DailyAdventureOutput {
     liveBaitImageAlt: coerceNullableString(source.liveBaitImageAlt),
     artificialBaitImageUrl: coerceNullableString(source.artificialBaitImageUrl),
     artificialBaitImageAlt: coerceNullableString(source.artificialBaitImageAlt),
+    bookRecommendation: bookRecommendation.success ? bookRecommendation.data : null,
     outingMode: coerceNullableString(source.outingMode),
     fallbackPlan: coerceNullableString(source.fallbackPlan)
   };
@@ -448,6 +470,7 @@ export const dailyAdventureOutputSchema = z.object({
   liveBaitImageAlt: z.string().trim().nullable(),
   artificialBaitImageUrl: z.string().trim().nullable(),
   artificialBaitImageAlt: z.string().trim().nullable(),
+  bookRecommendation: plannerBookRecommendationSchema.nullable().default(null),
   outingMode: z.string().trim().nullable(),
   fallbackPlan: z.string().trim().nullable()
 });
@@ -593,9 +616,12 @@ export type DailyAdventureGenerationInput = {
     name: string;
     age: number;
     interests: string[];
+    readingLevel?: (typeof readingLevelOptions)[number];
   }>;
   preset?: (typeof dailyAdventurePresetKeys)[number];
   museumKeys?: Array<(typeof smithsonianMuseumKeys)[number]>;
+  studentReadingLevel?: (typeof readingLevelOptions)[number];
+  homeZipcode?: string;
   timeAvailable?: string;
   budget?: string;
   energyLevel?: string;

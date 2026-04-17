@@ -7,6 +7,7 @@ import {
   weekPlannerOutputJsonSchema,
   weekPlannerOutputSchema
 } from "@/lib/generations";
+import { buildWeeklyPlannerBookRecommendations } from "@/lib/library-recommendations";
 import { createOpenAIClient, getOpenAIModel } from "@/lib/openai";
 
 export async function POST(request: Request) {
@@ -64,7 +65,20 @@ export async function POST(request: Request) {
       }
     });
 
-    const output = weekPlannerOutputSchema.parse(JSON.parse(response.output_text));
+    const baseOutput = weekPlannerOutputSchema.parse(JSON.parse(response.output_text));
+    const output = weekPlannerOutputSchema.parse({
+      ...baseOutput,
+      bookRecommendations: buildWeeklyPlannerBookRecommendations({
+        locationLabel: parsedInput.data.locationLabel,
+        homeZipcode: parsedInput.data.homeZipcode,
+        topicText: `${parsedInput.data.focusArea}. ${baseOutput.weeklyOverview}`,
+        learners: parsedInput.data.selectedStudentNames.map((name, index) => ({
+          name,
+          age: parsedInput.data.selectedStudentAges[index] ?? parsedInput.data.childAge ?? 8,
+          readingLevel: parsedInput.data.selectedStudentReadingLevels[index]
+        }))
+      })
+    });
     const generation = await saveGeneration({
       supabase,
       userId: user.id,

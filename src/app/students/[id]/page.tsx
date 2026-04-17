@@ -23,7 +23,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
 
   const { data: student } = await supabase
     .from("students")
-    .select("id, user_id, household_id, name, age, interests, current_rank, completed_adventures_count, created_at, updated_at")
+    .select("id, user_id, household_id, name, age, interests, reading_level, current_rank, completed_adventures_count, created_at, updated_at")
     .eq("household_id", household.householdId)
     .eq("id", id)
     .maybeSingle();

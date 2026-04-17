@@ -29,7 +29,7 @@ export default async function DailyAdventurePage({
       .limit(8),
     supabase
       .from("students")
-      .select("id, user_id, household_id, name, age, interests, current_rank, completed_adventures_count, created_at, updated_at")
+      .select("id, user_id, household_id, name, age, interests, reading_level, current_rank, completed_adventures_count, created_at, updated_at")
       .eq("household_id", household.householdId)
       .order("created_at", { ascending: false }),
     getUserLocationPreferences(supabase, user.id)
@@ -60,6 +60,7 @@ export default async function DailyAdventurePage({
         initialLatitude={initialLatitude}
         initialLongitude={initialLongitude}
         weatherHelperText="Auto-filled from today's forecast"
+        homeZipcode={locationPreferences.homeZipcode}
       />
     </AppShell>
   );
