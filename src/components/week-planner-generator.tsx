@@ -357,10 +357,25 @@ export function WeekPlannerGenerator({
                           {book.author ? <p className="muted">by {book.author}</p> : null}
                           <p>{book.whyItFits}</p>
                           <p className="muted" style={{ marginBottom: 0 }}>
+                            <strong>{book.availabilityStatus}</strong>: {book.availabilityNote}
+                          </p>
+                          <p className="muted" style={{ marginBottom: 0 }}>
                             Reading level: {book.readingLevelLabel}. {book.librarySystem ? `${book.librarySystem}. ` : ""}
                             {book.libraryTip}
                           </p>
                           <p className="muted" style={{ marginBottom: 0 }}>{book.catalogHint}</p>
+                          <div className="cta-row">
+                            {book.libraryCatalogUrl ? (
+                              <a className="button button-ghost" href={book.libraryCatalogUrl} target="_blank" rel="noreferrer">
+                                Open catalog
+                              </a>
+                            ) : null}
+                            {book.libraryDirectoryUrl ? (
+                              <a className="button button-ghost" href={book.libraryDirectoryUrl} target="_blank" rel="noreferrer">
+                                Library system
+                              </a>
+                            ) : null}
+                          </div>
                         </div>
                       </article>
                     ))}
@@ -459,7 +474,8 @@ export function WeekPlannerGenerator({
                     {result.bookRecommendations.map((book) => (
                       <li key={`${book.label}-${book.readingLevelLabel}`}>
                         <strong>{book.label}</strong>
-                        {book.author ? ` by ${book.author}` : ""}. Reading level: {book.readingLevelLabel}. {book.librarySystem ? `${book.librarySystem}. ` : ""}
+                        {book.author ? ` by ${book.author}` : ""}. {book.availabilityStatus}: {book.availabilityNote} Reading level: {book.readingLevelLabel}.{" "}
+                        {book.librarySystem ? `${book.librarySystem}. ` : ""}
                         {book.libraryTip} {book.catalogHint}
                       </li>
                     ))}

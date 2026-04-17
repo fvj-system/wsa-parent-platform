@@ -208,6 +208,9 @@ export function DailyAdventureResult({ result, generationId }: DailyAdventureRes
                   </p>
                   <p>{result.bookRecommendation.whyItFits}</p>
                   <p className="muted" style={{ marginBottom: 0 }}>
+                    <strong>{result.bookRecommendation.availabilityStatus}</strong>: {result.bookRecommendation.availabilityNote}
+                  </p>
+                  <p className="muted" style={{ marginBottom: 0 }}>
                     Reading level: {result.bookRecommendation.readingLevelLabel}.{" "}
                     {result.bookRecommendation.librarySystem ? `${result.bookRecommendation.librarySystem}. ` : ""}
                     {result.bookRecommendation.libraryTip}
@@ -215,6 +218,18 @@ export function DailyAdventureResult({ result, generationId }: DailyAdventureRes
                   <p className="muted" style={{ marginBottom: 0 }}>
                     {result.bookRecommendation.catalogHint}
                   </p>
+                  <div className="cta-row">
+                    {result.bookRecommendation.libraryCatalogUrl ? (
+                      <a className="button button-ghost" href={result.bookRecommendation.libraryCatalogUrl} target="_blank" rel="noreferrer">
+                        Open catalog
+                      </a>
+                    ) : null}
+                    {result.bookRecommendation.libraryDirectoryUrl ? (
+                      <a className="button button-ghost" href={result.bookRecommendation.libraryDirectoryUrl} target="_blank" rel="noreferrer">
+                        Library system
+                      </a>
+                    ) : null}
+                  </div>
                 </section>
               ) : null}
             </div>
@@ -373,6 +388,9 @@ export function DailyAdventureResult({ result, generationId }: DailyAdventureRes
                       </p>
                       <p>{result.bookRecommendation.whyItFits}</p>
                       <p className="muted" style={{ marginBottom: 0 }}>
+                        <strong>{result.bookRecommendation.availabilityStatus}</strong>: {result.bookRecommendation.availabilityNote}
+                      </p>
+                      <p className="muted" style={{ marginBottom: 0 }}>
                         Reading level: {result.bookRecommendation.readingLevelLabel}.{" "}
                         {result.bookRecommendation.librarySystem ? `${result.bookRecommendation.librarySystem}. ` : ""}
                         {result.bookRecommendation.libraryTip}
@@ -380,6 +398,18 @@ export function DailyAdventureResult({ result, generationId }: DailyAdventureRes
                       <p className="muted" style={{ marginBottom: 0 }}>
                         {result.bookRecommendation.catalogHint}
                       </p>
+                      <div className="cta-row">
+                        {result.bookRecommendation.libraryCatalogUrl ? (
+                          <a className="button button-ghost" href={result.bookRecommendation.libraryCatalogUrl} target="_blank" rel="noreferrer">
+                            Open catalog
+                          </a>
+                        ) : null}
+                        {result.bookRecommendation.libraryDirectoryUrl ? (
+                          <a className="button button-ghost" href={result.bookRecommendation.libraryDirectoryUrl} target="_blank" rel="noreferrer">
+                            Library system
+                          </a>
+                        ) : null}
+                      </div>
                     </section>
                   ) : null}
                   {result.specialExhibitNote ? (

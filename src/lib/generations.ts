@@ -106,6 +106,10 @@ export const plannerBookRecommendationSchema = z.object({
   formatFit: z.string().min(1),
   whyItFits: z.string().min(1),
   librarySystem: z.string().trim().nullable(),
+  libraryDirectoryUrl: z.string().trim().nullable(),
+  libraryCatalogUrl: z.string().trim().nullable(),
+  availabilityStatus: z.enum(["Available today", "In catalog", "May require a hold", "Check live availability"]),
+  availabilityNote: z.string().min(1),
   libraryTip: z.string().min(1),
   catalogHint: z.string().min(1)
 });

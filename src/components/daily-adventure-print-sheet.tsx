@@ -321,11 +321,15 @@ export function DailyAdventurePrintSheet({
               {result.bookRecommendation.author ? ` by ${result.bookRecommendation.author}` : ""}
             </p>
             <p>
+              <strong>{result.bookRecommendation.availabilityStatus}</strong>: {result.bookRecommendation.availabilityNote}
+            </p>
+            <p>
               Reading level: {result.bookRecommendation.readingLevelLabel}.{" "}
               {result.bookRecommendation.librarySystem ? `${result.bookRecommendation.librarySystem}. ` : ""}
               {result.bookRecommendation.libraryTip}
             </p>
             <p>{result.bookRecommendation.catalogHint}</p>
+            {result.bookRecommendation.libraryCatalogUrl ? <p>{result.bookRecommendation.libraryCatalogUrl}</p> : null}
           </section>
         ) : null}
 

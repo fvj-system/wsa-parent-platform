@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     const baseOutput = weekPlannerOutputSchema.parse(JSON.parse(response.output_text));
     const output = weekPlannerOutputSchema.parse({
       ...baseOutput,
-      bookRecommendations: buildWeeklyPlannerBookRecommendations({
+      bookRecommendations: await buildWeeklyPlannerBookRecommendations({
         locationLabel: parsedInput.data.locationLabel,
         homeZipcode: parsedInput.data.homeZipcode,
         topicText: `${parsedInput.data.focusArea}. ${baseOutput.weeklyOverview}`,

@@ -758,7 +758,7 @@ export async function POST(request: Request) {
         resolvedTemplate === "fish" ? baseOutput.artificialBaitImageUrl ?? fishingImages.artificialBaitImageUrl : null,
       artificialBaitImageAlt:
         resolvedTemplate === "fish" ? baseOutput.artificialBaitImageAlt ?? fishingImages.artificialBaitImageAlt : null,
-      bookRecommendation: buildDailyPlannerBookRecommendation({
+      bookRecommendation: await buildDailyPlannerBookRecommendation({
         locationLabel: location.displayLabel,
         homeZipcode: parsedInput.data.homeZipcode,
         topicText: [

@@ -166,9 +166,13 @@ export function GenerationDetailView({ generation, student, isCompleted = false 
                       (output.bookRecommendation as { author?: string | null }).author
                         ? `by ${(output.bookRecommendation as { author?: string | null }).author}`
                         : "",
+                      (output.bookRecommendation as { availabilityStatus?: string }).availabilityStatus
+                        ? `${(output.bookRecommendation as { availabilityStatus?: string }).availabilityStatus}: ${(output.bookRecommendation as { availabilityNote?: string }).availabilityNote ?? ""}`
+                        : "",
                       `Reading level: ${(output.bookRecommendation as { readingLevelLabel?: string }).readingLevelLabel ?? ""}`,
                       (output.bookRecommendation as { librarySystem?: string | null }).librarySystem ?? "",
-                      (output.bookRecommendation as { libraryTip?: string }).libraryTip ?? ""
+                      (output.bookRecommendation as { libraryTip?: string }).libraryTip ?? "",
+                      (output.bookRecommendation as { libraryCatalogUrl?: string | null }).libraryCatalogUrl ?? ""
                     ]
                       .filter(Boolean)
                       .join(". ")
@@ -323,16 +327,21 @@ export function GenerationDetailView({ generation, student, isCompleted = false 
                       label?: string;
                       author?: string | null;
                       readingLevelLabel?: string;
+                      availabilityStatus?: string;
+                      availabilityNote?: string;
                       librarySystem?: string | null;
                       libraryTip?: string;
+                      libraryCatalogUrl?: string | null;
                     };
 
                     return [
                       book.label,
                       book.author ? `by ${book.author}` : "",
+                      book.availabilityStatus ? `${book.availabilityStatus}: ${book.availabilityNote ?? ""}` : "",
                       book.readingLevelLabel ? `Reading level: ${book.readingLevelLabel}` : "",
                       book.librarySystem ?? "",
-                      book.libraryTip ?? ""
+                      book.libraryTip ?? "",
+                      book.libraryCatalogUrl ?? ""
                     ]
                       .filter(Boolean)
                       .join(". ");
