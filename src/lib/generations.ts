@@ -154,6 +154,7 @@ export const dailyAdventureInputSchema = z.object({
   weatherCondition: z.string().trim().max(60).default("clear"),
   studentReadingLevel: z.enum(readingLevelOptions).optional(),
   homeZipcode: z.string().trim().max(10).optional(),
+  selectedEventId: z.string().trim().min(1).max(120).optional(),
   timeAvailable: z.string().trim().min(1).max(40).optional(),
   budget: z.string().trim().min(1).max(40).optional(),
   energyLevel: z.string().trim().min(1).max(40).optional(),
@@ -626,6 +627,7 @@ export type DailyAdventureGenerationInput = {
   museumKeys?: Array<(typeof smithsonianMuseumKeys)[number]>;
   studentReadingLevel?: (typeof readingLevelOptions)[number];
   homeZipcode?: string;
+  selectedEventId?: string;
   timeAvailable?: string;
   budget?: string;
   energyLevel?: string;

@@ -7,14 +7,15 @@ import { getNwsWeatherContext } from "@/lib/context/weather/nws";
 import type { GenerationRecord } from "@/lib/generations";
 import { getHouseholdContext } from "@/lib/households";
 import { getUserLocationPreferences, resolveUserLocationPreference } from "@/lib/location-preferences";
+import { getFamilyOpportunityEventsForDate } from "@/lib/nearby/family-opportunities";
 import type { StudentRecord } from "@/lib/students";
 
 export default async function DailyAdventurePage({
   searchParams
 }: {
-  searchParams: Promise<{ studentId?: string; preset?: string }>;
+  searchParams: Promise<{ studentId?: string; preset?: string; eventId?: string }>;
 }) {
-  const { studentId, preset } = await searchParams;
+  const { studentId, preset, eventId } = await searchParams;
   const presetConfig = getDailyAdventurePreset(preset);
   const { supabase, user } = await requireUser();
   const household = await getHouseholdContext(supabase, user.id);
@@ -45,6 +46,11 @@ export default async function DailyAdventurePage({
   const initialWeatherCondition = initialWeather
     ? mapForecastToWeatherCondition(initialWeather.shortForecast, initialWeather.hazards)
     : "clear";
+  const today = new Date().toISOString().slice(0, 10);
+  const localEvents = getFamilyOpportunityEventsForDate(
+    resolvedLocationPreference.location,
+    today,
+  );
 
   return (
     <AppShell userLabel={user.email ?? "WSA family"}>
@@ -61,6 +67,8 @@ export default async function DailyAdventurePage({
         initialLongitude={initialLongitude}
         weatherHelperText="Auto-filled from today's forecast"
         homeZipcode={locationPreferences.homeZipcode}
+        localEvents={localEvents}
+        preselectedEventId={eventId}
       />
     </AppShell>
   );

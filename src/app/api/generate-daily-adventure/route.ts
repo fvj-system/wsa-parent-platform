@@ -14,6 +14,7 @@ import {
 } from "@/lib/generations";
 import {
   buildRecommendedSpotsFromFamilyOpportunities,
+  getFamilyOpportunityEventsForDate,
   getPlannerOpportunityMatches
 } from "@/lib/nearby/family-opportunities";
 import { createOpenAIClient, getOpenAIModel } from "@/lib/openai";
@@ -516,6 +517,15 @@ export async function POST(request: Request) {
       practicalNeeds: parsedInput.data.practicalNeeds,
       extraContext: parsedInput.data.extraContext
     });
+    const localEventsForDate = getFamilyOpportunityEventsForDate(
+      location,
+      parsedInput.data.requestDate
+    );
+    const selectedLocalEvent =
+      localEventsForDate.find((item) => item.id === parsedInput.data.selectedEventId) ?? null;
+    const selectedLocalEventSpots = selectedLocalEvent
+      ? buildRecommendedSpotsFromFamilyOpportunities([selectedLocalEvent])
+      : [];
     const plannerOpportunitySpots =
       buildRecommendedSpotsFromFamilyOpportunities(plannerOpportunityMatches);
     const generalNearbySpots =
@@ -600,6 +610,9 @@ export async function POST(request: Request) {
       `Energy level: ${parsedInput.data.energyLevel ?? "medium"}`,
       `Travel distance: ${parsedInput.data.travelDistance ?? "local"}`,
       parsedInput.data.targetFish ? `Requested target fish: ${parsedInput.data.targetFish}` : "Requested target fish: planner choice",
+      selectedLocalEvent
+        ? `Selected local event: ${selectedLocalEvent.title} at ${selectedLocalEvent.locationLabel}${selectedLocalEvent.eventTime ? `, ${selectedLocalEvent.eventTime}` : ""}${selectedLocalEvent.sourceLabel ? `, source ${selectedLocalEvent.sourceLabel}` : ""}.`
+        : "Selected local event: none.",
       `Location focus: ${location.displayLabel}`,
       `Weather context: ${environmental.weather?.shortForecast ?? weather.summary}`,
       environmental.weather?.hazards?.length
@@ -625,6 +638,9 @@ export async function POST(request: Request) {
             .map((item) => `${item.title} [${item.type}] - ${item.reason}`)
             .join("; ")}.`
         : "Trusted local opportunities: no curated regional matches were found, so rely on the nearby nature context.",
+      selectedLocalEvent
+        ? "Use the selected local event as the anchor stop when it fits the plan, and make the missionStops clearly tell the family how to build the outing around that event."
+        : "If a local event would help but none was selected, build the plan around the best nearby outing option.",
       templateInstructions.outputGuide,
       "missionStops must be a practical step-by-step plan with 4-7 short action steps. Include where to start, what to do first, what to watch for, how to move through the outing, and how to wrap up.",
       "Every schema field must be present in the JSON response. Use null for unknown string fields and [] for unknown arrays. Never omit keys.",
@@ -695,7 +711,10 @@ export async function POST(request: Request) {
         ? buildSmithsonianRecommendedStops(selectedMuseums)
         : resolvedTemplate === "fish"
           ? fishingRecommendation?.recommendedNearbySpots ?? generalNearbySpots
-          : mergeRecommendedSpots(plannerOpportunitySpots, generalNearbySpots).slice(0, 6);
+          : mergeRecommendedSpots(
+              selectedLocalEventSpots,
+              mergeRecommendedSpots(plannerOpportunitySpots, generalNearbySpots)
+            ).slice(0, 6);
     const defaultCopy = getDefaultAdventureCopy(resolvedTemplate, location.displayLabel);
     const output = parseDailyAdventure({
       ...baseOutput,

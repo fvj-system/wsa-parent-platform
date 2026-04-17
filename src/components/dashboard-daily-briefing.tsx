@@ -229,9 +229,6 @@ export function DashboardDailyBriefing({
             </div>
 
             <div className="cta-row today-adventure-actions">
-              <Link className="button button-primary" href={selectedItem.startHref}>
-                Start Adventure
-              </Link>
               <Link className="button button-ghost" href={selectedItem.fullHref}>
                 Open full page
               </Link>

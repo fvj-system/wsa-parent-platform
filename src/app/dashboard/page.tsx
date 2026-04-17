@@ -175,15 +175,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     "No badges earned yet";
   const startAdventureHref =
     studentRows.length > 0
-      ? todayAdventure
-        ? `/generations/${todayAdventure.id}`
-        : `/daily-adventure${activeStudent ? `?studentId=${activeStudent.id}` : ""}`
+      ? `/daily-adventure${activeStudent ? `?studentId=${activeStudent.id}` : ""}`
       : null;
-  const startAdventureLabel = todayAdventure
-    ? todayAdventureCompleted
-      ? "Open today's adventure"
-      : "Continue today's adventure"
-    : "Start today's adventure";
+  const startAdventureLabel = "Start today's adventure";
 
   return (
     <AppShell userLabel={user.email ?? "WSA family"}>
@@ -194,6 +188,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         todayEvents={todayEvents}
         startAdventureHref={startAdventureHref}
         startAdventureLabel={startAdventureLabel}
+        householdName={household.householdName}
       />
 
       {studentRows.length === 0 ? (

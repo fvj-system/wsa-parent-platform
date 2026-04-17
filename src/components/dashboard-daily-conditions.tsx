@@ -10,6 +10,7 @@ type DashboardDailyConditionsProps = {
   todayEvents: FamilyOpportunity[];
   startAdventureHref?: string | null;
   startAdventureLabel?: string;
+  householdName?: string | null;
 };
 
 function formatEventDateTime(item: FamilyOpportunity) {
@@ -31,6 +32,7 @@ export function DashboardDailyConditions({
   todayEvents,
   startAdventureHref,
   startAdventureLabel = "Start today's adventure",
+  householdName,
 }: DashboardDailyConditionsProps) {
   const weatherLabel = weather?.shortForecast ?? "Mixed conditions";
   const high = weather?.temperature ?? "--";
@@ -39,19 +41,22 @@ export function DashboardDailyConditions({
   const nextLow = tide.lowTides[0] ?? "--";
   const featuredEvents = todayEvents.slice(0, 2);
   const hasEventsToday = featuredEvents.length > 0;
+  const normalizedHouseholdName = householdName?.trim();
+  const greetingName = normalizedHouseholdName
+    ? /family$/i.test(normalizedHouseholdName)
+      ? normalizedHouseholdName
+      : `${normalizedHouseholdName} Family`
+    : "WSA Family";
 
   return (
     <section className="specimen-card daily-conditions-panel">
       <div className="daily-conditions-panel-head">
         <div>
-          <p className="eyebrow">Conditions</p>
           <h3>Today&apos;s field read</h3>
+          <p className="muted" style={{ margin: "6px 0 0" }}>
+            Welcome back {greetingName}!
+          </p>
         </div>
-        <p className="panel-copy" style={{ margin: 0 }}>
-          {hasEventsToday
-            ? "Weather, tides, and today's local event brief in one spot."
-            : "Weather, tides, and the quick nature read in one spot."}
-        </p>
       </div>
 
       <div className="daily-conditions-grid">

@@ -13,6 +13,7 @@ import {
   smithsonianMuseums,
   type SmithsonianMuseumKey,
 } from "@/lib/smithsonian-museums";
+import type { FamilyOpportunity } from "@/lib/nearby/family-opportunities";
 import { FISH_DATA } from "@/lib/species/fish-data";
 import type { StudentRecord } from "@/lib/students";
 
@@ -29,6 +30,8 @@ type DailyAdventureGeneratorProps = {
   initialLongitude?: number | null;
   weatherHelperText?: string;
   homeZipcode?: string | null;
+  localEvents?: FamilyOpportunity[];
+  preselectedEventId?: string;
 };
 
 type DailyAdventureResponse = {
@@ -119,6 +122,8 @@ export function DailyAdventureGenerator({
   initialLongitude,
   weatherHelperText = "",
   homeZipcode,
+  localEvents = [],
+  preselectedEventId,
 }: DailyAdventureGeneratorProps) {
   const [result, setResult] = useState<DailyAdventureOutput | null>(null);
   const [latestGenerationId, setLatestGenerationId] = useState("");
@@ -161,6 +166,7 @@ export function DailyAdventureGenerator({
   const [mainGoal, setMainGoal] = useState("");
   const [practicalNeeds, setPracticalNeeds] = useState<string[]>([]);
   const [extraContext, setExtraContext] = useState("");
+  const [selectedEventId, setSelectedEventId] = useState(preselectedEventId ?? "");
 
   useEffect(() => {
     if (preselectedStudentId) {
@@ -195,6 +201,7 @@ export function DailyAdventureGenerator({
       selectedStudent !== null ||
       students.length === 0) &&
     (!isSmithsonianPreset || selectedMuseumKeys.length > 0);
+  const hasLocalEvents = localEvents.length > 0;
 
   const toggleMuseum = (museumKey: SmithsonianMuseumKey) => {
     setSelectedMuseumKeys((current) =>
@@ -396,6 +403,28 @@ export function DailyAdventureGenerator({
               </p>
             </label>
           ) : null}
+
+          <label>
+            Local event
+            <select
+              value={selectedEventId}
+              onChange={(event) => setSelectedEventId(event.target.value)}
+            >
+              <option value="">No specific event</option>
+              {localEvents.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                  {item.eventTime ? ` | ${item.eventTime}` : ""}
+                  {item.locationLabel ? ` | ${item.locationLabel}` : ""}
+                </option>
+              ))}
+            </select>
+            <p className="field-helper-text">
+              {hasLocalEvents
+                ? "Pick one of today's local events if you want the mission to build around it."
+                : "No official local events are on today's calendar, so the planner will build a regular field mission."}
+            </p>
+          </label>
 
           {plannerMode === "advanced" ? (
             <section className="stack advanced-planner-chat">
@@ -662,6 +691,7 @@ export function DailyAdventureGenerator({
                       latitude,
                       longitude,
                       homeZipcode: homeZipcode ?? undefined,
+                      selectedEventId: selectedEventId || undefined,
                       timeAvailable,
                       budget,
                       energyLevel,
