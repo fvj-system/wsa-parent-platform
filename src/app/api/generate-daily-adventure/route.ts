@@ -716,6 +716,24 @@ export async function POST(request: Request) {
               mergeRecommendedSpots(plannerOpportunitySpots, generalNearbySpots)
             ).slice(0, 6);
     const defaultCopy = getDefaultAdventureCopy(resolvedTemplate, location.displayLabel);
+    const bookTopicSignals = [
+      baseOutput.animalOfTheDay,
+      baseOutput.outdoorObservationActivity,
+      baseOutput.challengeActivity,
+      baseOutput.discussionQuestion,
+      baseOutput.suggestedPlaceType,
+      fishingRecommendation?.primarySpecies,
+      fishingRecommendation?.bestPlace,
+      baseOutput.fishingMainSpecies,
+      baseOutput.fishingBestPlace,
+      parsedInput.data.mainGoal,
+      parsedInput.data.targetFish,
+      parsedInput.data.preset,
+      selectedLocalEvent?.title,
+      location.displayLabel
+    ];
+    const bookTopicText = bookTopicSignals.filter(Boolean).join(". ");
+
     const output = parseDailyAdventure({
       ...baseOutput,
       animalOfTheDay:
@@ -780,15 +798,8 @@ export async function POST(request: Request) {
       bookRecommendation: await buildDailyPlannerBookRecommendation({
         locationLabel: location.displayLabel,
         homeZipcode: parsedInput.data.homeZipcode,
-        topicText: [
-          parsedInput.data.mainGoal,
-          parsedInput.data.preset,
-          baseOutput.animalOfTheDay,
-          baseOutput.outdoorObservationActivity,
-          baseOutput.challengeActivity
-        ]
-          .filter(Boolean)
-          .join(". "),
+        topicText: bookTopicText,
+        topicSignals: bookTopicSignals,
         studentReadingLevel: isHouseholdTarget
           ? undefined
           : parsedInput.data.studentReadingLevel,

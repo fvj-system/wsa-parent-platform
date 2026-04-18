@@ -20,6 +20,15 @@ export const metadata: Metadata = {
   title: "Wild Stallion Academy AI",
   description:
     "AI-powered homeschool and outdoor education planning for families.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "WSA",
+  },
+  icons: {
+    apple: "/wsa/logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -38,4 +47,5 @@ import type { Viewport } from "next";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#26160f",
 };

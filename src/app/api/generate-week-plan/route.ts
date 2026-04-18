@@ -66,12 +66,21 @@ export async function POST(request: Request) {
     });
 
     const baseOutput = weekPlannerOutputSchema.parse(JSON.parse(response.output_text));
+    const weeklyBookSignals = [
+      parsedInput.data.focusArea,
+      baseOutput.weeklyOverview,
+      ...baseOutput.dailyPlan.flatMap((item) => [item.focus, ...item.activities]),
+      ...baseOutput.suggestedFieldTrips
+    ];
+    const weeklyBookTopicText = weeklyBookSignals.filter(Boolean).join(". ");
+
     const output = weekPlannerOutputSchema.parse({
       ...baseOutput,
       bookRecommendations: await buildWeeklyPlannerBookRecommendations({
         locationLabel: parsedInput.data.locationLabel,
         homeZipcode: parsedInput.data.homeZipcode,
-        topicText: `${parsedInput.data.focusArea}. ${baseOutput.weeklyOverview}`,
+        topicText: weeklyBookTopicText,
+        topicSignals: weeklyBookSignals,
         learners: parsedInput.data.selectedStudentNames.map((name, index) => ({
           name,
           age: parsedInput.data.selectedStudentAges[index] ?? parsedInput.data.childAge ?? 8,

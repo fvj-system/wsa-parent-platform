@@ -798,6 +798,46 @@ select {
   font: 700 0.92rem/1.4 var(--font-sans);
 }
 
+.a2hs-prompt {
+  position: fixed;
+  left: 50%;
+  bottom: 84px;
+  z-index: 32;
+  width: min(calc(100vw - 28px), 430px);
+  transform: translateX(-50%);
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid rgba(68, 47, 28, 0.18);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 252, 244, 0.98), rgba(246, 235, 211, 0.98)),
+    url("/wsa/textures/card-grain.svg");
+  box-shadow: 0 16px 30px rgba(12, 8, 5, 0.18);
+}
+
+.a2hs-prompt h3 {
+  margin: 0;
+}
+
+.a2hs-prompt-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.a2hs-steps {
+  margin: 4px 0 0;
+  padding-left: 20px;
+  color: #4b392a;
+  font: 600 0.95rem/1.45 var(--font-sans);
+}
+
+.a2hs-prompt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .result-list {
   margin: 12px 0 0;
   padding-left: 20px;
@@ -4256,6 +4296,18 @@ select {
     bottom: 18px;
     width: 56px;
     height: 56px;
+  }
+
+  .a2hs-prompt {
+    bottom: 88px;
+    width: calc(100vw - 24px);
+    padding: 14px 15px;
+    border-radius: 20px;
+  }
+
+  .a2hs-prompt-actions {
+    display: grid;
+    grid-template-columns: 1fr;
   }
 
   .camera-modal {

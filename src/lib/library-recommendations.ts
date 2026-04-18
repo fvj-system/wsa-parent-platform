@@ -33,7 +33,20 @@ type LibrarySystemRecord = {
 };
 
 type ReadingBand = "read_aloud" | "early_reader" | "developing_reader" | "independent_reader";
-type RecommendationTopic = "history" | "water" | "bird" | "plant" | "science" | "nature";
+type RecommendationTopic =
+  | "birds"
+  | "turtles_reptiles_amphibians"
+  | "mammals"
+  | "fish_waterways"
+  | "insects"
+  | "plants_trees_wildflowers"
+  | "weather_seasons"
+  | "local_history"
+  | "maryland_history"
+  | "survival_outdoor_skills"
+  | "museums_landmarks"
+  | "colonial_early_america"
+  | "general_nature_observation";
 
 type LearnerContext = {
   name: string;
@@ -45,6 +58,17 @@ type RecommendationTemplate = {
   label: string;
   author: string | null;
   formatFit: string;
+};
+
+type TopicProfile = {
+  displayLabel: string;
+  topicHint: string;
+  templates: Record<ReadingBand, RecommendationTemplate>;
+};
+
+type TopicAnalysis = {
+  topic: RecommendationTopic;
+  displayLabel: string;
 };
 
 type LibraryCatalogVerification = {
@@ -174,6 +198,326 @@ const librarySystemRecords: LibrarySystemRecord[] = [
   }
 ];
 
+const historyTemplates: Record<ReadingBand, RecommendationTemplate> = {
+  read_aloud: {
+    label: "If You Lived in Colonial Times",
+    author: "Ann McGovern",
+    formatFit: "Best as a parent read-aloud with picture support and short bursts of discussion."
+  },
+  early_reader: {
+    label: "You Wouldn't Want to Be an American Colonist!",
+    author: "Jacqueline Morley",
+    formatFit: "Best for a newer reader who can handle short history scenes with a little help."
+  },
+  developing_reader: {
+    label: "Who Was George Washington?",
+    author: "Roberta Edwards",
+    formatFit: "Best for a child who can manage short nonfiction chapters with occasional support."
+  },
+  independent_reader: {
+    label: "Chains",
+    author: "Laurie Halse Anderson",
+    formatFit: "Best for an older reader who can hold onto a longer historical story and compare perspectives."
+  }
+};
+
+const waterTemplates: Record<ReadingBand, RecommendationTemplate> = {
+  read_aloud: {
+    label: "Over and Under the Pond",
+    author: "Kate Messner",
+    formatFit: "Best as a picture-rich read-aloud while you talk through pond, marsh, and shoreline clues together."
+  },
+  early_reader: {
+    label: "Pond Circle",
+    author: "Betsy Franco",
+    formatFit: "Best for a newer reader who benefits from short lines, repetition, and familiar pond-life images."
+  },
+  developing_reader: {
+    label: "One Small Square: Pond",
+    author: "Donald M. Silver",
+    formatFit: "Best for a child ready to connect fish, insects, plants, and water habitats in one place."
+  },
+  independent_reader: {
+    label: "Eyewitness: Fish",
+    author: "Steve Parker",
+    formatFit: "Best for a confident reader who can compare fish species, habitats, and waterways with more detail."
+  }
+};
+
+const birdTemplates: Record<ReadingBand, RecommendationTemplate> = {
+  read_aloud: {
+    label: "National Geographic Little Kids First Big Book of Birds",
+    author: "Catherine D. Hughes",
+    formatFit: "Best as a parent-led picture-rich bird book with lots of quick stop-and-talk moments."
+  },
+  early_reader: {
+    label: "National Geographic Readers: Birds",
+    author: "Elizabeth Carney",
+    formatFit: "Best for a beginning reader who needs strong photos and short information blocks."
+  },
+  developing_reader: {
+    label: "National Geographic Kids Bird Guide of North America",
+    author: "Jonathan Alderfer",
+    formatFit: "Best for a child ready to compare field marks, habitats, and behavior notes."
+  },
+  independent_reader: {
+    label: "Birds of Maryland Field Guide",
+    author: "Stan Tekiela",
+    formatFit: "Best for a strong reader who can use local field-guide clues instead of broad guesses."
+  }
+};
+
+const reptileTemplates: Record<ReadingBand, RecommendationTemplate> = {
+  read_aloud: {
+    label: "Turtle Splash!: Countdown at the Pond",
+    author: "Cathryn Falwell",
+    formatFit: "Best as a parent read-aloud that clearly fits turtle, pond-life, and wetland observation days."
+  },
+  early_reader: {
+    label: "National Geographic Readers: Turtles",
+    author: "Laura Marsh",
+    formatFit: "Best for a newer reader who needs short sentences and strong turtle photos."
+  },
+  developing_reader: {
+    label: "Turtles",
+    author: "Seymour Simon",
+    formatFit: "Best for a child ready for short nonfiction sections about reptiles, shells, and habitats."
+  },
+  independent_reader: {
+    label: "Peterson First Guide to Reptiles and Amphibians",
+    author: "Robert C. Stebbins",
+    formatFit: "Best for a stronger reader who can compare turtles, frogs, salamanders, and other field-guide clues."
+  }
+};
+
+const plantTemplates: Record<ReadingBand, RecommendationTemplate> = {
+  read_aloud: {
+    label: "National Geographic Little Kids First Big Book of Nature",
+    author: "Catherine D. Hughes",
+    formatFit: "Best as a read-aloud with photo support while you talk about leaves, bark, flowers, and seasons."
+  },
+  early_reader: {
+    label: "National Geographic Readers: Seed to Plant",
+    author: "Kristin Baird Rattini",
+    formatFit: "Best for short independent reading with help on harder plant words."
+  },
+  developing_reader: {
+    label: "Planting the Wild Garden",
+    author: "Kathryn O. Galbraith",
+    formatFit: "Best for a child ready to connect seeds, plant growth, and habitat relationships."
+  },
+  independent_reader: {
+    label: "Trees, Leaves, Flowers and Seeds",
+    author: "DK",
+    formatFit: "Best for a strong reader who can handle more precise plant vocabulary and visual comparisons."
+  }
+};
+
+const scienceTemplates: Record<ReadingBand, RecommendationTemplate> = {
+  read_aloud: {
+    label: "National Geographic Little Kids First Big Book of Weather",
+    author: "Karen de Seve",
+    formatFit: "Best as a picture-rich read-aloud that keeps weather and seasonal science concrete."
+  },
+  early_reader: {
+    label: "National Geographic Readers: Weather",
+    author: "Kristin Baird Rattini",
+    formatFit: "Best for a newer reader who needs short explanations and strong visuals."
+  },
+  developing_reader: {
+    label: "The Magic School Bus Inside a Hurricane",
+    author: "Joanna Cole",
+    formatFit: "Best for a child ready to connect a science topic to systems, questions, and real observations."
+  },
+  independent_reader: {
+    label: "Basher Science: Planet Earth",
+    author: "Dan Green",
+    formatFit: "Best for a confident reader who can follow deeper explanations and science vocabulary."
+  }
+};
+
+const natureTemplates: Record<ReadingBand, RecommendationTemplate> = {
+  read_aloud: {
+    label: "National Geographic Little Kids First Big Book of Animals",
+    author: "Catherine D. Hughes",
+    formatFit: "Best as a parent read-aloud with plenty of pictures and quick nature chats."
+  },
+  early_reader: {
+    label: "National Geographic Readers: Caterpillar to Butterfly",
+    author: "Laura Marsh",
+    formatFit: "Best for a child reading short sentences and simple nonfiction captions."
+  },
+  developing_reader: {
+    label: "Over and Under the Woodland Pond",
+    author: "Kate Messner",
+    formatFit: "Best for a child ready for short sections, habitat clues, and gentle nature comparisons."
+  },
+  independent_reader: {
+    label: "The Animal Book",
+    author: "Steve Jenkins",
+    formatFit: "Best for a strong reader who can handle richer wildlife facts and visual comparison."
+  }
+};
+
+const topicProfiles: Record<RecommendationTopic, TopicProfile> = {
+  birds: {
+    displayLabel: "birdwatching focus",
+    topicHint: "birds, nests, feathers, migration, Maryland bird guides, or backyard birdwatching",
+    templates: birdTemplates
+  },
+  turtles_reptiles_amphibians: {
+    displayLabel: "turtle, reptile, amphibian, or pond-life focus",
+    topicHint: "turtles, frogs, salamanders, reptiles, amphibians, wetlands, ponds, or marsh life",
+    templates: reptileTemplates
+  },
+  mammals: {
+    displayLabel: "mammal and wildlife-tracking focus",
+    topicHint: "mammals, tracks, habitats, woodland animals, or local wildlife guides",
+    templates: natureTemplates
+  },
+  fish_waterways: {
+    displayLabel: "fish, stream, bay, or shoreline focus",
+    topicHint: "fish, ponds, rivers, marshes, Chesapeake Bay, streams, shoreline life, or waterways",
+    templates: waterTemplates
+  },
+  insects: {
+    displayLabel: "bug and insect focus",
+    topicHint: "bugs, butterflies, bees, insects, pond insects, or pollinator life",
+    templates: natureTemplates
+  },
+  plants_trees_wildflowers: {
+    displayLabel: "plant, tree, or wildflower focus",
+    topicHint: "trees, wildflowers, seeds, gardens, leaves, bark, or plant identification",
+    templates: plantTemplates
+  },
+  weather_seasons: {
+    displayLabel: "weather or seasonal science focus",
+    topicHint: "weather, seasons, clouds, storms, climate, or seasonal patterns",
+    templates: scienceTemplates
+  },
+  local_history: {
+    displayLabel: "local history focus",
+    topicHint: "local history, county history, landmarks, museums, historical sites, or regional stories",
+    templates: historyTemplates
+  },
+  maryland_history: {
+    displayLabel: "Maryland history focus",
+    topicHint: "Maryland history, Chesapeake Bay history, Southern Maryland, St. Mary's City, or regional landmarks",
+    templates: historyTemplates
+  },
+  survival_outdoor_skills: {
+    displayLabel: "outdoor skills focus",
+    topicHint: "outdoor skills, camping, field craft, safety, survival basics, or practical nature skills",
+    templates: natureTemplates
+  },
+  museums_landmarks: {
+    displayLabel: "museum or landmark focus",
+    topicHint: "museum exhibits, landmarks, galleries, monuments, or field-trip interpretation",
+    templates: historyTemplates
+  },
+  colonial_early_america: {
+    displayLabel: "colonial or early America focus",
+    topicHint: "colonial America, early America, founding-era history, settlement stories, or museum history",
+    templates: historyTemplates
+  },
+  general_nature_observation: {
+    displayLabel: "general nature observation focus",
+    topicHint: "local wildlife, habitats, field guides, or outdoor nature study",
+    templates: natureTemplates
+  }
+};
+
+const topicPriorityOrder: RecommendationTopic[] = [
+  "turtles_reptiles_amphibians",
+  "birds",
+  "fish_waterways",
+  "plants_trees_wildflowers",
+  "maryland_history",
+  "local_history",
+  "colonial_early_america",
+  "museums_landmarks",
+  "survival_outdoor_skills",
+  "weather_seasons",
+  "mammals",
+  "insects",
+  "general_nature_observation"
+];
+
+const topicKeywordRules: Array<{ topic: RecommendationTopic; pattern: RegExp; weight: number }> = [
+  {
+    topic: "turtles_reptiles_amphibians",
+    pattern:
+      /\b(turtle|terrapin|painted turtle|box turtle|snapping turtle|slider|reptile|amphibian|frog|toad|salamander|newt|vernal pool|wetland|wetlands)\b/i,
+    weight: 8
+  },
+  {
+    topic: "birds",
+    pattern:
+      /\b(bird|birding|songbird|owl|hawk|eagle|duck|goose|heron|egret|osprey|sparrow|warbler|woodpecker|nest|migration|feather)\b/i,
+    weight: 7
+  },
+  {
+    topic: "fish_waterways",
+    pattern:
+      /\b(fish|fishing|angler|pond|creek|stream|river|bay|marsh|shore|shoreline|waterway|waterways|water|tide|estuary|aquatic|pier|dock|wetland|wetlands|chesapeake)\b/i,
+    weight: 6
+  },
+  {
+    topic: "plants_trees_wildflowers",
+    pattern:
+      /\b(plant|plants|tree|trees|wildflower|wildflowers|flower|flowers|garden|gardens|seed|seeds|leaf|leaves|bark|botany|fern|moss)\b/i,
+    weight: 6
+  },
+  {
+    topic: "maryland_history",
+    pattern:
+      /\b(maryland|southern maryland|st\.?\s*mary'?s|saint mary'?s|chesapeake bay history|annapolis|leonardtown|calvert|patuxent)\b/i,
+    weight: 7
+  },
+  {
+    topic: "colonial_early_america",
+    pattern:
+      /\b(colonial|early america|revolution|revolutionary|founding|founders|settler|settlement|1776|george washington|thomas jefferson)\b/i,
+    weight: 7
+  },
+  {
+    topic: "museums_landmarks",
+    pattern:
+      /\b(museum|museums|smithsonian|gallery|galleries|exhibit|exhibits|portrait|landmark|monument|historic site|memorial|zoo)\b/i,
+    weight: 6
+  },
+  {
+    topic: "local_history",
+    pattern:
+      /\b(local history|history walk|county history|heritage|courthouse|lighthouse|fort|battlefield|historic|history)\b/i,
+    weight: 5
+  },
+  {
+    topic: "survival_outdoor_skills",
+    pattern:
+      /\b(survival|bushcraft|campfire|shelter|navigation|compass|first aid|outdoor skill|outdoor skills|tracking|trail craft)\b/i,
+    weight: 6
+  },
+  {
+    topic: "weather_seasons",
+    pattern:
+      /\b(weather|season|seasons|storm|cloud|rain|wind|forecast|climate|spring|summer|fall|autumn|winter)\b/i,
+    weight: 5
+  },
+  {
+    topic: "mammals",
+    pattern:
+      /\b(mammal|mammals|deer|fox|otter|beaver|rabbit|squirrel|raccoon|muskrat|coyote|bat)\b/i,
+    weight: 5
+  },
+  {
+    topic: "insects",
+    pattern:
+      /\b(insect|insects|bug|bugs|butterfly|butterflies|bee|bees|dragonfly|dragonflies|beetle|beetles|pollinator|pollinators)\b/i,
+    weight: 5
+  }
+];
+
 function getReadingBand(readingLevel: StudentReadingLevel): ReadingBand {
   switch (readingLevel) {
     case "just starting":
@@ -193,30 +537,43 @@ function getReadingBand(readingLevel: StudentReadingLevel): ReadingBand {
   }
 }
 
-function getTopicFromText(input: string): RecommendationTopic {
-  const text = input.toLowerCase();
+function pickBestTopic(scores: Map<RecommendationTopic, number>) {
+  let bestTopic: RecommendationTopic = "general_nature_observation";
+  let bestScore = 0;
 
-  if (/(history|historic|smithsonian|museum|american|colonial|revolution|civil war|portrait|landmark)/.test(text)) {
-    return "history";
+  for (const topic of topicPriorityOrder) {
+    const score = scores.get(topic) ?? 0;
+    if (score > bestScore) {
+      bestTopic = topic;
+      bestScore = score;
+    }
   }
 
-  if (/(fish|fishing|pond|creek|river|bay|marsh|tide|shore|water|ocean)/.test(text)) {
-    return "water";
-  }
+  return bestTopic;
+}
 
-  if (/(bird|owl|hawk|sparrow|eagle|duck|songbird)/.test(text)) {
-    return "bird";
-  }
+function analyzeTopic(topicText: string, topicSignals: Array<string | null | undefined> = []): TopicAnalysis {
+  const normalizedSignals = topicSignals
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value));
+  const fallbackText = topicText.trim();
+  const signals = normalizedSignals.length ? normalizedSignals : [fallbackText];
+  const scores = new Map<RecommendationTopic, number>();
 
-  if (/(plant|tree|flower|garden|seed|leaf|botany)/.test(text)) {
-    return "plant";
-  }
+  signals.forEach((signal, index) => {
+    const priorityWeight = Math.max(1, 6 - index);
+    for (const rule of topicKeywordRules) {
+      if (rule.pattern.test(signal)) {
+        scores.set(rule.topic, (scores.get(rule.topic) ?? 0) + rule.weight * priorityWeight);
+      }
+    }
+  });
 
-  if (/(science|space|weather|experiment|rocket|planet|invention)/.test(text)) {
-    return "science";
-  }
-
-  return "nature";
+  const topic = pickBestTopic(scores);
+  return {
+    topic,
+    displayLabel: topicProfiles[topic].displayLabel
+  };
 }
 
 function resolveLibrarySystem(locationLabel: string, homeZipcode?: string | null) {
@@ -248,19 +605,7 @@ function resolveLibrarySystem(locationLabel: string, homeZipcode?: string | null
 }
 
 function buildCatalogHint(topic: RecommendationTopic, readingBand: ReadingBand) {
-  const topicHint =
-    topic === "history"
-      ? "early America, local history, museums, or landmarks"
-      : topic === "water"
-        ? "fish, ponds, rivers, marshes, Chesapeake Bay, or shoreline life"
-        : topic === "bird"
-          ? "birds, nests, feathers, migration, or backyard birdwatching"
-          : topic === "plant"
-            ? "trees, wildflowers, seeds, gardens, or plant identification"
-            : topic === "science"
-              ? "weather, inventions, experiments, or space"
-              : "local wildlife, habitats, field guides, or outdoor nature study";
-
+  const topicHint = topicProfiles[topic].topicHint;
   const formatHint =
     readingBand === "read_aloud"
       ? "picture books or photo-heavy read-aloud nonfiction"
@@ -274,142 +619,7 @@ function buildCatalogHint(topic: RecommendationTopic, readingBand: ReadingBand) 
 }
 
 function buildRecommendationTemplate(topic: RecommendationTopic, readingBand: ReadingBand): RecommendationTemplate {
-  const templates: Record<RecommendationTopic, Record<ReadingBand, RecommendationTemplate>> = {
-    history: {
-      read_aloud: {
-        label: "If You Lived in Colonial Times",
-        author: "Ann McGovern",
-        formatFit: "Best as a parent read-aloud with picture support and short bursts of discussion."
-      },
-      early_reader: {
-        label: "George Washington's Breakfast",
-        author: "Jean Fritz",
-        formatFit: "Best for a newer reader who can handle short history scenes with a little help."
-      },
-      developing_reader: {
-        label: "Who Was George Washington?",
-        author: "Roberta Edwards",
-        formatFit: "Best for a child who can manage short nonfiction chapters with occasional support."
-      },
-      independent_reader: {
-        label: "Chains",
-        author: "Laurie Halse Anderson",
-        formatFit: "Best for an older reader who can hold onto a longer historical story and compare perspectives."
-      }
-    },
-    water: {
-      read_aloud: {
-        label: "The Magic School Bus on the Ocean Floor",
-        author: "Joanna Cole",
-        formatFit: "Best as a fun parent read-aloud with lots of pointing, explaining, and picture talk."
-      },
-      early_reader: {
-        label: "National Geographic Readers: Sharks!",
-        author: "Anne Schreiber",
-        formatFit: "Best for a new reader who needs short lines, strong photos, and exciting animal facts."
-      },
-      developing_reader: {
-        label: "Over and Under the Pond",
-        author: "Kate Messner",
-        formatFit: "Best for a child ready to connect pond habitats, animals, and simple nonfiction thinking."
-      },
-      independent_reader: {
-        label: "The Ultimate Book of Sharks",
-        author: "Brian Skerry",
-        formatFit: "Best for a confident reader who can compare species, habitats, and aquatic food webs."
-      }
-    },
-    bird: {
-      read_aloud: {
-        label: "National Geographic Little Kids First Big Book of Birds",
-        author: "Catherine D. Hughes",
-        formatFit: "Best as a parent-led picture-rich bird book with lots of quick stop-and-talk moments."
-      },
-      early_reader: {
-        label: "National Geographic Readers: Birds",
-        author: "Elizabeth Carney",
-        formatFit: "Best for a beginning reader who needs strong photos and short information blocks."
-      },
-      developing_reader: {
-        label: "National Geographic Kids Bird Guide of North America",
-        author: "Jonathan Alderfer",
-        formatFit: "Best for a child ready to compare field marks, habitats, and behavior notes."
-      },
-      independent_reader: {
-        label: "Birds of Maryland Field Guide",
-        author: "Stan Tekiela",
-        formatFit: "Best for a strong reader who can use local field-guide clues instead of broad guesses."
-      }
-    },
-    plant: {
-      read_aloud: {
-        label: "National Geographic Little Kids First Big Book of Nature",
-        author: "Catherine D. Hughes",
-        formatFit: "Best as a read-aloud with photo support while you talk about leaves, bark, flowers, and seasons."
-      },
-      early_reader: {
-        label: "National Geographic Readers: Seed to Plant",
-        author: "Kristin Baird Rattini",
-        formatFit: "Best for short independent reading with help on harder plant words."
-      },
-      developing_reader: {
-        label: "Planting the Wild Garden",
-        author: "Kathryn O. Galbraith",
-        formatFit: "Best for a child ready to connect seeds, plant growth, and habitat relationships."
-      },
-      independent_reader: {
-        label: "Trees, Leaves, Flowers and Seeds",
-        author: "DK",
-        formatFit: "Best for a strong reader who can handle more precise plant vocabulary and visual comparisons."
-      }
-    },
-    science: {
-      read_aloud: {
-        label: "National Geographic Little Kids First Big Book of Space",
-        author: "Catherine D. Hughes",
-        formatFit: "Best as a picture-rich read-aloud that keeps science ideas exciting and concrete."
-      },
-      early_reader: {
-        label: "National Geographic Readers: Planets",
-        author: "Elizabeth Carney",
-        formatFit: "Best for a newer reader who needs short explanations and strong visuals."
-      },
-      developing_reader: {
-        label: "The Magic School Bus at the Waterworks",
-        author: "Joanna Cole",
-        formatFit: "Best for a child ready to connect a science topic to systems, questions, and simple experiments."
-      },
-      independent_reader: {
-        label: "Basher Science: Planet Earth",
-        author: "Dan Green",
-        formatFit: "Best for a confident reader who can follow deeper explanations and science vocabulary."
-      }
-    },
-    nature: {
-      read_aloud: {
-        label: "National Geographic Little Kids First Big Book of Animals",
-        author: "Catherine D. Hughes",
-        formatFit: "Best as a parent read-aloud with plenty of pictures and quick nature chats."
-      },
-      early_reader: {
-        label: "National Geographic Readers: Caterpillar to Butterfly",
-        author: "Laura Marsh",
-        formatFit: "Best for a child reading short sentences and simple nonfiction captions."
-      },
-      developing_reader: {
-        label: "Over and Under the Woodland Pond",
-        author: "Kate Messner",
-        formatFit: "Best for a child ready for short sections, habitat clues, and gentle nature comparisons."
-      },
-      independent_reader: {
-        label: "The Animal Book",
-        author: "Steve Jenkins",
-        formatFit: "Best for a strong reader who can handle richer wildlife facts and visual comparison."
-      }
-    }
-  };
-
-  return templates[topic][readingBand];
+  return topicProfiles[topic].templates[readingBand];
 }
 
 function buildCatalogSearchUrl(baseUrl: string | null, title: string) {
@@ -528,28 +738,32 @@ async function verifyLibraryRecommendation(
 }
 
 async function buildRecommendation({
-  topic,
+  topicAnalysis,
   readingLevel,
   learningFocus,
   libraryRecord,
   householdLabel
 }: {
-  topic: RecommendationTopic;
+  topicAnalysis: TopicAnalysis;
   readingLevel: StudentReadingLevel;
   learningFocus: string;
   libraryRecord: ReturnType<typeof resolveLibrarySystem>;
   householdLabel?: string;
 }): Promise<PlannerBookRecommendation> {
   const readingBand = getReadingBand(readingLevel);
-  const template = buildRecommendationTemplate(topic, readingBand);
+  const template = buildRecommendationTemplate(topicAnalysis.topic, readingBand);
   const verification = await verifyLibraryRecommendation(libraryRecord, template.label);
+  const normalizedFocus = learningFocus.trim().replace(/\s+/g, " ");
+  const focusExcerpt =
+    normalizedFocus.length > 120 ? `${normalizedFocus.slice(0, 117).trim()}...` : normalizedFocus;
+  const focusSuffix = focusExcerpt ? ` It supports this plan: ${focusExcerpt}` : "";
 
   return {
     label: householdLabel ? `${householdLabel}: ${template.label}` : template.label,
     author: template.author,
     readingLevelLabel: readingLevel,
     formatFit: template.formatFit,
-    whyItFits: `This fits the current learning focus because it reinforces ${learningFocus.toLowerCase()} in a way that matches this reading stage.`,
+    whyItFits: `This book fits today's ${topicAnalysis.displayLabel} and matches this reading stage.${focusSuffix}`,
     librarySystem: libraryRecord.librarySystem,
     libraryDirectoryUrl: libraryRecord.directoryUrl,
     libraryCatalogUrl: verification.libraryCatalogUrl,
@@ -558,7 +772,7 @@ async function buildRecommendation({
     libraryTip: libraryRecord.librarySystem
       ? `Mapped from the household ZIP/location to ${libraryRecord.librarySystem}${libraryRecord.directoryUrl ? " using the Maryland library directory reference." : "."}`
       : "The app could not confidently map this household to one specific public library system, so it falls back to the Maryland library directory.",
-    catalogHint: buildCatalogHint(topic, readingBand)
+    catalogHint: buildCatalogHint(topicAnalysis.topic, readingBand)
   };
 }
 
@@ -566,6 +780,7 @@ export async function buildDailyPlannerBookRecommendation({
   locationLabel,
   homeZipcode,
   topicText,
+  topicSignals,
   studentReadingLevel,
   householdReadingLevels,
   householdMode
@@ -573,11 +788,12 @@ export async function buildDailyPlannerBookRecommendation({
   locationLabel: string;
   homeZipcode?: string | null;
   topicText: string;
+  topicSignals?: Array<string | null | undefined>;
   studentReadingLevel?: string | null;
   householdReadingLevels?: Array<string | null | undefined>;
   householdMode?: boolean;
 }): Promise<PlannerBookRecommendation> {
-  const topic = getTopicFromText(topicText);
+  const topicAnalysis = analyzeTopic(topicText, topicSignals);
   const libraryRecord = resolveLibrarySystem(locationLabel, homeZipcode);
   const readingLevel = householdMode
     ? Array.from(new Set((householdReadingLevels ?? []).map((value) => normalizeStudentReadingLevel(value))))
@@ -585,7 +801,7 @@ export async function buildDailyPlannerBookRecommendation({
     : normalizeStudentReadingLevel(studentReadingLevel);
 
   return buildRecommendation({
-    topic,
+    topicAnalysis,
     readingLevel,
     learningFocus: topicText,
     libraryRecord,
@@ -597,14 +813,16 @@ export async function buildWeeklyPlannerBookRecommendations({
   locationLabel,
   homeZipcode,
   topicText,
+  topicSignals,
   learners
 }: {
   locationLabel: string;
   homeZipcode?: string | null;
   topicText: string;
+  topicSignals?: Array<string | null | undefined>;
   learners: LearnerContext[];
 }): Promise<PlannerBookRecommendation[]> {
-  const topic = getTopicFromText(topicText);
+  const topicAnalysis = analyzeTopic(topicText, topicSignals);
   const libraryRecord = resolveLibrarySystem(locationLabel, homeZipcode);
   const normalizedLearners = learners.length
     ? learners
@@ -619,7 +837,7 @@ export async function buildWeeklyPlannerBookRecommendations({
 
   recommendations.push(
     await buildRecommendation({
-      topic,
+      topicAnalysis,
       readingLevel: uniqueLevels[0] ?? defaultStudentReadingLevel,
       learningFocus: topicText,
       libraryRecord,
@@ -630,7 +848,7 @@ export async function buildWeeklyPlannerBookRecommendations({
   if (normalizedLearners.length > 1 && uniqueLevels.length > 1) {
     recommendations.push(
       await buildRecommendation({
-        topic,
+        topicAnalysis,
         readingLevel: uniqueLevels[uniqueLevels.length - 1],
         learningFocus: topicText,
         libraryRecord,

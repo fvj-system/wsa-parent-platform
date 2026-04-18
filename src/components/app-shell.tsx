@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { AddToHomeScreenPrompt } from "@/components/add-to-home-screen-prompt";
 import { QuickDiscoverCamera } from "@/components/quick-discover-camera";
 import { createClient } from "@/lib/supabase/client";
 import { WSA_FACEBOOK_URL } from "@/lib/social";
@@ -39,6 +40,7 @@ type AppShellProps = {
 export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
   const pathname = usePathname();
   const isAdminPath = pathname.startsWith("/admin");
+  const shouldShowA2hsPrompt = pathname === "/dashboard";
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -194,6 +196,8 @@ export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
       </section>
 
       {children}
+
+      {!isAdminPath && shouldShowA2hsPrompt ? <AddToHomeScreenPrompt /> : null}
 
       {!isAdminPath ? (
         <>
