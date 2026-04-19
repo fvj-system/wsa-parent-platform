@@ -24,7 +24,7 @@ export default function manifest(): MetadataRoute.Manifest {
         src: "/wsa/logo.png",
         sizes: "any",
         type: "image/png",
-        purpose: "any maskable",
+        purpose: "maskable",
       },
     ],
   };

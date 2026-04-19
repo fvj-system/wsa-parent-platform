@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { ClassRecord } from "@/lib/classes";
+import { slugifyClassTitle } from "@/lib/admin-classes";
 
 type AdminClassFormProps = {
   initialValues?: ClassRecord | null;
@@ -21,26 +22,29 @@ export function AdminClassForm({ initialValues, mode }: AdminClassFormProps) {
         event.preventDefault();
         setError("");
         const formData = new FormData(event.currentTarget);
+        const title = String(formData.get("title") || "").trim();
+        const manualSlug = String(formData.get("slug") || "").trim();
 
         startTransition(async () => {
           const body = {
-            title: String(formData.get("title") || ""),
+            title,
+            slug: manualSlug || slugifyClassTitle(title),
             description: String(formData.get("description") || ""),
-            class_type: String(formData.get("class_type") || ""),
-            date: String(formData.get("date") || ""),
+            short_description: String(formData.get("short_description") || ""),
+            class_date: String(formData.get("class_date") || ""),
             start_time: String(formData.get("start_time") || ""),
             end_time: String(formData.get("end_time") || ""),
             location: String(formData.get("location") || ""),
-            age_min: Number(formData.get("age_min") || 0),
-            age_max: Number(formData.get("age_max") || 0),
-            price_cents: Number(formData.get("price_cents") || 0),
-            max_capacity: Number(formData.get("max_capacity") || 1),
-            spots_remaining: Number(formData.get("spots_remaining") || 0),
+            price_child: Number(formData.get("price_child") || 0),
+            price_family: Number(formData.get("price_family") || 0),
+            capacity: Number(formData.get("capacity") || 0),
+            status: String(formData.get("status") || "scheduled"),
+            image_url: String(formData.get("image_url") || ""),
             what_to_bring: String(formData.get("what_to_bring") || ""),
-            weather_note: String(formData.get("weather_note") || ""),
-            internal_notes: String(formData.get("internal_notes") || ""),
-            waiver_required: formData.get("waiver_required") === "on",
-            status: String(formData.get("status") || "draft")
+            age_range: String(formData.get("age_range") || ""),
+            registration_link_child: String(formData.get("registration_link_child") || ""),
+            registration_link_family: String(formData.get("registration_link_family") || ""),
+            is_featured: formData.get("is_featured") === "on"
           };
 
           const endpoint = mode === "create" ? "/api/admin/classes" : `/api/admin/classes/${initialValues?.id}`;
@@ -65,7 +69,10 @@ export function AdminClassForm({ initialValues, mode }: AdminClassFormProps) {
     >
       <div>
         <p className="eyebrow">{mode === "create" ? "Create class" : "Edit class"}</p>
-        <h3>{mode === "create" ? "Publish a new class" : "Update class details"}</h3>
+        <h3>{mode === "create" ? "Publish a class card for families" : "Update class details and links"}</h3>
+        <p className="panel-copy" style={{ marginBottom: 0 }}>
+          WSA handles browsing and class choice here. Jotform still handles the real registration, waiver, and Stripe checkout.
+        </p>
       </div>
 
       <div className="content-grid">
@@ -74,20 +81,50 @@ export function AdminClassForm({ initialValues, mode }: AdminClassFormProps) {
           <input name="title" defaultValue={initialValues?.title ?? ""} required />
         </label>
         <label>
-          Class type
-          <input name="class_type" defaultValue={initialValues?.class_type ?? ""} required />
+          Slug
+          <input
+            name="slug"
+            defaultValue={initialValues?.slug ?? ""}
+            placeholder="auto-generated-from-title"
+          />
         </label>
         <label style={{ gridColumn: "1 / -1" }}>
-          Description
-          <textarea name="description" rows={4} defaultValue={initialValues?.description ?? ""} />
+          Short description
+          <textarea
+            name="short_description"
+            rows={2}
+            defaultValue={initialValues?.short_description ?? ""}
+            placeholder="One compact sentence for the class card."
+          />
+        </label>
+        <label style={{ gridColumn: "1 / -1" }}>
+          Full description
+          <textarea
+            name="description"
+            rows={5}
+            defaultValue={initialValues?.description ?? ""}
+            placeholder="What families should know before they register."
+          />
         </label>
         <label>
-          Date
-          <input name="date" type="date" defaultValue={initialValues?.date ?? ""} required />
+          Class date
+          <input
+            name="class_date"
+            type="date"
+            defaultValue={initialValues?.class_date ?? initialValues?.date ?? ""}
+            required
+          />
         </label>
         <label>
-          Location
-          <input name="location" defaultValue={initialValues?.location ?? ""} />
+          Status
+          <select name="status" defaultValue={initialValues?.status ?? "scheduled"}>
+            <option value="draft">Draft</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="full">Full</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="archived">Archived</option>
+          </select>
         </label>
         <label>
           Start time
@@ -97,56 +134,94 @@ export function AdminClassForm({ initialValues, mode }: AdminClassFormProps) {
           End time
           <input name="end_time" type="time" defaultValue={initialValues?.end_time ?? ""} required />
         </label>
-        <label>
-          Min age
-          <input name="age_min" type="number" min={0} max={18} defaultValue={initialValues?.age_min ?? 5} required />
+        <label style={{ gridColumn: "1 / -1" }}>
+          Location
+          <input name="location" defaultValue={initialValues?.location ?? ""} />
         </label>
         <label>
-          Max age
-          <input name="age_max" type="number" min={0} max={18} defaultValue={initialValues?.age_max ?? 12} required />
+          Child price
+          <input
+            name="price_child"
+            type="number"
+            min={0}
+            step="0.01"
+            defaultValue={initialValues?.price_child ?? (typeof initialValues?.price_cents === "number" ? initialValues.price_cents / 100 : 15)}
+            required
+          />
         </label>
         <label>
-          Price (cents)
-          <input name="price_cents" type="number" min={0} defaultValue={initialValues?.price_cents ?? 0} required />
+          Family price
+          <input
+            name="price_family"
+            type="number"
+            min={0}
+            step="0.01"
+            defaultValue={initialValues?.price_family ?? 25}
+            required
+          />
         </label>
         <label>
-          Max capacity
-          <input name="max_capacity" type="number" min={1} defaultValue={initialValues?.max_capacity ?? 12} required />
+          Capacity
+          <input
+            name="capacity"
+            type="number"
+            min={1}
+            defaultValue={initialValues?.capacity ?? initialValues?.max_capacity ?? 12}
+            required
+          />
         </label>
         <label>
-          Spots remaining
-          <input name="spots_remaining" type="number" min={0} defaultValue={initialValues?.spots_remaining ?? initialValues?.max_capacity ?? 12} required />
+          Age range
+          <input
+            name="age_range"
+            defaultValue={
+              initialValues?.age_range ??
+              (typeof initialValues?.age_min === "number" && typeof initialValues?.age_max === "number"
+                ? `${initialValues.age_min}-${initialValues.age_max}`
+                : "")
+            }
+            placeholder="5-12"
+          />
         </label>
-        <label>
-          Status
-          <select name="status" defaultValue={initialValues?.status ?? "draft"}>
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="full">Full</option>
-            <option value="cancelled">Cancelled</option>
-            <option value="completed">Completed</option>
-          </select>
+        <label style={{ gridColumn: "1 / -1" }}>
+          Image URL
+          <input name="image_url" type="url" defaultValue={initialValues?.image_url ?? ""} placeholder="https://..." />
         </label>
         <label style={{ gridColumn: "1 / -1" }}>
           What to bring
-          <textarea name="what_to_bring" rows={3} defaultValue={initialValues?.what_to_bring ?? ""} />
+          <textarea
+            name="what_to_bring"
+            rows={3}
+            defaultValue={initialValues?.what_to_bring ?? ""}
+            placeholder="Water, bug spray, journal, boots..."
+          />
         </label>
         <label style={{ gridColumn: "1 / -1" }}>
-          Weather note
-          <textarea name="weather_note" rows={3} defaultValue={initialValues?.weather_note ?? ""} />
+          Child registration Jotform link
+          <input
+            name="registration_link_child"
+            type="url"
+            defaultValue={initialValues?.registration_link_child ?? ""}
+            placeholder="https://form.jotform.com/..."
+          />
         </label>
         <label style={{ gridColumn: "1 / -1" }}>
-          Internal notes
-          <textarea name="internal_notes" rows={3} defaultValue={initialValues?.internal_notes ?? ""} />
+          Family registration Jotform link
+          <input
+            name="registration_link_family"
+            type="url"
+            defaultValue={initialValues?.registration_link_family ?? ""}
+            placeholder="https://form.jotform.com/..."
+          />
         </label>
-        <label>
-          <input name="waiver_required" type="checkbox" defaultChecked={initialValues?.waiver_required ?? true} />
-          Waiver required
+        <label className="classes-waiver-toggle" style={{ gridColumn: "1 / -1" }}>
+          <input name="is_featured" type="checkbox" defaultChecked={initialValues?.is_featured ?? false} />
+          <span>Feature this class at the top of the parent class list.</span>
         </label>
       </div>
 
       <div className="cta-row">
-        <button type="submit" disabled={isPending}>
+        <button type="submit" className="button button-primary" disabled={isPending}>
           {isPending ? "Saving..." : mode === "create" ? "Create class" : "Save changes"}
         </button>
       </div>

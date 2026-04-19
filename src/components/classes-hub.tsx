@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { calculateClassRegistrationPrice, CLASS_PRICING, formatPrice } from "@/lib/class-pricing";
+import { getClassCapacity, getClassDateValue, getClassPrimaryPrice, getClassSpotsLeft } from "@/lib/classes";
 import type { ClassBookingRecord, ClassRecord } from "@/lib/classes";
 import type { StudentRecord } from "@/lib/students";
 import type { WaiverRecord } from "@/lib/waivers";
@@ -34,8 +35,9 @@ type RegistrationGroup = {
 };
 
 function formatClassDate(classItem: ClassRecord | null) {
-  if (!classItem?.date) return "Date TBD";
-  return new Date(classItem.date).toLocaleDateString();
+  const dateValue = classItem ? getClassDateValue(classItem) : null;
+  if (!dateValue) return "Date TBD";
+  return new Date(dateValue).toLocaleDateString();
 }
 
 function formatClassTime(classItem: ClassRecord | null) {
@@ -324,7 +326,7 @@ export function ClassesHub({
                 >
                   <div className="classes-hub-card-head">
                     <div>
-                      <p className="eyebrow">{classItem.class_type}</p>
+                      <p className="eyebrow">{classItem.class_type || "Field class"}</p>
                       <h3>{classItem.title}</h3>
                     </div>
                     <span className="badge">{statusLabel}</span>
@@ -333,7 +335,15 @@ export function ClassesHub({
                     <li>{formatClassDate(classItem)}</li>
                     <li>{formatClassTime(classItem)}</li>
                     <li>{classItem.location || "Location TBD"}</li>
-                    <li>{formatPrice(calculateClassRegistrationPrice(1).totalCents)} per child</li>
+                    <li>
+                      {typeof getClassPrimaryPrice(classItem) === "number"
+                        ? new Intl.NumberFormat("en-US", {
+                            style: "currency",
+                            currency: "USD"
+                          }).format(getClassPrimaryPrice(classItem) ?? 0)
+                        : formatPrice(calculateClassRegistrationPrice(1).totalCents)}{" "}
+                      per child
+                    </li>
                   </div>
                 </button>
 
@@ -373,7 +383,9 @@ export function ClassesHub({
                       </section>
                       <section>
                         <h4>Spots</h4>
-                        <p>{classItem.spots_remaining} remaining out of {classItem.max_capacity}</p>
+                        <p>
+                          {getClassSpotsLeft(classItem) ?? "?"} remaining out of {getClassCapacity(classItem) ?? "?"}
+                        </p>
                       </section>
                       <section>
                         <h4>Waiver</h4>
@@ -420,8 +432,8 @@ export function ClassesHub({
                           {students.map((student) => {
                             const isAlreadyRegistered = classRegisteredStudentIds.has(student.id);
                             const outOfRange =
-                              (classItem.age_min !== null && student.age < classItem.age_min) ||
-                              (classItem.age_max !== null && student.age > classItem.age_max);
+                              (typeof classItem.age_min === "number" && student.age < classItem.age_min) ||
+                              (typeof classItem.age_max === "number" && student.age > classItem.age_max);
                             const disabled = isAlreadyRegistered || outOfRange;
 
                             return (

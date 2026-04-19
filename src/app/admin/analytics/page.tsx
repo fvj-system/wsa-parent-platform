@@ -7,6 +7,7 @@ import {
   resolveAdminDateRange,
 } from "@/lib/admin-portal";
 import { requireAdmin } from "@/lib/auth";
+import { getClassDateValue } from "@/lib/classes";
 
 export default async function AdminAnalyticsPage({
   searchParams,
@@ -74,7 +75,14 @@ export default async function AdminAnalyticsPage({
           </p>
           <div className="chip-list">
             <li>{uniqueStudents} unique students</li>
-            <li>{dataset.classes.filter((item) => new Date(item.date) >= selectedRange.start && new Date(item.date) <= selectedRange.end).length} classes in range</li>
+            <li>
+              {dataset.classes.filter((item) => {
+                const classDate = getClassDateValue(item);
+                if (!classDate) return false;
+                const parsedDate = new Date(`${classDate}T00:00:00`);
+                return parsedDate >= selectedRange.start && parsedDate <= selectedRange.end;
+              }).length} classes in range
+            </li>
             <li>{filteredBookings.filter((item) => item.payment_status === "refunded").length} refunded</li>
             <li>{filteredBookings.filter((item) => item.booking_status === "no_show").length} no-shows</li>
           </div>

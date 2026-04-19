@@ -1,122 +1,136 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AdminBookingActions } from "@/components/admin-booking-actions";
+import { AdminClassStatusActions } from "@/components/admin-class-status-actions";
 import { AdminShell } from "@/components/admin-shell";
-import { listAdminUsers } from "@/lib/admin-portal";
 import { requireAdmin } from "@/lib/auth";
-import type { ActivityCompletionRecord } from "@/lib/activity-completions";
-import type { ClassBookingRecord, ClassRecord } from "@/lib/classes";
-import type { StudentRecord } from "@/lib/students";
+import { getClassCapacity, getClassDateValue, getClassSpotsLeft, type ClassRecord } from "@/lib/classes";
 
 export default async function AdminClassDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase, user } = await requireAdmin();
 
-  const [{ data: classItem }, { data: bookings }, { data: students }, { data: profiles }, { data: completions }, authUsers] = await Promise.all([
+  const [{ data: classItem }, { data: bookingRows }] = await Promise.all([
     supabase
       .from("classes")
-      .select("id, title, description, class_type, date, start_time, end_time, location, age_min, age_max, price_cents, max_capacity, spots_remaining, what_to_bring, weather_note, internal_notes, waiver_required, status, created_at, updated_at")
+      .select("id, title, slug, description, short_description, class_date, start_time, end_time, location, price_child, price_family, capacity, status, image_url, what_to_bring, age_range, registration_link_child, registration_link_family, is_featured, created_at, updated_at, class_type, date, age_min, age_max, price_cents, max_capacity, spots_remaining")
       .eq("id", id)
       .maybeSingle(),
     supabase
       .from("class_bookings")
-      .select("id, class_id, user_id, student_id, booking_status, payment_status, stripe_checkout_session_id, stripe_payment_intent_id, amount_paid_cents, booked_at, notes, created_at, updated_at")
+      .select("class_id, booking_status")
       .eq("class_id", id)
-      .order("booked_at", { ascending: false }),
-    supabase
-      .from("students")
-      .select("id, user_id, name, age, interests, current_rank, completed_adventures_count, created_at, updated_at"),
-    supabase
-      .from("profiles")
-      .select("id, full_name, household_name, phone, is_admin, created_at, updated_at"),
-    supabase
-      .from("activity_completions")
-      .select("id, user_id, student_id, generation_id, class_booking_id, activity_type, title, completed_at, notes, parent_rating, created_at")
-      .eq("activity_type", "in_person_class"),
-    listAdminUsers(supabase)
+      .neq("booking_status", "cancelled")
   ]);
 
   if (!classItem) {
     notFound();
   }
 
-  const studentMap = new Map(((students ?? []) as StudentRecord[]).map((student) => [student.id, student]));
-  const profileMap = new Map((profiles ?? []).map((profile) => [profile.id, profile as { full_name?: string; household_name?: string; phone?: string }]));
-  const completionMap = new Set(((completions ?? []) as ActivityCompletionRecord[]).map((item) => item.class_booking_id).filter(Boolean));
+  const classRecord = {
+    ...(classItem as ClassRecord),
+    enrolled_count: (bookingRows ?? []).length
+  } satisfies ClassRecord;
 
   return (
     <AdminShell
       userLabel={user.email ?? "WSA admin"}
-      title={(classItem as ClassRecord).title}
-      description="Review operational details, registrations, payments, and attendance from one admin workspace."
+      title={classRecord.title}
+      description="Review the parent-facing class details, bridge links, and any bridge-side booking records in one place."
     >
       <section className="panel stack">
         <div className="header-row">
           <div>
-            <p className="eyebrow">{(classItem as ClassRecord).class_type}</p>
-            <h3>{(classItem as ClassRecord).title}</h3>
+            <p className="eyebrow">{classRecord.is_featured ? "Featured class" : "Class"}</p>
+            <h3>{classRecord.title}</h3>
           </div>
           <div className="nav-actions">
             <Link className="button button-ghost" href={`/admin/classes/${id}/edit`}>Edit class</Link>
           </div>
         </div>
-        <p className="panel-copy" style={{ margin: 0 }}>{(classItem as ClassRecord).description || "No description added."}</p>
-        <div className="chip-list">
-          <li>{new Date((classItem as ClassRecord).date).toLocaleDateString()}</li>
-          <li>{(classItem as ClassRecord).location || "Location TBD"}</li>
-          <li>{(classItem as ClassRecord).status}</li>
-          <li>{(classItem as ClassRecord).spots_remaining} spots left</li>
-        </div>
-        {(classItem as ClassRecord).internal_notes ? (
-          <section>
-            <h4>Internal notes</h4>
-            <p>{(classItem as ClassRecord).internal_notes}</p>
-          </section>
-        ) : null}
+        <p className="panel-copy" style={{ margin: 0 }}>
+          {classRecord.short_description || classRecord.description || "No summary added yet."}
+        </p>
+        <ul className="chip-list">
+          <li>{getClassDateValue(classRecord) ? new Date(`${getClassDateValue(classRecord)}T00:00:00`).toLocaleDateString() : "Date TBD"}</li>
+          <li>{classRecord.start_time && classRecord.end_time ? `${classRecord.start_time} - ${classRecord.end_time}` : "Time TBD"}</li>
+          <li>{classRecord.location || "Location TBD"}</li>
+          <li>Child ${classRecord.price_child?.toFixed(2) ?? "TBD"}</li>
+          <li>Family ${classRecord.price_family?.toFixed(2) ?? "TBD"}</li>
+          {getClassSpotsLeft(classRecord) !== null || getClassCapacity(classRecord) !== null ? (
+            <li>{getClassSpotsLeft(classRecord) ?? getClassCapacity(classRecord)} spots left</li>
+          ) : null}
+        </ul>
+      </section>
+
+      <section className="result-sections class-detail-grid">
+        <section>
+          <h4>Status</h4>
+          <p>{classRecord.status}</p>
+        </section>
+        <section>
+          <h4>Age range</h4>
+          <p>{classRecord.age_range || "All family ages welcome"}</p>
+        </section>
+        <section>
+          <h4>Bridge records</h4>
+          <p>{classRecord.enrolled_count ?? 0}</p>
+        </section>
+        <section>
+          <h4>Featured</h4>
+          <p>{classRecord.is_featured ? "Yes" : "No"}</p>
+        </section>
       </section>
 
       <section className="panel stack">
         <div>
-          <p className="eyebrow">Registrations</p>
-          <h3>Bookings and attendance</h3>
+          <p className="eyebrow">Registration links</p>
+          <h3>Live Jotform handoff</h3>
         </div>
-        {((bookings ?? []) as ClassBookingRecord[]).length ? (
-          <div className="stack">
-            {((bookings ?? []) as ClassBookingRecord[]).map((booking) => {
-              const student = booking.student_id ? studentMap.get(booking.student_id) : null;
-              const profile = profileMap.get(booking.user_id);
-              const attended = completionMap.has(booking.id);
-              const email = authUsers.get(booking.user_id)?.email ?? "No email found";
+        <div className="result-sections class-detail-grid">
+          <section>
+            <h4>Child registration</h4>
+            <p>{classRecord.registration_link_child || "Not connected yet."}</p>
+          </section>
+          <section>
+            <h4>Family registration</h4>
+            <p>{classRecord.registration_link_family || "Not connected yet."}</p>
+          </section>
+        </div>
+        <div className="cta-row">
+          {classRecord.registration_link_child ? (
+            <a className="button button-primary" href={classRecord.registration_link_child} target="_blank" rel="noreferrer">
+              Open child form
+            </a>
+          ) : null}
+          {classRecord.registration_link_family ? (
+            <a className="button button-ghost" href={classRecord.registration_link_family} target="_blank" rel="noreferrer">
+              Open family form
+            </a>
+          ) : null}
+        </div>
+      </section>
 
-              return (
-                <article className="note-card" key={booking.id}>
-                  <div className="copy">
-                    <div className="header-row">
-                      <div>
-                        <h4>{student?.name ?? "Unassigned student"}</h4>
-                        <p className="muted" style={{ margin: "8px 0 0" }}>
-                          {profile?.household_name || profile?.full_name || "Parent account"} • {new Date(booking.booked_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <span className="pill">{attended ? "attended" : booking.booking_status}</span>
-                    </div>
-                    <p className="panel-copy" style={{ margin: "10px 0 0" }}>
-                      Payment: {booking.payment_status} • Paid ${(booking.amount_paid_cents / 100).toFixed(2)}
-                    </p>
-                    <p className="muted" style={{ margin: "10px 0 0" }}>
-                      {email} {profile?.phone ? `• Phone: ${profile.phone}` : ""} • Stripe session: {booking.stripe_checkout_session_id || "none"}
-                    </p>
-                    <div style={{ marginTop: 14 }}>
-                      <AdminBookingActions bookingId={booking.id} disabled={attended} />
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="panel-copy">No registrations yet for this class.</p>
-        )}
+      <section className="panel stack">
+        <div>
+          <p className="eyebrow">Class content</p>
+          <h3>Family-facing detail</h3>
+        </div>
+        <section>
+          <h4>Full description</h4>
+          <p>{classRecord.description || "No full description added yet."}</p>
+        </section>
+        <section>
+          <h4>What to bring</h4>
+          <p>{classRecord.what_to_bring || "No bring-list added yet."}</p>
+        </section>
+      </section>
+
+      <section className="panel stack">
+        <div>
+          <p className="eyebrow">Actions</p>
+          <h3>Status controls</h3>
+        </div>
+        <AdminClassStatusActions classId={classRecord.id} />
       </section>
     </AdminShell>
   );

@@ -10,7 +10,7 @@ export default async function AdminEditClassPage({ params }: { params: Promise<{
 
   const { data: classItem } = await supabase
     .from("classes")
-    .select("id, title, description, class_type, date, start_time, end_time, location, age_min, age_max, price_cents, max_capacity, spots_remaining, what_to_bring, weather_note, internal_notes, waiver_required, status, created_at, updated_at")
+    .select("id, title, slug, description, short_description, class_date, start_time, end_time, location, price_child, price_family, capacity, status, image_url, what_to_bring, age_range, registration_link_child, registration_link_family, is_featured, created_at, updated_at, class_type, date, age_min, age_max, price_cents, max_capacity, spots_remaining")
     .eq("id", id)
     .maybeSingle();
 
@@ -22,7 +22,7 @@ export default async function AdminEditClassPage({ params }: { params: Promise<{
     <AdminShell
       userLabel={user.email ?? "WSA admin"}
       title={`Edit ${(classItem as ClassRecord).title}`}
-      description="Update the published class details, availability, and internal notes."
+      description="Update the parent-facing class card, dates, pricing, and Jotform registration links."
     >
       <AdminClassForm mode="edit" initialValues={classItem as ClassRecord} />
     </AdminShell>

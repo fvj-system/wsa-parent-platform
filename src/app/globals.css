@@ -723,6 +723,88 @@ select {
   margin-top: 3px;
 }
 
+.classes-catalog-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.classes-card {
+  padding: 18px;
+  border-radius: 20px;
+  gap: 12px;
+}
+
+.classes-card-image,
+.class-detail-image {
+  display: block;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 18px;
+  border: 1px solid rgba(68, 47, 28, 0.12);
+}
+
+.classes-card-image {
+  aspect-ratio: 16 / 9;
+}
+
+.class-detail-image {
+  aspect-ratio: 16 / 8;
+}
+
+.classes-card-header,
+.classes-price-row,
+.classes-past-row {
+  display: flex;
+  gap: 12px;
+}
+
+.classes-card-header,
+.classes-price-row {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.classes-price-chip {
+  min-width: 112px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(68, 47, 28, 0.12);
+  background: rgba(255, 255, 255, 0.52);
+  display: grid;
+  gap: 4px;
+}
+
+.classes-price-chip span {
+  color: rgba(43, 32, 24, 0.72);
+  font: 700 0.74rem/1.1 var(--font-sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.classes-price-chip strong {
+  color: var(--ink);
+  font: 800 1rem/1.1 var(--font-serif);
+}
+
+.classes-past-list {
+  display: grid;
+  gap: 10px;
+}
+
+.classes-past-row {
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(68, 47, 28, 0.12);
+  background: rgba(255, 255, 255, 0.52);
+}
+
+.class-detail-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .admin-tabs-panel {
   padding: 18px 20px;
 }
@@ -4824,5 +4906,15 @@ select {
 
   .classes-student-option {
     padding: 11px 12px;
+  }
+
+  .class-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .classes-price-row,
+  .classes-past-row {
+    display: grid;
+    grid-template-columns: 1fr;
   }
 }

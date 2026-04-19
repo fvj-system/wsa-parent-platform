@@ -1,81 +1,66 @@
-import { ClassesHub } from "@/components/classes-hub";
+import { ClassesCatalog } from "@/components/classes-catalog";
 import { PageShell } from "@/components/page-shell";
 import { requireUser } from "@/lib/auth";
-import { confirmClassBookingFromSession } from "@/lib/class-bookings";
-import type { ClassBookingRecord, ClassRecord } from "@/lib/classes";
-import { getHouseholdContext } from "@/lib/households";
-import type { StudentRecord } from "@/lib/students";
-import type { WaiverRecord } from "@/lib/waivers";
+import type { ClassRecord } from "@/lib/classes";
 
-export default async function ClassesPage({
-  searchParams
-}: {
-  searchParams: Promise<{ session_id?: string; group_id?: string; class?: string; canceled?: string }>;
-}) {
-  const { session_id: sessionId, group_id: groupId, class: selectedClassId, canceled } = await searchParams;
-  const { supabase, user } = await requireUser();
-  const household = await getHouseholdContext(supabase, user.id);
-
-  let successMessage = "";
-  let errorMessage = canceled === "1" ? "Checkout was canceled. Your class registration was not completed." : "";
-
-  if (sessionId && groupId) {
-    try {
-      await confirmClassBookingFromSession({
-        supabase,
-        userId: user.id,
-        sessionId,
-        bookingGroupId: groupId
-      });
-      successMessage = "Class registration confirmed and payment recorded.";
-    } catch (error) {
-      errorMessage = error instanceof Error ? error.message : "Could not confirm the Stripe session.";
+function sortClasses(items: ClassRecord[]) {
+  return [...items].sort((left, right) => {
+    if (left.is_featured !== right.is_featured) {
+      return left.is_featured ? -1 : 1;
     }
-  }
 
-  const [{ data: classes }, { data: students }, { data: bookings }, { data: reusableWaiver }] = await Promise.all([
+    const leftDate = left.class_date ?? left.date ?? "";
+    const rightDate = right.class_date ?? right.date ?? "";
+    return leftDate.localeCompare(rightDate);
+  });
+}
+
+export default async function ClassesPage() {
+  const { supabase, user } = await requireUser();
+  const today = new Date().toISOString().slice(0, 10);
+
+  const [{ data: upcomingClasses }, { data: pastClasses }, { data: bookingRows }] = await Promise.all([
     supabase
       .from("classes")
-      .select("id, title, description, class_type, date, start_time, end_time, location, age_min, age_max, price_cents, max_capacity, spots_remaining, what_to_bring, weather_note, waiver_required, status, created_at, updated_at")
-      .in("status", ["published", "full", "completed"])
-      .gte("date", new Date().toISOString().slice(0, 10))
-      .order("date", { ascending: true })
+      .select("id, title, slug, description, short_description, class_date, start_time, end_time, location, price_child, price_family, capacity, status, image_url, what_to_bring, age_range, registration_link_child, registration_link_family, is_featured, created_at, updated_at, class_type, date, age_min, age_max, price_cents, max_capacity, spots_remaining")
+      .in("status", ["scheduled", "published", "full"])
+      .gte("class_date", today)
+      .order("is_featured", { ascending: false })
+      .order("class_date", { ascending: true })
       .limit(24),
     supabase
-      .from("students")
-      .select("id, user_id, household_id, name, age, interests, current_rank, completed_adventures_count, created_at, updated_at")
-      .eq("household_id", household.householdId)
-      .order("created_at", { ascending: true }),
+      .from("classes")
+      .select("id, title, slug, description, short_description, class_date, start_time, end_time, location, price_child, price_family, capacity, status, image_url, what_to_bring, age_range, registration_link_child, registration_link_family, is_featured, created_at, updated_at, class_type, date, age_min, age_max, price_cents, max_capacity, spots_remaining")
+      .in("status", ["completed", "cancelled"])
+      .order("class_date", { ascending: false })
+      .limit(8),
     supabase
       .from("class_bookings")
-      .select("id, class_id, user_id, household_id, student_id, registration_group_id, group_lead, attendee_count, pricing_mode, waiver_id, booking_status, payment_status, stripe_checkout_session_id, stripe_payment_intent_id, amount_paid_cents, booked_at, notes, created_at, updated_at")
-      .eq("household_id", household.householdId)
-      .order("booked_at", { ascending: false }),
-    supabase
-      .from("waivers")
-      .select("id, user_id, household_id, student_id, child_name, emergency_contact, medical_notes, waiver_type, accepted_at, signature_name, signature_data, version, save_on_file")
-      .eq("household_id", household.householdId)
-      .eq("save_on_file", true)
-      .order("accepted_at", { ascending: false })
-      .limit(1)
-      .maybeSingle()
+      .select("class_id, booking_status")
+      .neq("booking_status", "cancelled")
   ]);
+
+  const enrolledByClassId = new Map<string, number>();
+  for (const row of bookingRows ?? []) {
+    enrolledByClassId.set(row.class_id, (enrolledByClassId.get(row.class_id) ?? 0) + 1);
+  }
+
+  const hydrateClasses = (items: ClassRecord[] = []) =>
+    items.map((item) => ({
+      ...item,
+      enrolled_count: enrolledByClassId.get(item.id) ?? null
+    }));
 
   return (
     <PageShell
       userLabel={user.email ?? "WSA family"}
       eyebrow="Classes"
       title="Classes"
-      description="Browse planned classes, register one or more children, reuse a saved waiver when available, and track family class activity in one place."
+      description="Browse upcoming Wild Stallion Academy classes, open the details that fit your family, and continue to the live Jotform registration when you are ready."
     >
-      <ClassesHub
-        classes={(classes ?? []) as ClassRecord[]}
-        students={(students ?? []) as StudentRecord[]}
-        bookings={(bookings ?? []) as ClassBookingRecord[]}
-        initialSelectedClassId={selectedClassId ?? null}
-        reusableWaiver={(reusableWaiver ?? null) as WaiverRecord | null}
-        successMessage={successMessage}
-        errorMessage={errorMessage}
+      <ClassesCatalog
+        upcomingClasses={sortClasses(hydrateClasses((upcomingClasses ?? []) as ClassRecord[]))}
+        pastClasses={hydrateClasses((pastClasses ?? []) as ClassRecord[])}
       />
     </PageShell>
   );

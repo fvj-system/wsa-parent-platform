@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { completeActivity } from "@/lib/activity-completions";
 import { calculateClassRegistrationPrice } from "@/lib/class-pricing";
-import type { ClassBookingRecord, ClassRecord } from "@/lib/classes";
+import { getClassSpotsLeft, type ClassBookingRecord, type ClassRecord } from "@/lib/classes";
 import { getHouseholdContext } from "@/lib/households";
 import { getAppUrl, getStripeClient } from "@/lib/stripe";
 import type { StudentRecord } from "@/lib/students";
@@ -134,20 +134,25 @@ export async function createClassCheckoutSession(input: {
   const classRow = await loadClassForBooking(input.supabase, input.classId);
   const students = await loadStudentsForBooking(input.supabase, input.userId, uniqueStudentIds);
 
-  if (classRow.status !== "published") {
+  if (classRow.status !== "published" && classRow.status !== "scheduled") {
     throw new Error("This class is not currently open for booking.");
   }
 
-  if (classRow.spots_remaining <= 0) {
+  const spotsRemaining = getClassSpotsLeft(classRow);
+
+  if (typeof spotsRemaining === "number" && spotsRemaining <= 0) {
     throw new Error("This class is full.");
   }
 
-  if (classRow.spots_remaining < students.length) {
+  if (typeof spotsRemaining === "number" && spotsRemaining < students.length) {
     throw new Error("There are not enough remaining class spots for all selected students.");
   }
 
   for (const student of students) {
-    if ((classRow.age_min && student.age < classRow.age_min) || (classRow.age_max && student.age > classRow.age_max)) {
+    if (
+      (typeof classRow.age_min === "number" && student.age < classRow.age_min) ||
+      (typeof classRow.age_max === "number" && student.age > classRow.age_max)
+    ) {
       throw new Error(`${student.name} is outside this class age range.`);
     }
   }
@@ -352,7 +357,10 @@ export async function confirmClassBookingFromSession(input: {
 
     if (classRow) {
       const nextSpots = Math.max((classRow.spots_remaining ?? newlyPaidCount) - newlyPaidCount, 0);
-      const nextStatus = classRow.status === "published" && nextSpots === 0 ? "full" : classRow.status;
+      const nextStatus =
+        (classRow.status === "published" || classRow.status === "scheduled") && nextSpots === 0
+          ? "full"
+          : classRow.status;
       const { error } = await input.supabase
         .from("classes")
         .update({

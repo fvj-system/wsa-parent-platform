@@ -6,12 +6,12 @@ type ParsedTimeRange = {
 export type ImportedClassDraft = {
   title: string;
   description: string;
-  class_type: string;
-  date: string;
+  short_description: string;
+  class_date: string;
   start_time: string;
   end_time: string;
   location: string;
-  internal_notes: string;
+  age_range: string;
 };
 
 function cleanLine(value: string) {
@@ -91,17 +91,7 @@ function looksLikeLocationLine(value: string) {
   );
 }
 
-function guessClassType(sourceText: string) {
-  const normalized = sourceText.toLowerCase();
-  if (normalized.includes("fishing") || normalized.includes("angler")) return "Fishing class";
-  if (normalized.includes("bird")) return "Birding class";
-  if (normalized.includes("history") || normalized.includes("museum")) return "History field class";
-  if (normalized.includes("art")) return "Arts field class";
-  if (normalized.includes("nature") || normalized.includes("trail") || normalized.includes("park")) return "Nature field class";
-  return "Field class";
-}
-
-export function parseFacebookClassImport(sourceText: string, sourceUrl?: string): ImportedClassDraft {
+export function parseFacebookClassImport(sourceText: string): ImportedClassDraft {
   const cleanedSource = sourceText.trim();
   if (!cleanedSource) {
     throw new Error("Paste the Facebook event text first.");
@@ -147,19 +137,11 @@ export function parseFacebookClassImport(sourceText: string, sourceUrl?: string)
   return {
     title,
     description,
-    class_type: guessClassType(cleanedSource),
-    date,
+    short_description: description.split("\n")[0] || title,
+    class_date: date,
     start_time: timeRange.start_time,
     end_time: timeRange.end_time,
     location,
-    internal_notes: [
-      "Imported from Facebook event copy.",
-      sourceUrl ? `Source URL: ${sourceUrl}` : "",
-      "",
-      "Original imported text:",
-      cleanedSource
-    ]
-      .filter(Boolean)
-      .join("\n")
+    age_range: "",
   };
 }

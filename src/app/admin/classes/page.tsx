@@ -3,7 +3,7 @@ import { AdminClassStatusActions } from "@/components/admin-class-status-actions
 import { AdminClassImportCard } from "@/components/admin-class-import-card";
 import { AdminShell } from "@/components/admin-shell";
 import { requireAdmin } from "@/lib/auth";
-import type { ClassBookingRecord, ClassRecord } from "@/lib/classes";
+import { getClassCapacity, getClassDateValue, getClassSpotsLeft, type ClassRecord } from "@/lib/classes";
 
 export default async function AdminClassesPage({
   searchParams
@@ -16,99 +16,121 @@ export default async function AdminClassesPage({
 
   let classQuery = supabase
     .from("classes")
-    .select("id, title, description, class_type, date, start_time, end_time, location, age_min, age_max, price_cents, max_capacity, spots_remaining, what_to_bring, weather_note, internal_notes, waiver_required, status, created_at, updated_at")
-    .order("date", { ascending: true });
+    .select("id, title, slug, description, short_description, class_date, start_time, end_time, location, price_child, price_family, capacity, status, image_url, what_to_bring, age_range, registration_link_child, registration_link_family, is_featured, created_at, updated_at, class_type, date, age_min, age_max, price_cents, max_capacity, spots_remaining")
+    .order("is_featured", { ascending: false })
+    .order("class_date", { ascending: true });
 
-  if (filter === "open") classQuery = classQuery.eq("status", "published");
+  if (filter === "featured") classQuery = classQuery.eq("is_featured", true);
+  if (filter === "scheduled") classQuery = classQuery.eq("status", "scheduled");
   if (filter === "full") classQuery = classQuery.eq("status", "full");
-  if (filter === "cancelled") classQuery = classQuery.eq("status", "cancelled");
+  if (filter === "draft") classQuery = classQuery.eq("status", "draft");
+  if (filter === "archived") classQuery = classQuery.eq("status", "archived");
   if (filter === "completed") classQuery = classQuery.eq("status", "completed");
-  if (filter === "upcoming") classQuery = classQuery.gte("date", today);
-  if (filter === "past") classQuery = classQuery.lt("date", today);
+  if (filter === "upcoming") classQuery = classQuery.gte("class_date", today).in("status", ["scheduled", "published", "full"]);
 
-  const [{ data: classes }, { data: bookings }] = await Promise.all([
+  const [{ data: classes }, { data: bookingRows }] = await Promise.all([
     classQuery,
     supabase
       .from("class_bookings")
-      .select("id, class_id, user_id, student_id, booking_status, payment_status, stripe_checkout_session_id, stripe_payment_intent_id, amount_paid_cents, booked_at, notes, created_at, updated_at")
+      .select("class_id, booking_status")
+      .neq("booking_status", "cancelled")
   ]);
 
-  const classRows = (classes ?? []) as ClassRecord[];
-  const bookingRows = (bookings ?? []) as ClassBookingRecord[];
-  const registrationsByClass = bookingRows.reduce<Record<string, number>>((acc, booking) => {
-    if (booking.booking_status !== "cancelled") {
-      acc[booking.class_id] = (acc[booking.class_id] ?? 0) + 1;
-    }
-    return acc;
-  }, {});
+  const bookingCountByClassId = new Map<string, number>();
+  for (const row of bookingRows ?? []) {
+    bookingCountByClassId.set(row.class_id, (bookingCountByClassId.get(row.class_id) ?? 0) + 1);
+  }
+
+  const classRows = ((classes ?? []) as ClassRecord[]).map((item) => ({
+    ...item,
+    enrolled_count: bookingCountByClassId.get(item.id) ?? 0
+  }));
 
   const metrics = {
-    upcoming: classRows.filter((item) => item.date >= today).length,
-    open: classRows.filter((item) => item.status === "published").length,
-    full: classRows.filter((item) => item.status === "full").length,
-    registrationsThisMonth: bookingRows.filter((item) => item.booked_at.slice(0, 7) === today.slice(0, 7)).length,
-    unpaid: bookingRows.filter((item) => item.payment_status === "unpaid" || item.payment_status === "failed").length
+    upcoming: classRows.filter((item) => {
+      const classDate = getClassDateValue(item);
+      return Boolean(classDate && classDate >= today && (item.status === "scheduled" || item.status === "published" || item.status === "full"));
+    }).length,
+    featured: classRows.filter((item) => item.is_featured).length,
+    drafts: classRows.filter((item) => item.status === "draft").length,
+    archived: classRows.filter((item) => item.status === "archived").length
   };
 
   return (
     <AdminShell
       userLabel={user.email ?? "WSA admin"}
       title="Classes"
-      description="An operator cockpit for class publishing, registrations, attendance, and class status."
+      description="Manage the parent-facing class catalog here, while Jotform stays the live registration and Stripe checkout layer."
     >
       <section className="stats-grid">
-        <article className="stat"><span>Upcoming classes</span><strong>{metrics.upcoming}</strong></article>
-        <article className="stat"><span>Open classes</span><strong>{metrics.open}</strong></article>
-        <article className="stat"><span>Full classes</span><strong>{metrics.full}</strong></article>
-        <article className="stat"><span>Registrations this month</span><strong>{metrics.registrationsThisMonth}</strong></article>
+        <article className="stat"><span>Upcoming</span><strong>{metrics.upcoming}</strong></article>
+        <article className="stat"><span>Featured</span><strong>{metrics.featured}</strong></article>
+        <article className="stat"><span>Drafts</span><strong>{metrics.drafts}</strong></article>
+        <article className="stat"><span>Archived</span><strong>{metrics.archived}</strong></article>
       </section>
 
       <section className="panel stack">
         <div className="header-row">
           <div>
             <p className="eyebrow">Filters</p>
-            <h3>Class operations</h3>
+            <h3>Class catalog operations</h3>
           </div>
           <Link className="button button-primary" href="/admin/classes/new">
-            Create new class
+            Create class
           </Link>
         </div>
         <div className="cta-row">
           <Link className="button button-ghost" href="/admin/classes?filter=upcoming">Upcoming</Link>
-          <Link className="button button-ghost" href="/admin/classes?filter=open">Open</Link>
+          <Link className="button button-ghost" href="/admin/classes?filter=featured">Featured</Link>
+          <Link className="button button-ghost" href="/admin/classes?filter=scheduled">Scheduled</Link>
+          <Link className="button button-ghost" href="/admin/classes?filter=draft">Drafts</Link>
           <Link className="button button-ghost" href="/admin/classes?filter=full">Full</Link>
-          <Link className="button button-ghost" href="/admin/classes?filter=cancelled">Cancelled</Link>
           <Link className="button button-ghost" href="/admin/classes?filter=completed">Completed</Link>
-          <Link className="button button-ghost" href="/admin/classes?filter=past">Past</Link>
+          <Link className="button button-ghost" href="/admin/classes?filter=archived">Archived</Link>
         </div>
       </section>
 
       <AdminClassImportCard />
 
       <section className="stack">
-        {classRows.map((item) => (
-          <article className="panel stack" key={item.id}>
-            <div className="header-row">
-              <div>
-                <p className="eyebrow">{item.class_type}</p>
-                <h3>{item.title}</h3>
+        {classRows.length ? (
+          classRows.map((item) => (
+            <article className="panel stack" key={item.id}>
+              <div className="header-row">
+                <div>
+                  <p className="eyebrow">{item.is_featured ? "Featured class" : "Class"}</p>
+                  <h3>{item.title}</h3>
+                </div>
+                <span className="pill">{item.status}</span>
               </div>
-              <span className="pill">{item.status}</span>
-            </div>
-            <p className="panel-copy" style={{ margin: 0 }}>
-              {new Date(item.date).toLocaleDateString()} • {item.location || "Location TBD"} • ${(item.price_cents / 100).toFixed(2)}
+              <p className="panel-copy" style={{ margin: 0 }}>
+                {item.short_description || item.description || "No short description added yet."}
+              </p>
+              <ul className="chip-list">
+                <li>{getClassDateValue(item) ? new Date(`${getClassDateValue(item)}T00:00:00`).toLocaleDateString() : "Date TBD"}</li>
+                <li>{item.location || "Location TBD"}</li>
+                <li>Child ${item.price_child?.toFixed(2) ?? "TBD"}</li>
+                <li>Family ${item.price_family?.toFixed(2) ?? "TBD"}</li>
+                {getClassSpotsLeft(item) !== null || getClassCapacity(item) !== null ? (
+                  <li>{getClassSpotsLeft(item) ?? getClassCapacity(item)} spots left</li>
+                ) : null}
+                <li>{item.enrolled_count ?? 0} bridge records</li>
+              </ul>
+              <div className="cta-row">
+                <Link className="button button-primary" href={`/admin/classes/${item.id}`}>View</Link>
+                <Link className="button button-ghost" href={`/admin/classes/${item.id}/edit`}>Edit</Link>
+              </div>
+              <AdminClassStatusActions classId={item.id} />
+            </article>
+          ))
+        ) : (
+          <section className="panel stack">
+            <h3>No classes match this filter</h3>
+            <p className="panel-copy" style={{ marginBottom: 0 }}>
+              Create a new class or switch filters to see more catalog entries.
             </p>
-            <div className="chip-list">
-              <li>{item.spots_remaining} spots left</li>
-              <li>{registrationsByClass[item.id] ?? 0} registrations</li>
-            </div>
-            <div className="cta-row">
-              <Link className="button button-primary" href={`/admin/classes/${item.id}`}>View</Link>
-              <Link className="button button-ghost" href={`/admin/classes/${item.id}/edit`}>Edit</Link>
-            </div>
-            <AdminClassStatusActions classId={item.id} />
-          </article>
-        ))}
+          </section>
+        )}
       </section>
     </AdminShell>
   );

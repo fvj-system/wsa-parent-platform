@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
 
 const updateStatusSchema = z.object({
-  status: z.enum(["draft", "published", "full", "cancelled", "completed"])
+  status: z.enum(["draft", "scheduled", "full", "cancelled", "completed", "archived"])
 });
 
 export async function POST(

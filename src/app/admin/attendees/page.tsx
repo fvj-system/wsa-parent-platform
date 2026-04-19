@@ -6,6 +6,7 @@ import {
   matchesAdminQuery,
 } from "@/lib/admin-portal";
 import { requireAdmin } from "@/lib/auth";
+import { getClassDateValue } from "@/lib/classes";
 
 export default async function AdminAttendeesPage({
   searchParams,
@@ -50,7 +51,9 @@ export default async function AdminAttendeesPage({
     .sort((left, right) => right.attendedCount - left.attendedCount);
 
   const classes = [...dataset.classes].sort(
-    (left, right) => new Date(right.date).getTime() - new Date(left.date).getTime(),
+    (left, right) =>
+      new Date(`${getClassDateValue(right) ?? "1970-01-01"}T00:00:00`).getTime() -
+      new Date(`${getClassDateValue(left) ?? "1970-01-01"}T00:00:00`).getTime(),
   );
 
   return (
@@ -69,11 +72,15 @@ export default async function AdminAttendeesPage({
             Class
             <select name="classId" defaultValue={classId ?? ""}>
               <option value="">All classes</option>
-              {classes.map((classItem) => (
-                <option key={classItem.id} value={classItem.id}>
-                  {classItem.title} • {new Date(classItem.date).toLocaleDateString()}
-                </option>
-              ))}
+              {classes.map((classItem) => {
+                const classDate = getClassDateValue(classItem);
+
+                return (
+                  <option key={classItem.id} value={classItem.id}>
+                    {classItem.title} | {classDate ? new Date(`${classDate}T00:00:00`).toLocaleDateString() : "Date TBD"}
+                  </option>
+                );
+              })}
             </select>
           </label>
           <label>
@@ -106,7 +113,7 @@ export default async function AdminAttendeesPage({
                 <p className="eyebrow">Attendee household</p>
                 <h3>{family.householdName}</h3>
                 <p className="panel-copy" style={{ margin: "8px 0 0" }}>
-                  {family.parentNames.join(", ") || "Parent account"} • {family.parentEmails.join(", ") || "No email found"}
+                  {family.parentNames.join(", ") || "Parent account"} | {family.parentEmails.join(", ") || "No email found"}
                 </p>
               </div>
               <span className="pill">{family.attendedCount} attended</span>

@@ -1,15 +1,22 @@
 import Link from "next/link";
-import type { ClassRecord } from "@/lib/classes";
+import {
+  getClassCapacity,
+  getClassDateValue,
+  getClassPrimaryPrice,
+  getClassSpotsLeft,
+  type ClassRecord
+} from "@/lib/classes";
 
 type ClassesListProps = {
   classes: ClassRecord[];
 };
 
-function formatPrice(priceCents: number) {
+function formatMoney(value: number | null) {
+  if (typeof value !== "number") return "Price TBD";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD"
-  }).format(priceCents / 100);
+  }).format(value);
 }
 
 export function ClassesList({ classes }: ClassesListProps) {
@@ -40,10 +47,10 @@ export function ClassesList({ classes }: ClassesListProps) {
             {item.description || "Outdoor class details coming soon."}
           </p>
           <div className="chip-list">
-            <li>{new Date(item.date).toLocaleDateString()}</li>
+            <li>{getClassDateValue(item) ? new Date(getClassDateValue(item) as string).toLocaleDateString() : "Date TBD"}</li>
             <li>{item.start_time} - {item.end_time}</li>
             <li>{item.location || "Location TBD"}</li>
-            <li>{formatPrice(item.price_cents)}</li>
+            <li>{formatMoney(getClassPrimaryPrice(item))}</li>
           </div>
           <div className="result-sections">
             <section>
@@ -55,7 +62,7 @@ export function ClassesList({ classes }: ClassesListProps) {
             <section>
               <h4>Spots remaining</h4>
               <p>
-                {item.spots_remaining} of {item.max_capacity}
+                {getClassSpotsLeft(item) ?? "?"} of {getClassCapacity(item) ?? "?"}
               </p>
             </section>
             <section>

@@ -9,7 +9,7 @@ export default async function AdminNewClassPage() {
     <AdminShell
       userLabel={user.email ?? "WSA admin"}
       title="New class"
-      description="Create a new in-person class with the parent-facing details and the internal operational notes in one place."
+      description="Create a parent-facing class card in WSA and connect the live Jotform registration links for child and family checkout."
     >
       <AdminClassForm mode="create" />
     </AdminShell>

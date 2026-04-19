@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
-import { adminClassFormSchema } from "@/lib/admin-classes";
+import { adminClassFormSchema, buildAdminClassPayload } from "@/lib/admin-classes";
 
 export async function POST(request: Request) {
   try {
@@ -11,9 +11,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid class details." }, { status: 400 });
     }
 
+    const payload = buildAdminClassPayload(parsed.data);
+
     const { data, error } = await supabase
       .from("classes")
-      .insert(parsed.data)
+      .insert(payload)
       .select("id")
       .single();
 

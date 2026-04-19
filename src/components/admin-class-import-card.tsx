@@ -48,20 +48,21 @@ export function AdminClassImportCard() {
 
             startTransition(async () => {
               try {
-                const parsed = parseFacebookClassImport(sourceText, sourceUrl.trim() || undefined);
+                const parsed = parseFacebookClassImport(sourceText);
                 const response = await fetch("/api/admin/classes", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
                     ...parsed,
-                    age_min: 5,
-                    age_max: 12,
-                    price_cents: 0,
-                    max_capacity: 12,
-                    spots_remaining: 12,
+                    slug: "",
+                    price_child: 15,
+                    price_family: 25,
+                    capacity: 12,
+                    image_url: "",
                     what_to_bring: "",
-                    weather_note: "",
-                    waiver_required: true,
+                    registration_link_child: sourceUrl.trim(),
+                    registration_link_family: sourceUrl.trim(),
+                    is_featured: false,
                     status: "draft"
                   })
                 });

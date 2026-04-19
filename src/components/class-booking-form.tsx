@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import type { ClassBookingRecord, ClassRecord } from "@/lib/classes";
+import { getClassPrimaryPrice, type ClassBookingRecord, type ClassRecord } from "@/lib/classes";
 import type { StudentRecord } from "@/lib/students";
 
 type ClassBookingFormProps = {
@@ -14,8 +14,8 @@ export function ClassBookingForm({ classItem, students, existingBookings }: Clas
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
-
   const existingBooking = existingBookings.find((item) => item.student_id === selectedStudentId);
+  const priceLabel = getClassPrimaryPrice(classItem);
 
   return (
     <section className="panel stack">
@@ -32,7 +32,7 @@ export function ClassBookingForm({ classItem, students, existingBookings }: Clas
             <option value="">Choose a student</option>
             {students.map((student) => (
               <option key={student.id} value={student.id}>
-                {student.name} • age {student.age}
+                {student.name} | age {student.age}
               </option>
             ))}
           </select>
@@ -74,7 +74,7 @@ export function ClassBookingForm({ classItem, students, existingBookings }: Clas
           });
         }}
       >
-        {isPending ? "Opening Stripe..." : `Book now • $${(classItem.price_cents / 100).toFixed(2)}`}
+        {isPending ? "Opening Stripe..." : `Book now${priceLabel !== null ? ` | $${priceLabel.toFixed(2)}` : ""}`}
       </button>
 
       {error ? <p className="error">{error}</p> : null}
