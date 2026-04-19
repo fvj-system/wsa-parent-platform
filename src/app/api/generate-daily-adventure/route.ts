@@ -18,7 +18,7 @@ import {
   getPlannerOpportunityMatches
 } from "@/lib/nearby/family-opportunities";
 import { createOpenAIClient, getOpenAIModel } from "@/lib/openai";
-import { buildDailyPlannerBookRecommendation } from "@/lib/library-recommendations";
+import { buildDailyPlannerBookRecommendation, buildPlannerThemeContext } from "@/lib/library-recommendations";
 import {
   buildSmithsonianRecommendedStops,
   getSelectedSmithsonianMuseums,
@@ -733,6 +733,7 @@ export async function POST(request: Request) {
       location.displayLabel
     ];
     const bookTopicText = bookTopicSignals.filter(Boolean).join(". ");
+    const themeContext = buildPlannerThemeContext(bookTopicText, bookTopicSignals);
 
     const output = parseDailyAdventure({
       ...baseOutput,
@@ -795,11 +796,13 @@ export async function POST(request: Request) {
         resolvedTemplate === "fish" ? baseOutput.artificialBaitImageUrl ?? fishingImages.artificialBaitImageUrl : null,
       artificialBaitImageAlt:
         resolvedTemplate === "fish" ? baseOutput.artificialBaitImageAlt ?? fishingImages.artificialBaitImageAlt : null,
+      themeContext,
       bookRecommendation: await buildDailyPlannerBookRecommendation({
         locationLabel: location.displayLabel,
         homeZipcode: parsedInput.data.homeZipcode,
         topicText: bookTopicText,
         topicSignals: bookTopicSignals,
+        themeContext,
         studentReadingLevel: isHouseholdTarget
           ? undefined
           : parsedInput.data.studentReadingLevel,

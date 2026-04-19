@@ -7,7 +7,7 @@ import {
   weekPlannerOutputJsonSchema,
   weekPlannerOutputSchema
 } from "@/lib/generations";
-import { buildWeeklyPlannerBookRecommendations } from "@/lib/library-recommendations";
+import { buildPlannerThemeContext, buildWeeklyPlannerBookRecommendations } from "@/lib/library-recommendations";
 import { createOpenAIClient, getOpenAIModel } from "@/lib/openai";
 
 export async function POST(request: Request) {
@@ -73,14 +73,17 @@ export async function POST(request: Request) {
       ...baseOutput.suggestedFieldTrips
     ];
     const weeklyBookTopicText = weeklyBookSignals.filter(Boolean).join(". ");
+    const themeContext = buildPlannerThemeContext(weeklyBookTopicText, weeklyBookSignals);
 
     const output = weekPlannerOutputSchema.parse({
       ...baseOutput,
+      themeContext,
       bookRecommendations: await buildWeeklyPlannerBookRecommendations({
         locationLabel: parsedInput.data.locationLabel,
         homeZipcode: parsedInput.data.homeZipcode,
         topicText: weeklyBookTopicText,
         topicSignals: weeklyBookSignals,
+        themeContext,
         learners: parsedInput.data.selectedStudentNames.map((name, index) => ({
           name,
           age: parsedInput.data.selectedStudentAges[index] ?? parsedInput.data.childAge ?? 8,

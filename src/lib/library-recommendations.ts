@@ -61,14 +61,18 @@ type RecommendationTemplate = {
 };
 
 type TopicProfile = {
+  theme: string;
+  category: string;
   displayLabel: string;
   topicHint: string;
   templates: Record<ReadingBand, RecommendationTemplate>;
 };
 
-type TopicAnalysis = {
-  topic: RecommendationTopic;
-  displayLabel: string;
+export type PlannerThemeContext = {
+  theme: string;
+  category: string;
+  context: string | null;
+  bucket: RecommendationTopic;
 };
 
 type LibraryCatalogVerification = {
@@ -361,66 +365,92 @@ const natureTemplates: Record<ReadingBand, RecommendationTemplate> = {
 
 const topicProfiles: Record<RecommendationTopic, TopicProfile> = {
   birds: {
+    theme: "birds",
+    category: "wildlife",
     displayLabel: "birdwatching focus",
     topicHint: "birds, nests, feathers, migration, Maryland bird guides, or backyard birdwatching",
     templates: birdTemplates
   },
   turtles_reptiles_amphibians: {
+    theme: "turtles",
+    category: "reptiles",
     displayLabel: "turtle, reptile, amphibian, or pond-life focus",
     topicHint: "turtles, frogs, salamanders, reptiles, amphibians, wetlands, ponds, or marsh life",
     templates: reptileTemplates
   },
   mammals: {
+    theme: "mammals",
+    category: "wildlife",
     displayLabel: "mammal and wildlife-tracking focus",
     topicHint: "mammals, tracks, habitats, woodland animals, or local wildlife guides",
     templates: natureTemplates
   },
   fish_waterways: {
+    theme: "fish and waterways",
+    category: "aquatic life",
     displayLabel: "fish, stream, bay, or shoreline focus",
     topicHint: "fish, ponds, rivers, marshes, Chesapeake Bay, streams, shoreline life, or waterways",
     templates: waterTemplates
   },
   insects: {
+    theme: "insects",
+    category: "wildlife",
     displayLabel: "bug and insect focus",
     topicHint: "bugs, butterflies, bees, insects, pond insects, or pollinator life",
     templates: natureTemplates
   },
   plants_trees_wildflowers: {
+    theme: "plants and wildflowers",
+    category: "botany",
     displayLabel: "plant, tree, or wildflower focus",
     topicHint: "trees, wildflowers, seeds, gardens, leaves, bark, or plant identification",
     templates: plantTemplates
   },
   weather_seasons: {
+    theme: "weather and seasons",
+    category: "science",
     displayLabel: "weather or seasonal science focus",
     topicHint: "weather, seasons, clouds, storms, climate, or seasonal patterns",
     templates: scienceTemplates
   },
   local_history: {
+    theme: "local history",
+    category: "history",
     displayLabel: "local history focus",
     topicHint: "local history, county history, landmarks, museums, historical sites, or regional stories",
     templates: historyTemplates
   },
   maryland_history: {
+    theme: "Maryland history",
+    category: "history",
     displayLabel: "Maryland history focus",
     topicHint: "Maryland history, Chesapeake Bay history, Southern Maryland, St. Mary's City, or regional landmarks",
     templates: historyTemplates
   },
   survival_outdoor_skills: {
+    theme: "outdoor survival skills",
+    category: "outdoor skills",
     displayLabel: "outdoor skills focus",
     topicHint: "outdoor skills, camping, field craft, safety, survival basics, or practical nature skills",
     templates: natureTemplates
   },
   museums_landmarks: {
+    theme: "museums and landmarks",
+    category: "history",
     displayLabel: "museum or landmark focus",
     topicHint: "museum exhibits, landmarks, galleries, monuments, or field-trip interpretation",
     templates: historyTemplates
   },
   colonial_early_america: {
+    theme: "colonial and early America",
+    category: "history",
     displayLabel: "colonial or early America focus",
     topicHint: "colonial America, early America, founding-era history, settlement stories, or museum history",
     templates: historyTemplates
   },
   general_nature_observation: {
+    theme: "general nature observation",
+    category: "wildlife",
     displayLabel: "general nature observation focus",
     topicHint: "local wildlife, habitats, field guides, or outdoor nature study",
     templates: natureTemplates
@@ -518,6 +548,19 @@ const topicKeywordRules: Array<{ topic: RecommendationTopic; pattern: RegExp; we
   }
 ];
 
+const contextKeywordRules: Array<{ context: string; pattern: RegExp }> = [
+  { context: "pond", pattern: /\b(pond|vernal pool)\b/i },
+  { context: "wetland", pattern: /\b(wetland|wetlands|marsh|bog)\b/i },
+  { context: "stream", pattern: /\b(creek|stream|river)\b/i },
+  { context: "shoreline", pattern: /\b(shore|shoreline|bay|pier|dock|estuary)\b/i },
+  { context: "forest", pattern: /\b(forest|woods|woodland)\b/i },
+  { context: "field", pattern: /\b(field|meadow|prairie)\b/i },
+  { context: "garden", pattern: /\b(garden|flower bed)\b/i },
+  { context: "museum", pattern: /\b(museum|gallery|exhibit|smithsonian|zoo)\b/i },
+  { context: "colonial site", pattern: /\b(colonial site|historic site|settlement|fort|st\.?\s*mary'?s city)\b/i },
+  { context: "trail", pattern: /\b(trail|park path|path)\b/i }
+];
+
 function getReadingBand(readingLevel: StudentReadingLevel): ReadingBand {
   switch (readingLevel) {
     case "just starting":
@@ -552,7 +595,7 @@ function pickBestTopic(scores: Map<RecommendationTopic, number>) {
   return bestTopic;
 }
 
-function analyzeTopic(topicText: string, topicSignals: Array<string | null | undefined> = []): TopicAnalysis {
+function analyzeTopicBucket(topicText: string, topicSignals: Array<string | null | undefined> = []) {
   const normalizedSignals = topicSignals
     .map((value) => value?.trim())
     .filter((value): value is string => Boolean(value));
@@ -570,9 +613,37 @@ function analyzeTopic(topicText: string, topicSignals: Array<string | null | und
   });
 
   const topic = pickBestTopic(scores);
+  return topic;
+}
+
+function deriveThemeContextValue(topicText: string, topicSignals: Array<string | null | undefined> = []) {
+  const signals = [...topicSignals, topicText]
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value));
+
+  for (const signal of signals) {
+    for (const rule of contextKeywordRules) {
+      if (rule.pattern.test(signal)) {
+        return rule.context;
+      }
+    }
+  }
+
+  return null;
+}
+
+export function buildPlannerThemeContext(
+  topicText: string,
+  topicSignals: Array<string | null | undefined> = []
+): PlannerThemeContext {
+  const bucket = analyzeTopicBucket(topicText, topicSignals);
+  const profile = topicProfiles[bucket];
+
   return {
-    topic,
-    displayLabel: topicProfiles[topic].displayLabel
+    theme: profile.theme,
+    category: profile.category,
+    context: deriveThemeContextValue(topicText, topicSignals),
+    bucket
   };
 }
 
@@ -738,32 +809,35 @@ async function verifyLibraryRecommendation(
 }
 
 async function buildRecommendation({
-  topicAnalysis,
+  themeContext,
   readingLevel,
   learningFocus,
   libraryRecord,
   householdLabel
 }: {
-  topicAnalysis: TopicAnalysis;
+  themeContext: PlannerThemeContext;
   readingLevel: StudentReadingLevel;
   learningFocus: string;
   libraryRecord: ReturnType<typeof resolveLibrarySystem>;
   householdLabel?: string;
 }): Promise<PlannerBookRecommendation> {
   const readingBand = getReadingBand(readingLevel);
-  const template = buildRecommendationTemplate(topicAnalysis.topic, readingBand);
+  const template = buildRecommendationTemplate(themeContext.bucket, readingBand);
   const verification = await verifyLibraryRecommendation(libraryRecord, template.label);
   const normalizedFocus = learningFocus.trim().replace(/\s+/g, " ");
   const focusExcerpt =
     normalizedFocus.length > 120 ? `${normalizedFocus.slice(0, 117).trim()}...` : normalizedFocus;
   const focusSuffix = focusExcerpt ? ` It supports this plan: ${focusExcerpt}` : "";
+  const themePhrase = themeContext.context
+    ? `${themeContext.theme} and ${themeContext.context} exploration`
+    : `${themeContext.theme} exploration`;
 
   return {
     label: householdLabel ? `${householdLabel}: ${template.label}` : template.label,
     author: template.author,
     readingLevelLabel: readingLevel,
     formatFit: template.formatFit,
-    whyItFits: `This book fits today's ${topicAnalysis.displayLabel} and matches this reading stage.${focusSuffix}`,
+    whyItFits: `This book supports today's ${themePhrase} and matches this reading stage.${focusSuffix}`,
     librarySystem: libraryRecord.librarySystem,
     libraryDirectoryUrl: libraryRecord.directoryUrl,
     libraryCatalogUrl: verification.libraryCatalogUrl,
@@ -772,7 +846,7 @@ async function buildRecommendation({
     libraryTip: libraryRecord.librarySystem
       ? `Mapped from the household ZIP/location to ${libraryRecord.librarySystem}${libraryRecord.directoryUrl ? " using the Maryland library directory reference." : "."}`
       : "The app could not confidently map this household to one specific public library system, so it falls back to the Maryland library directory.",
-    catalogHint: buildCatalogHint(topicAnalysis.topic, readingBand)
+    catalogHint: buildCatalogHint(themeContext.bucket, readingBand)
   };
 }
 
@@ -781,6 +855,7 @@ export async function buildDailyPlannerBookRecommendation({
   homeZipcode,
   topicText,
   topicSignals,
+  themeContext,
   studentReadingLevel,
   householdReadingLevels,
   householdMode
@@ -789,11 +864,12 @@ export async function buildDailyPlannerBookRecommendation({
   homeZipcode?: string | null;
   topicText: string;
   topicSignals?: Array<string | null | undefined>;
+  themeContext?: PlannerThemeContext | null;
   studentReadingLevel?: string | null;
   householdReadingLevels?: Array<string | null | undefined>;
   householdMode?: boolean;
 }): Promise<PlannerBookRecommendation> {
-  const topicAnalysis = analyzeTopic(topicText, topicSignals);
+  const resolvedThemeContext = themeContext ?? buildPlannerThemeContext(topicText, topicSignals);
   const libraryRecord = resolveLibrarySystem(locationLabel, homeZipcode);
   const readingLevel = householdMode
     ? Array.from(new Set((householdReadingLevels ?? []).map((value) => normalizeStudentReadingLevel(value))))
@@ -801,7 +877,7 @@ export async function buildDailyPlannerBookRecommendation({
     : normalizeStudentReadingLevel(studentReadingLevel);
 
   return buildRecommendation({
-    topicAnalysis,
+    themeContext: resolvedThemeContext,
     readingLevel,
     learningFocus: topicText,
     libraryRecord,
@@ -814,15 +890,17 @@ export async function buildWeeklyPlannerBookRecommendations({
   homeZipcode,
   topicText,
   topicSignals,
+  themeContext,
   learners
 }: {
   locationLabel: string;
   homeZipcode?: string | null;
   topicText: string;
   topicSignals?: Array<string | null | undefined>;
+  themeContext?: PlannerThemeContext | null;
   learners: LearnerContext[];
 }): Promise<PlannerBookRecommendation[]> {
-  const topicAnalysis = analyzeTopic(topicText, topicSignals);
+  const resolvedThemeContext = themeContext ?? buildPlannerThemeContext(topicText, topicSignals);
   const libraryRecord = resolveLibrarySystem(locationLabel, homeZipcode);
   const normalizedLearners = learners.length
     ? learners
@@ -837,7 +915,7 @@ export async function buildWeeklyPlannerBookRecommendations({
 
   recommendations.push(
     await buildRecommendation({
-      topicAnalysis,
+      themeContext: resolvedThemeContext,
       readingLevel: uniqueLevels[0] ?? defaultStudentReadingLevel,
       learningFocus: topicText,
       libraryRecord,
@@ -848,7 +926,7 @@ export async function buildWeeklyPlannerBookRecommendations({
   if (normalizedLearners.length > 1 && uniqueLevels.length > 1) {
     recommendations.push(
       await buildRecommendation({
-        topicAnalysis,
+        themeContext: resolvedThemeContext,
         readingLevel: uniqueLevels[uniqueLevels.length - 1],
         learningFocus: topicText,
         libraryRecord,

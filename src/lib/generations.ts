@@ -114,6 +114,12 @@ export const plannerBookRecommendationSchema = z.object({
   catalogHint: z.string().min(1)
 });
 
+export const plannerThemeContextSchema = z.object({
+  theme: z.string().trim().min(1),
+  category: z.string().trim().min(1),
+  context: z.string().trim().nullable()
+});
+
 export const weekPlannerOutputSchema = z.object({
   weeklyOverview: z.string().min(1),
   dailyPlan: z.array(dailyPlanItemSchema).min(1).max(7),
@@ -121,6 +127,7 @@ export const weekPlannerOutputSchema = z.object({
   materialsList: z.array(z.string().min(1)).min(3).max(12),
   parentNotes: z.string().min(1),
   printableSummary: z.string().min(1),
+  themeContext: plannerThemeContextSchema.nullable().default(null),
   bookRecommendations: z.array(plannerBookRecommendationSchema).max(3).default([])
 });
 
@@ -201,6 +208,7 @@ export type DailyAdventureOutput = {
   liveBaitImageAlt: string | null;
   artificialBaitImageUrl: string | null;
   artificialBaitImageAlt: string | null;
+  themeContext: z.infer<typeof plannerThemeContextSchema> | null;
   bookRecommendation: z.infer<typeof plannerBookRecommendationSchema> | null;
   outingMode: string | null;
   fallbackPlan: string | null;
@@ -241,6 +249,7 @@ export const EMPTY_DAILY_ADVENTURE: DailyAdventureOutput = {
   liveBaitImageAlt: null,
   artificialBaitImageUrl: null,
   artificialBaitImageAlt: null,
+  themeContext: null,
   bookRecommendation: null,
   outingMode: null,
   fallbackPlan: null
@@ -282,6 +291,7 @@ export function coerceNearbySpots(value: unknown): DailyAdventureOutput["recomme
 export function normalizeDailyAdventure(raw: unknown): DailyAdventureOutput {
   const source = isPlainObject(raw) ? raw : {};
   const bookRecommendation = plannerBookRecommendationSchema.safeParse(source.bookRecommendation);
+  const themeContext = plannerThemeContextSchema.safeParse(source.themeContext);
 
   return {
     animalOfTheDay: coerceString(source.animalOfTheDay),
@@ -318,6 +328,7 @@ export function normalizeDailyAdventure(raw: unknown): DailyAdventureOutput {
     liveBaitImageAlt: coerceNullableString(source.liveBaitImageAlt),
     artificialBaitImageUrl: coerceNullableString(source.artificialBaitImageUrl),
     artificialBaitImageAlt: coerceNullableString(source.artificialBaitImageAlt),
+    themeContext: themeContext.success ? themeContext.data : null,
     bookRecommendation: bookRecommendation.success ? bookRecommendation.data : null,
     outingMode: coerceNullableString(source.outingMode),
     fallbackPlan: coerceNullableString(source.fallbackPlan)
@@ -475,6 +486,7 @@ export const dailyAdventureOutputSchema = z.object({
   liveBaitImageAlt: z.string().trim().nullable(),
   artificialBaitImageUrl: z.string().trim().nullable(),
   artificialBaitImageAlt: z.string().trim().nullable(),
+  themeContext: plannerThemeContextSchema.nullable().default(null),
   bookRecommendation: plannerBookRecommendationSchema.nullable().default(null),
   outingMode: z.string().trim().nullable(),
   fallbackPlan: z.string().trim().nullable()
