@@ -11,10 +11,17 @@ import { WSA_FACEBOOK_URL } from "@/lib/social";
 
 const primaryNavItems = [
   { href: "/dashboard", label: "Today", className: "nav-pill-primary-link" },
-  { href: "/planner", label: "Weekly Planner", className: "nav-pill-planner-link" }
+  { href: "/dashboard/premium", label: "Premium", className: "nav-pill-planner-link" }
 ];
 
-const utilityNavItems = [
+const familyUtilityNavItems = [
+  { href: "/dashboard/premium", label: "Premium Home" },
+  { href: "/dashboard/premium/students", label: "Students" },
+  { href: "/dashboard/premium/lessons", label: "Lessons" },
+  { href: "/dashboard/premium/worksheets", label: "Worksheets" },
+  { href: "/dashboard/premium/portfolio", label: "Portfolio" },
+  { href: "/dashboard/premium/review-packet", label: "Review Packet" },
+  { href: "/dashboard/premium/settings", label: "Settings" },
   { href: "/planner", label: "Weekly Planner" },
   { href: "/students", label: "Student Profiles" },
   { href: "/household", label: "Household Sharing" },
@@ -25,7 +32,16 @@ const utilityNavItems = [
   { href: "/classes", label: "Classes" },
   { href: "/animal-of-the-day", label: "Animal of the Day" },
   { href: WSA_FACEBOOK_URL, label: "WSA Facebook", external: true }
-];
+] as const;
+
+const umbrellaUtilityNavItems = [
+  { href: "/dashboard/umbrella", label: "Umbrella Home" },
+  { href: "/dashboard/umbrella/families", label: "Families" },
+  { href: "/dashboard/umbrella/enrollments", label: "Enrollments" },
+  { href: "/dashboard/umbrella/reviews", label: "Reviews" },
+  { href: "/dashboard/umbrella/reviewers", label: "Reviewers" },
+  { href: "/dashboard/umbrella/compliance", label: "Compliance" }
+] as const;
 
 type ShellStudent = {
   id: string;
@@ -46,6 +62,7 @@ export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [students, setStudents] = useState<ShellStudent[]>([]);
+  const [userRole, setUserRole] = useState("parent");
 
   useEffect(() => {
     if (isAdminPath) {
@@ -55,18 +72,33 @@ export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
 
     let isMounted = true;
 
-    async function loadStudents() {
+    async function loadNavState() {
       const supabase = createClient();
-      const { data } = await supabase
-        .from("students")
-        .select("id, name")
-        .order("created_at", { ascending: true });
+      const [{ data: studentRows }, authUser] = await Promise.all([
+        supabase
+          .from("students")
+          .select("id, name")
+          .order("created_at", { ascending: true }),
+        supabase.auth.getUser()
+      ]);
+
+      if (authUser.data.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", authUser.data.user.id)
+          .maybeSingle();
+
+        if (isMounted) {
+          setUserRole(profile?.role ?? "parent");
+        }
+      }
 
       if (!isMounted) return;
-      setStudents(((data ?? []) as ShellStudent[]).slice(0, 8));
+      setStudents(((studentRows ?? []) as ShellStudent[]).slice(0, 8));
     }
 
-    void loadStudents();
+    void loadNavState();
 
     return () => {
       isMounted = false;
@@ -82,6 +114,7 @@ export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
   const visiblePrimaryNavItems = isAdminPath
     ? [{ href: "/admin", label: "Admin", className: "nav-pill-primary-link" }]
     : primaryNavItems;
+  const isUmbrellaVisible = ["reviewer", "admin", "super_admin"].includes(userRole);
   const visibleUtilityNavItems = isAdminPath
     ? [
         { href: "/admin", label: "Overview" },
@@ -91,7 +124,7 @@ export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
         { href: "/admin/analytics", label: "Analytics" },
         { href: "/admin/engagement", label: "Engagement" },
       ]
-    : utilityNavItems;
+    : [...familyUtilityNavItems, ...(isUmbrellaVisible ? umbrellaUtilityNavItems : [])];
 
   return (
     <main className="shell layout-grid">
@@ -150,7 +183,7 @@ export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
             <summary className="button nav-pill nav-pill-secondary nav-pill-more nav-pill-idle">More</summary>
             <div className="mobile-nav-more-panel shell-utility-panel">
               {visibleUtilityNavItems.map((item) =>
-                item.external ? (
+                "external" in item && item.external ? (
                   <a
                     key={item.href}
                     className="button nav-pill nav-pill-secondary nav-pill-idle"
