@@ -52,6 +52,10 @@ function summarizeForAdventure(value?: string | null) {
   return shortened;
 }
 
+function firstListItem(value: unknown) {
+  return Array.isArray(value) && typeof value[0] === "string" ? value[0] : "";
+}
+
 const imageStyles: Record<AdventureCategory, string> = {
   animal: "today-adventure-image-focus",
   bird: "today-adventure-image-top",
@@ -91,7 +95,7 @@ export function DashboardDailyBriefing({
         imageUrl: briefing.animalOutput.imageUrl ?? "/field-guide/mammals.png",
         imageAlt: briefing.animalOutput.imageAlt ?? `${briefing.animalOutput.animalName} field-guide image`,
         coolFact:
-          summarizeForAdventure(briefing.animalOutput.funFacts[0]) ||
+          summarizeForAdventure(firstListItem(briefing.animalOutput.funFacts)) ||
           summarizeForAdventure(briefing.animalOutput.whyThisPlaceFits) ||
           "This species is worth watching because small habitat clues can reveal a lot about how it survives.",
         startHref: buildAdventureHref(activeStudent?.id ?? null, "animal"),
@@ -106,7 +110,7 @@ export function DashboardDailyBriefing({
         imageAlt: briefing.birdOutput.imageAlt,
         coolFact:
           summarizeForAdventure(briefing.birdOutput.broadExplanation) ||
-          summarizeForAdventure(briefing.birdOutput.fieldMarks[0]) ||
+          summarizeForAdventure(firstListItem(briefing.birdOutput.fieldMarks)) ||
           "Birds often give themselves away by movement and sound before they are easy to see.",
         startHref: buildAdventureHref(activeStudent?.id ?? null, "bird"),
         fullHref: `/generations/${briefing.birdGeneration.id}`

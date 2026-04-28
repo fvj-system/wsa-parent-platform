@@ -1,4 +1,5 @@
 import { BadgeProgressWidget } from "@/components/badge-progress-widget";
+import { ClientSafeBoundary } from "@/components/client-safe-boundary";
 import { DashboardDailyConditions } from "@/components/dashboard-daily-conditions";
 import { DashboardDailyBriefing } from "@/components/dashboard-daily-briefing";
 import { DashboardTodayNextStep } from "@/components/dashboard-today-next-step";
@@ -199,20 +200,25 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           todayAdventureCompleted={false}
         />
       ) : householdBriefing ? (
-        <DashboardDailyBriefing
-          briefing={householdBriefing}
-          activeStudent={briefingStudent}
-          totalCompletedAdventures={totalCompletedAdventures}
-          totalSavedLessons={totalSavedLessons}
-          printableItemsCreated={printableItemsCreated}
-          todayAdventureHref={
-            todayAdventure
-              ? `/generations/${todayAdventure.id}`
-              : `/daily-adventure${briefingStudent ? `?studentId=${briefingStudent.id}` : ""}`
-          }
-          historyFact={historyFact}
-          natureQuote={natureQuote}
-        />
+        <ClientSafeBoundary
+          fallbackTitle="Today's briefing hit a snag"
+          fallbackMessage="The rest of the dashboard is still available. Refresh the page, and if this keeps happening, regenerate today's household briefing."
+        >
+          <DashboardDailyBriefing
+            briefing={householdBriefing}
+            activeStudent={briefingStudent}
+            totalCompletedAdventures={totalCompletedAdventures}
+            totalSavedLessons={totalSavedLessons}
+            printableItemsCreated={printableItemsCreated}
+            todayAdventureHref={
+              todayAdventure
+                ? `/generations/${todayAdventure.id}`
+                : `/daily-adventure${briefingStudent ? `?studentId=${briefingStudent.id}` : ""}`
+            }
+            historyFact={historyFact}
+            natureQuote={natureQuote}
+          />
+        </ClientSafeBoundary>
       ) : (
         <section className="panel stack">
           <div>
@@ -227,11 +233,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
       {dashboardWarning && studentRows.length > 0 && !householdBriefing ? <p className="error">{dashboardWarning}</p> : null}
 
-      <BadgeProgressWidget
-        badgeCount={totalBadgeCount}
-        achievementCount={recentAchievements?.length ?? 0}
-        recentBadge={recentBadgeName}
-      />
+      <ClientSafeBoundary
+        fallbackTitle="Badge progress is unavailable"
+        fallbackMessage="This progress card can be refreshed later. Your dashboard data and student records are still safe."
+      >
+        <BadgeProgressWidget
+          badgeCount={totalBadgeCount}
+          achievementCount={recentAchievements?.length ?? 0}
+          recentBadge={recentBadgeName}
+        />
+      </ClientSafeBoundary>
     </AppShell>
   );
 }

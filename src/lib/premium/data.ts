@@ -49,6 +49,24 @@ type ReviewQueueItem = {
 export const homeschoolDisclaimer =
   "WSA Premium Homeschool helps families plan and document home instruction. Parents remain responsible for providing regular, thorough instruction. AI-generated summaries are organizational tools only. Final review decisions must be made by a qualified human reviewer when WSA UmbrellaOS review services are used.";
 
+function mapPremiumSetupError(message: string) {
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("profiles.display_name") ||
+    normalized.includes("profiles.role") ||
+    normalized.includes("profiles.family_id") ||
+    normalized.includes("relation \"families\" does not exist") ||
+    normalized.includes("relation \"subject_areas\" does not exist") ||
+    normalized.includes("relation \"lesson_plans\" does not exist") ||
+    normalized.includes("relation \"portfolio_items\" does not exist")
+  ) {
+    return "WSA Premium Homeschool setup is incomplete. Apply Supabase migration 0030_wsa_premium_umbrellaos.sql, then refresh the page.";
+  }
+
+  return message;
+}
+
 export function getTodayIsoDate() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -105,7 +123,7 @@ export async function ensurePremiumContext(
     .maybeSingle();
 
   if (profileError) {
-    throw new Error(profileError.message);
+    throw new Error(mapPremiumSetupError(profileError.message));
   }
 
   let family = await supabase
@@ -115,7 +133,7 @@ export async function ensurePremiumContext(
     .maybeSingle();
 
   if (family.error) {
-    throw new Error(family.error.message);
+    throw new Error(mapPremiumSetupError(family.error.message));
   }
 
   if (!family.data) {
@@ -130,7 +148,7 @@ export async function ensurePremiumContext(
       .single();
 
     if (family.error) {
-      throw new Error(family.error.message);
+      throw new Error(mapPremiumSetupError(family.error.message));
     }
   }
 

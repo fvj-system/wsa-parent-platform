@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AddToHomeScreenPrompt } from "@/components/add-to-home-screen-prompt";
+import { ClientSafeBoundary } from "@/components/client-safe-boundary";
 import { QuickDiscoverCamera } from "@/components/quick-discover-camera";
 import { createClient } from "@/lib/supabase/client";
 import { WSA_FACEBOOK_URL } from "@/lib/social";
@@ -230,7 +231,14 @@ export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
 
       {children}
 
-      {!isAdminPath && shouldShowA2hsPrompt ? <AddToHomeScreenPrompt /> : null}
+      {!isAdminPath && shouldShowA2hsPrompt ? (
+        <ClientSafeBoundary
+          fallbackTitle="Install prompt unavailable"
+          fallbackMessage="The dashboard can still be used normally while the home screen prompt is skipped."
+        >
+          <AddToHomeScreenPrompt />
+        </ClientSafeBoundary>
+      ) : null}
 
       {!isAdminPath ? (
         <>
@@ -257,7 +265,12 @@ export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
             </svg>
           </button>
 
-          <QuickDiscoverCamera isOpen={isCameraOpen} onClose={() => setIsCameraOpen(false)} />
+          <ClientSafeBoundary
+            fallbackTitle="Camera tools unavailable"
+            fallbackMessage="Quick Discover can be reopened after a refresh. The rest of the app is still available."
+          >
+            <QuickDiscoverCamera isOpen={isCameraOpen} onClose={() => setIsCameraOpen(false)} />
+          </ClientSafeBoundary>
         </>
       ) : null}
     </main>
