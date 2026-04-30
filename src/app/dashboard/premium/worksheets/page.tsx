@@ -20,7 +20,7 @@ export default async function PremiumWorksheetsPage({
       userLabel={user.email ?? "WSA family"}
       eyebrow="WSA Premium Homeschool"
       title="Worksheets"
-      description="Generate print-friendly homeschool worksheets with saved records for later portfolio evidence and review packets."
+      description="Generate curriculum-backed homeschool worksheets with sequenced lessons, teaching notes, and saved records for later portfolio evidence and review packets."
     >
       <PremiumPortalTabs />
       <WorksheetGenerator

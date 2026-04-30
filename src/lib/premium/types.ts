@@ -75,6 +75,15 @@ export type WorksheetQuestion = {
   type: "short_answer" | "multiple_choice" | "draw" | "match" | "math" | "copywork";
   choices?: string[];
   answer?: string;
+  hint?: string;
+  workspace_lines?: number;
+};
+
+export type WorksheetSection = {
+  title: string;
+  kind: "hook" | "mini_lesson" | "word_bank" | "mission" | "reflection" | "coach_note";
+  body: string;
+  bullets?: string[];
 };
 
 export type WorksheetPayload = {
@@ -82,8 +91,20 @@ export type WorksheetPayload = {
   student_name: string;
   subject: MarylandSubject;
   date: string;
+  track_id?: string;
+  track_title?: string;
+  unit_title?: string;
+  lesson_title?: string;
+  lesson_number?: number;
+  total_lessons?: number;
+  fun_theme?: string;
+  essential_question?: string;
+  learning_objective?: string;
   instructions: string;
+  materials?: string[];
+  sections?: WorksheetSection[];
   questions: WorksheetQuestion[];
+  extension_activity?: string;
   parent_notes: string;
 };
 

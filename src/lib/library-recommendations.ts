@@ -60,6 +60,17 @@ type RecommendationTemplate = {
   formatFit: string;
 };
 
+type SomdCatalogSearchResult = {
+  title: string;
+  author: string | null;
+  description: string | null;
+  audienceNote: string | null;
+  availableCopies: number | null;
+  totalCopies: number | null;
+  libraryCatalogUrl: string | null;
+  searchUrl: string;
+};
+
 type TopicProfile = {
   theme: string;
   category: string;
@@ -94,7 +105,9 @@ const readingLevelOrder: StudentReadingLevel[] = [
 
 const marylandDirectoryUrl = "https://www.slrc.info/library-directory";
 const stMarysDirectoryUrl = "https://www.slrc.info/library-directory/st.-marys-county-library";
-const stMarysCatalogBaseUrl = "https://catalog.somd.lib.md.us/polaris/";
+const somdCatalogBaseUrl = "https://catalog.somd.lib.md.us/polaris/";
+const somdCatalogSearchBaseUrl =
+  `${somdCatalogBaseUrl}search/searchresults.aspx?ctx=1.1033.0.0.1&type=Keyword&sort=RELEVANCE&limit=TOM%3d*&query=&page=0`;
 
 const librarySystemRecords: LibrarySystemRecord[] = [
   {
@@ -103,8 +116,8 @@ const librarySystemRecords: LibrarySystemRecord[] = [
     countyLabel: "St. Mary's County, Maryland",
     state: "MD",
     directoryUrl: stMarysDirectoryUrl,
-    catalogBaseUrl: stMarysCatalogBaseUrl,
-    catalogSearchUrl: `${stMarysCatalogBaseUrl}view.aspx?title=`,
+    catalogBaseUrl: somdCatalogBaseUrl,
+    catalogSearchUrl: somdCatalogSearchBaseUrl,
     supportsCatalogVerification: true,
     zipcodes: ["20606", "20609", "20619", "20621", "20622", "20626", "20628", "20630", "20634", "20636", "20650", "20653", "20656", "20659", "20667", "20670", "20674", "20684", "20692"],
     matches: [
@@ -129,9 +142,9 @@ const librarySystemRecords: LibrarySystemRecord[] = [
     countyLabel: "Calvert County, Maryland",
     state: "MD",
     directoryUrl: `${marylandDirectoryUrl}/calvert-library`,
-    catalogBaseUrl: null,
-    catalogSearchUrl: null,
-    supportsCatalogVerification: false,
+    catalogBaseUrl: somdCatalogBaseUrl,
+    catalogSearchUrl: somdCatalogSearchBaseUrl,
+    supportsCatalogVerification: true,
     matches: ["calvert", "prince frederick", "lusby", "chesapeake beach", "north beach", "huntingtown", "solomons"]
   },
   {
@@ -140,9 +153,9 @@ const librarySystemRecords: LibrarySystemRecord[] = [
     countyLabel: "Charles County, Maryland",
     state: "MD",
     directoryUrl: `${marylandDirectoryUrl}/charles-county-public-library`,
-    catalogBaseUrl: null,
-    catalogSearchUrl: null,
-    supportsCatalogVerification: false,
+    catalogBaseUrl: somdCatalogBaseUrl,
+    catalogSearchUrl: somdCatalogSearchBaseUrl,
+    supportsCatalogVerification: true,
     matches: ["charles county", "waldorf", "la plata", "indian head", "bryans road"]
   },
   {
@@ -695,6 +708,9 @@ function buildRecommendationTemplate(topic: RecommendationTopic, readingBand: Re
 
 function buildCatalogSearchUrl(baseUrl: string | null, title: string) {
   if (!baseUrl) return null;
+  if (baseUrl.includes("searchresults.aspx")) {
+    return `${baseUrl}&term=${encodeURIComponent(title)}&by=TI`;
+  }
   return `${baseUrl}${encodeURIComponent(title)}`;
 }
 
@@ -711,8 +727,245 @@ function decodeHtmlToText(html: string) {
     .trim();
 }
 
+function extractCookieHeader(response: Response) {
+  const headers = response.headers as Headers & { getSetCookie?: () => string[] };
+  if (typeof headers.getSetCookie === "function") {
+    return headers
+      .getSetCookie()
+      .map((value) => value.split(";")[0])
+      .join("; ");
+  }
+
+  const raw = response.headers.get("set-cookie");
+  if (!raw) return "";
+
+  return raw
+    .split(/,(?=[^;,]+=)/)
+    .map((value) => value.split(";")[0]?.trim())
+    .filter(Boolean)
+    .join("; ");
+}
+
+function buildSomdCatalogSearchUrl(term: string, by: "KW" | "TI" = "KW") {
+  return `${somdCatalogSearchBaseUrl}&term=${encodeURIComponent(term)}&by=${by}`;
+}
+
+function parseSomdCatalogResults(html: string, searchUrl: string): SomdCatalogSearchResult[] {
+  const blocks = html.match(/<div class="content-module content-module--search-result">[\s\S]*?<hr \/>[\s\S]*?<\/div>\s*/gi) ?? [];
+  const parsedResults: SomdCatalogSearchResult[] = [];
+
+  for (const block of blocks) {
+    const titleMatch = block.match(
+      /nsm-brief-primary-title-group[\s\S]*?<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i,
+    );
+
+    if (!titleMatch) {
+      continue;
+    }
+
+    const authorMatch = block.match(
+      /nsm-brief-primary-author-group[\s\S]*?<a[^>]*>([\s\S]*?)<\/a>/i,
+    );
+    const descriptionMatch = block.match(/nsm-short-item nsm-e1">([\s\S]*?)<\/span>/i);
+    const audienceMatch = block.match(
+      /Target Audience Note:\s*<\/span><span[^>]*>([\s\S]*?)<\/span>/i,
+    );
+    const availabilityMatch = block.match(
+      /Tri-County Availability:\s*<\/span><span[^>]*>\s*<span[^>]*>(\d+)\s*\(of\s*(\d+)\)\s*<\/span>/i,
+    );
+
+    parsedResults.push({
+      title: decodeHtmlToText(titleMatch[2]),
+      author: authorMatch ? decodeHtmlToText(authorMatch[1]).replace(/,\s*author\.?$/i, "").trim() : null,
+      description: descriptionMatch ? decodeHtmlToText(descriptionMatch[1]) : null,
+      audienceNote: audienceMatch ? decodeHtmlToText(audienceMatch[1]) : null,
+      availableCopies: availabilityMatch ? Number(availabilityMatch[1]) : null,
+      totalCopies: availabilityMatch ? Number(availabilityMatch[2]) : null,
+      libraryCatalogUrl: titleMatch[1].startsWith("http")
+        ? titleMatch[1]
+        : `${somdCatalogBaseUrl}${titleMatch[1].replace(/^\/+/, "")}`,
+      searchUrl,
+    });
+  }
+
+  return parsedResults;
+}
+
+async function fetchSomdCatalogResults(term: string, by: "KW" | "TI" = "KW") {
+  const searchUrl = buildSomdCatalogSearchUrl(term, by);
+  const headers = {
+    Accept: "text/html",
+    "User-Agent": process.env.WSA_ENV_DATA_USER_AGENT ?? "WildStallionAcademyAI/1.0",
+  };
+
+  const initialResponse = await fetch(searchUrl, {
+    headers,
+    next: {
+      revalidate: 60 * 60 * 6,
+    },
+  });
+
+  if (!initialResponse.ok) {
+    return {
+      searchUrl,
+      results: [] as SomdCatalogSearchResult[],
+    };
+  }
+
+  const ajaxHeaders: Record<string, string> = {
+    ...headers,
+    Referer: searchUrl,
+  };
+  const cookieHeader = extractCookieHeader(initialResponse);
+
+  if (cookieHeader) {
+    ajaxHeaders.Cookie = cookieHeader;
+  }
+
+  const ajaxResponse = await fetch(`${somdCatalogBaseUrl}search/components/ajaxResults.aspx?page=1`, {
+    headers: ajaxHeaders,
+    next: {
+      revalidate: 60 * 60 * 6,
+    },
+  });
+
+  if (!ajaxResponse.ok) {
+    return {
+      searchUrl,
+      results: [] as SomdCatalogSearchResult[],
+    };
+  }
+
+  const html = await ajaxResponse.text();
+  return {
+    searchUrl,
+    results: parseSomdCatalogResults(html, searchUrl),
+  };
+}
+
+function buildSomdCatalogSearchTerms(topic: RecommendationTopic, readingBand: ReadingBand) {
+  switch (topic) {
+    case "birds":
+      return readingBand === "independent_reader"
+        ? ["birds field guide", "birds north america"]
+        : readingBand === "developing_reader"
+          ? ["birds kids", "birds juvenile nonfiction"]
+          : ["birds children", "birds readers"];
+    case "turtles_reptiles_amphibians":
+      return readingBand === "independent_reader"
+        ? ["reptiles amphibians field guide", "turtles frogs salamanders"]
+        : ["turtles kids", "frogs salamanders children"];
+    case "fish_waterways":
+      return readingBand === "independent_reader"
+        ? ["fish field guide", "pond stream fish"]
+        : ["fish kids", "pond life children"];
+    case "plants_trees_wildflowers":
+      return readingBand === "independent_reader"
+        ? ["trees wildflowers field guide", "plants botany kids"]
+        : ["trees flowers kids", "plants children"];
+    case "weather_seasons":
+      return readingBand === "independent_reader"
+        ? ["weather climate kids", "storms weather science"]
+        : ["weather kids", "seasons children"];
+    case "maryland_history":
+      return readingBand === "independent_reader"
+        ? ["Maryland history juvenile", "Chesapeake Bay history kids"]
+        : ["Maryland history kids", "Southern Maryland children"];
+    case "local_history":
+      return readingBand === "independent_reader"
+        ? ["local history kids", "community history juvenile"]
+        : ["community history children", "local history kids"];
+    case "colonial_early_america":
+      return readingBand === "independent_reader"
+        ? ["colonial America juvenile", "American Revolution kids"]
+        : ["colonial America kids", "early America children"];
+    case "museums_landmarks":
+      return ["museum kids", "landmarks history children"];
+    case "survival_outdoor_skills":
+      return readingBand === "independent_reader"
+        ? ["outdoor survival kids", "camping field skills"]
+        : ["camping kids", "outdoor skills children"];
+    case "mammals":
+      return readingBand === "independent_reader"
+        ? ["mammals field guide", "wildlife mammals kids"]
+        : ["mammals kids", "woodland animals children"];
+    case "insects":
+      return readingBand === "independent_reader"
+        ? ["insects field guide", "pollinators kids"]
+        : ["insects kids", "butterflies bees children"];
+    case "general_nature_observation":
+    default:
+      return readingBand === "independent_reader"
+        ? ["nature field guide", "wildlife kids nonfiction"]
+        : ["nature kids", "wildlife children"];
+  }
+}
+
+function scoreSomdCatalogResult(result: SomdCatalogSearchResult, readingBand: ReadingBand, term: string) {
+  const haystack = `${result.title} ${result.description ?? ""} ${result.audienceNote ?? ""}`.toLowerCase();
+  let score = 0;
+
+  if (result.availableCopies && result.availableCopies > 0) {
+    score += 100 + result.availableCopies * 5;
+  } else if (result.totalCopies && result.totalCopies > 0) {
+    score += 40;
+  }
+
+  if (result.audienceNote) {
+    score += 25;
+  }
+
+  if (readingBand !== "independent_reader" && /\b(novel|memoir|adult)\b/i.test(haystack)) {
+    score -= 50;
+  }
+
+  if (readingBand === "read_aloud" && /\b(children|kids|picture|first big book)\b/i.test(haystack)) {
+    score += 35;
+  }
+
+  if (readingBand === "early_reader" && /\b(reader|readers|kids|children)\b/i.test(haystack)) {
+    score += 35;
+  }
+
+  if (readingBand === "developing_reader" && /\b(juvenile|ages|kids)\b/i.test(haystack)) {
+    score += 25;
+  }
+
+  if (readingBand === "independent_reader" && /\b(field guide|guide|encyclopedia|visual guide)\b/i.test(haystack)) {
+    score += 25;
+  }
+
+  for (const word of term.toLowerCase().split(/\s+/).filter((part) => part.length > 2)) {
+    if (haystack.includes(word)) {
+      score += 5;
+    }
+  }
+
+  return score;
+}
+
+async function discoverSomdCatalogBook(topic: RecommendationTopic, readingBand: ReadingBand) {
+  const searchTerms = buildSomdCatalogSearchTerms(topic, readingBand);
+  let bestMatch: SomdCatalogSearchResult | null = null;
+  let bestScore = Number.NEGATIVE_INFINITY;
+
+  for (const term of searchTerms) {
+    const { results } = await fetchSomdCatalogResults(term, "KW");
+
+    for (const result of results.slice(0, 10)) {
+      const score = scoreSomdCatalogResult(result, readingBand, term);
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = result;
+      }
+    }
+  }
+
+  return bestMatch;
+}
+
 async function verifyStMarysCatalogTitle(title: string): Promise<LibraryCatalogVerification> {
-  const searchUrl = buildCatalogSearchUrl(`${stMarysCatalogBaseUrl}view.aspx?title=`, title);
+  const searchUrl = buildSomdCatalogSearchUrl(title, "TI");
 
   if (!searchUrl) {
     return {
@@ -723,62 +976,38 @@ async function verifyStMarysCatalogTitle(title: string): Promise<LibraryCatalogV
   }
 
   try {
-    const response = await fetch(searchUrl, {
-      headers: {
-        Accept: "text/html",
-        "User-Agent": process.env.WSA_ENV_DATA_USER_AGENT ?? "WildStallionAcademyAI/1.0"
-      },
-      next: {
-        revalidate: 60 * 60 * 6
-      }
-    });
+    const { results } = await fetchSomdCatalogResults(title, "TI");
 
-    if (!response.ok) {
+    if (!results.length) {
       return {
         availabilityStatus: "Check live availability",
-        availabilityNote: "The public St. Mary's catalog search could not be confirmed right now.",
+        availabilityNote: "The exact title was not found confidently in the public COSMOS title search.",
         libraryCatalogUrl: searchUrl
       };
     }
 
-    const html = await response.text();
-    const text = decodeHtmlToText(html);
-    const normalizedText = text.toLowerCase();
-    const normalizedTitle = title.toLowerCase();
-    const titleFound = normalizedText.includes(normalizedTitle);
-    const availableNowMatch = normalizedText.match(/available now\s*\(?\s*(\d+)\s*\)?/i);
-    const availableNowCount = availableNowMatch ? Number(availableNowMatch[1]) : 0;
+    const exactOrBest = results.find((item) => item.title.toLowerCase() === title.toLowerCase()) ?? results[0];
 
-    if (!titleFound) {
+    if ((exactOrBest.availableCopies ?? 0) > 0) {
       return {
-        availabilityStatus: "Check live availability",
-        availabilityNote: "The exact title was not confidently confirmed in the public St. Mary's search response.",
-        libraryCatalogUrl: searchUrl
+        availabilityStatus: "Available today",
+        availabilityNote: `${exactOrBest.availableCopies} of ${exactOrBest.totalCopies ?? exactOrBest.availableCopies} Tri-County copies show as available in COSMOS right now.`,
+        libraryCatalogUrl: exactOrBest.libraryCatalogUrl ?? searchUrl
       };
     }
 
-    if (availableNowCount > 0) {
-      return {
-        availabilityStatus: "Check live availability",
-        availabilityNote:
-          "The public COSMOS search shows an 'Available Now' result for this title search, but the app is not yet proving same-branch shelf pickup copy-by-copy. Open the catalog page to confirm today's exact status.",
-        libraryCatalogUrl: searchUrl
-      };
-    }
-
-    if (/place a hold|hold requests|on the wait list|availability/i.test(normalizedText)) {
+    if ((exactOrBest.totalCopies ?? 0) > 0) {
       return {
         availabilityStatus: "May require a hold",
-        availabilityNote:
-          "The exact title appears in the public COSMOS catalog, but same-day pickup was not confirmed from the public page. Be ready to place a hold.",
-        libraryCatalogUrl: searchUrl
+        availabilityNote: `0 of ${exactOrBest.totalCopies} Tri-County copies show as available right now, so this title may require a hold.`,
+        libraryCatalogUrl: exactOrBest.libraryCatalogUrl ?? searchUrl
       };
     }
 
     return {
       availabilityStatus: "In catalog",
-      availabilityNote: "The exact title appears in the public COSMOS catalog. Open the catalog to check branch-level live status.",
-      libraryCatalogUrl: searchUrl
+      availabilityNote: "The title appears in the public COSMOS catalog. Open the full record to confirm branch-level status.",
+      libraryCatalogUrl: exactOrBest.libraryCatalogUrl ?? searchUrl
     };
   } catch {
     return {
@@ -793,7 +1022,11 @@ async function verifyLibraryRecommendation(
   libraryRecord: ReturnType<typeof resolveLibrarySystem>,
   title: string
 ): Promise<LibraryCatalogVerification> {
-  if (libraryRecord.key === "st_marys_md") {
+  if (
+    libraryRecord.key === "st_marys_md" ||
+    libraryRecord.key === "calvert_md" ||
+    libraryRecord.key === "charles_md"
+  ) {
     return verifyStMarysCatalogTitle(title);
   }
 
@@ -823,20 +1056,47 @@ async function buildRecommendation({
 }): Promise<PlannerBookRecommendation> {
   const readingBand = getReadingBand(readingLevel);
   const template = buildRecommendationTemplate(themeContext.bucket, readingBand);
-  const verification = await verifyLibraryRecommendation(libraryRecord, template.label);
+  const somdCatalogMatch =
+    libraryRecord.supportsCatalogVerification && libraryRecord.catalogBaseUrl === somdCatalogBaseUrl
+      ? await discoverSomdCatalogBook(themeContext.bucket, readingBand)
+      : null;
+  const verification = somdCatalogMatch
+    ? {
+        availabilityStatus:
+          (somdCatalogMatch.availableCopies ?? 0) > 0
+            ? ("Available today" as const)
+            : (somdCatalogMatch.totalCopies ?? 0) > 0
+              ? ("May require a hold" as const)
+              : ("In catalog" as const),
+        availabilityNote:
+          (somdCatalogMatch.availableCopies ?? 0) > 0
+            ? `${somdCatalogMatch.availableCopies} of ${somdCatalogMatch.totalCopies ?? somdCatalogMatch.availableCopies} Tri-County copies show as available in COSMOS right now.`
+            : (somdCatalogMatch.totalCopies ?? 0) > 0
+              ? `0 of ${somdCatalogMatch.totalCopies} Tri-County copies show as available right now, so this title may require a hold.`
+              : "This result is present in the COSMOS catalog, but copy counts were not exposed in the search card.",
+        libraryCatalogUrl: somdCatalogMatch.libraryCatalogUrl ?? somdCatalogMatch.searchUrl,
+      }
+    : await verifyLibraryRecommendation(libraryRecord, template.label);
   const normalizedFocus = learningFocus.trim().replace(/\s+/g, " ");
   const focusExcerpt =
     normalizedFocus.length > 120 ? `${normalizedFocus.slice(0, 117).trim()}...` : normalizedFocus;
   const focusSuffix = focusExcerpt ? ` It supports this plan: ${focusExcerpt}` : "";
   const themePhrase = themeContext.context
     ? `${themeContext.theme} and ${themeContext.context} exploration`
-    : `${themeContext.theme} exploration`;
+      : `${themeContext.theme} exploration`;
+  const recommendationLabel = householdLabel
+    ? `${householdLabel}: ${somdCatalogMatch?.title ?? template.label}`
+    : somdCatalogMatch?.title ?? template.label;
+  const recommendationAuthor = somdCatalogMatch?.author ?? template.author;
+  const recommendationFormatFit = somdCatalogMatch?.audienceNote
+    ? `${template.formatFit} COSMOS notes: ${somdCatalogMatch.audienceNote}.`
+    : template.formatFit;
 
   return {
-    label: householdLabel ? `${householdLabel}: ${template.label}` : template.label,
-    author: template.author,
+    label: recommendationLabel,
+    author: recommendationAuthor,
     readingLevelLabel: readingLevel,
-    formatFit: template.formatFit,
+    formatFit: recommendationFormatFit,
     whyItFits: `This book supports today's ${themePhrase} and matches this reading stage.${focusSuffix}`,
     librarySystem: libraryRecord.librarySystem,
     libraryDirectoryUrl: libraryRecord.directoryUrl,
@@ -844,9 +1104,13 @@ async function buildRecommendation({
     availabilityStatus: verification.availabilityStatus,
     availabilityNote: verification.availabilityNote,
     libraryTip: libraryRecord.librarySystem
-      ? `Mapped from the household ZIP/location to ${libraryRecord.librarySystem}${libraryRecord.directoryUrl ? " using the Maryland library directory reference." : "."}`
+      ? somdCatalogMatch
+        ? `Mapped from the household ZIP/location to ${libraryRecord.librarySystem} and selected from the live COSMOS catalog results.`
+        : `Mapped from the household ZIP/location to ${libraryRecord.librarySystem}${libraryRecord.directoryUrl ? " using the Maryland library directory reference." : "."}`
       : "The app could not confidently map this household to one specific public library system, so it falls back to the Maryland library directory.",
-    catalogHint: buildCatalogHint(themeContext.bucket, readingBand)
+    catalogHint: somdCatalogMatch
+      ? `Chosen from a COSMOS search for ${topicProfiles[themeContext.bucket].displayLabel}. Open the record for full copy details.`
+      : buildCatalogHint(themeContext.bucket, readingBand)
   };
 }
 

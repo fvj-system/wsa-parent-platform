@@ -38,9 +38,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Student not found." }, { status: 404 });
     }
 
-    const result = await generateWorksheet(parsed.data);
+    const normalizedSubject = normalizeSubjectName(parsed.data.subject);
+    const priorWorksheetQuery = await supabase
+      .from("worksheets")
+      .select("id", { count: "exact", head: true })
+      .eq("family_id", context.familyId)
+      .eq("student_id", parsed.data.student_id);
+
+    const priorWorksheetCount = normalizedSubject
+      ? await supabase
+          .from("worksheets")
+          .select("id", { count: "exact", head: true })
+          .eq("family_id", context.familyId)
+          .eq("student_id", parsed.data.student_id)
+          .eq("subject", normalizedSubject)
+      : priorWorksheetQuery;
+
+    if (priorWorksheetCount.error) {
+      return NextResponse.json({ error: priorWorksheetCount.error.message }, { status: 500 });
+    }
+
+    const result = await generateWorksheet({
+      ...parsed.data,
+      existing_worksheet_count: priorWorksheetCount.count ?? 0,
+    });
     const subjectAreas = await listSubjectAreas(supabase);
-    const subjectArea = subjectAreas.find((item) => item.name === normalizeSubjectName(parsed.data.subject));
+    const subjectArea = subjectAreas.find((item) => item.name === normalizedSubject);
 
     const { data: worksheetRow, error: worksheetError } = await supabase
       .from("worksheets")
@@ -50,7 +73,7 @@ export async function POST(request: Request) {
         created_by: user.id,
         subject_area_id: subjectArea?.id ?? null,
         subject: result.worksheet.subject,
-        topic: parsed.data.topic,
+        topic: result.worksheet.lesson_title ?? result.worksheet.title,
         difficulty: parsed.data.difficulty,
         number_of_questions: parsed.data.number_of_questions,
         include_answer_key: parsed.data.include_answer_key,
@@ -77,7 +100,7 @@ export async function POST(request: Request) {
         studentId: parsed.data.student_id,
         userId: user.id,
         feature: "worksheet_generator",
-        promptSummary: `${parsed.data.subject}:${parsed.data.topic}:${parsed.data.difficulty}`,
+        promptSummary: `${parsed.data.subject}:${result.worksheet.lesson_title ?? result.worksheet.title}:${parsed.data.difficulty}`,
         modelUsed: result.model,
         outputSummary: `${result.worksheet.title} with ${result.worksheet.questions.length} questions`,
       }),
@@ -92,7 +115,8 @@ export async function POST(request: Request) {
         targetId: worksheetRow.id,
         metadata: {
           subject: parsed.data.subject,
-          topic: parsed.data.topic,
+          lesson_title: result.worksheet.lesson_title ?? result.worksheet.title,
+          track_id: result.worksheet.track_id ?? null,
           used_fallback: result.usedFallback,
         },
       }),

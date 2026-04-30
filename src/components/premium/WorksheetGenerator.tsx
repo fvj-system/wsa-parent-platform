@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import type { PremiumStudent, WorksheetPayload } from "@/lib/premium/types";
 import { formatPremiumStudentName } from "@/lib/premium/data";
+import { getWorksheetCurriculumOverview } from "@/lib/premium/worksheet-curriculum";
 
 type WorksheetGeneratorProps = {
   students: PremiumStudent[];
@@ -13,8 +14,7 @@ type WorksheetGeneratorProps = {
 export function WorksheetGenerator({ students, activeStudentId, recentWorksheets }: WorksheetGeneratorProps) {
   const [studentId, setStudentId] = useState(activeStudentId ?? students[0]?.id ?? "");
   const [subject, setSubject] = useState("English");
-  const [topic, setTopic] = useState("Nature journaling");
-  const [difficulty, setDifficulty] = useState("moderate");
+  const [difficulty, setDifficulty] = useState("on_level");
   const [questionCount, setQuestionCount] = useState("6");
   const [includeAnswerKey, setIncludeAnswerKey] = useState(false);
   const [worksheet, setWorksheet] = useState<WorksheetPayload | null>(null);
@@ -27,6 +27,13 @@ export function WorksheetGenerator({ students, activeStudentId, recentWorksheets
     () => students.find((student) => student.id === studentId) ?? students[0],
     [studentId, students],
   );
+
+  const curriculum = useMemo(() => getWorksheetCurriculumOverview(subject), [subject]);
+  const recentSubjectCount = useMemo(
+    () => recentWorksheets.filter((item) => String(item.subject ?? "") === subject).length,
+    [recentWorksheets, subject],
+  );
+  const predictedLessonNumber = (recentSubjectCount % curriculum.lessonCount) + 1;
 
   async function createWorksheet() {
     if (!selectedStudent) return;
@@ -42,9 +49,9 @@ export function WorksheetGenerator({ students, activeStudentId, recentWorksheets
         student_id: selectedStudent.id,
         student_name: formatPremiumStudentName(selectedStudent),
         subject,
-        topic,
         grade_level: selectedStudent.grade_level ?? "3",
         reading_level: selectedStudent.reading_level ?? "early_reader",
+        math_level: selectedStudent.math_level ?? "addition_subtraction",
         difficulty,
         number_of_questions: Number(questionCount),
         include_answer_key: includeAnswerKey,
@@ -72,8 +79,11 @@ export function WorksheetGenerator({ students, activeStudentId, recentWorksheets
     <section className="content-grid">
       <section className="panel stack">
         <div>
-          <p className="eyebrow">Worksheets Ready to Print</p>
-          <h3>Create a printable worksheet</h3>
+          <p className="eyebrow">Curriculum Worksheets</p>
+          <h3>Generate the next lesson in a real learning path</h3>
+          <p className="panel-copy" style={{ margin: 0 }}>
+            Each worksheet now follows a sequenced subject track with an objective, mini lesson, vocabulary, and a fun mission.
+          </p>
         </div>
 
         <div className="premium-form-grid">
@@ -88,7 +98,7 @@ export function WorksheetGenerator({ students, activeStudentId, recentWorksheets
             </select>
           </label>
           <label>
-            Subject
+            Subject path
             <select value={subject} onChange={(event) => setSubject(event.target.value)}>
               <option>English</option>
               <option>Mathematics</option>
@@ -101,22 +111,53 @@ export function WorksheetGenerator({ students, activeStudentId, recentWorksheets
             </select>
           </label>
           <label>
-            Topic
-            <input value={topic} onChange={(event) => setTopic(event.target.value)} />
+            Support level
+            <select value={difficulty} onChange={(event) => setDifficulty(event.target.value)}>
+              <option value="supported">Supported</option>
+              <option value="on_level">On level</option>
+              <option value="stretch">Stretch</option>
+            </select>
           </label>
           <label>
-            Difficulty
-            <input value={difficulty} onChange={(event) => setDifficulty(event.target.value)} />
-          </label>
-          <label>
-            Number of questions
-            <input value={questionCount} onChange={(event) => setQuestionCount(event.target.value)} />
+            Question count
+            <select value={questionCount} onChange={(event) => setQuestionCount(event.target.value)}>
+              <option value="6">6 questions</option>
+              <option value="7">7 questions</option>
+              <option value="8">8 questions</option>
+            </select>
           </label>
           <label className="classes-waiver-toggle">
             <input type="checkbox" checked={includeAnswerKey} onChange={(event) => setIncludeAnswerKey(event.target.checked)} />
             <span>Include answer key</span>
           </label>
         </div>
+
+        <article className="premium-inline-card premium-curriculum-card">
+          <div className="header-row">
+            <div>
+              <strong>{curriculum.title}</strong>
+              <p className="muted" style={{ margin: "4px 0 0" }}>
+                {curriculum.unitTitle}
+              </p>
+            </div>
+            <span className="premium-status-pill premium-status-covered">
+              Lesson {predictedLessonNumber} of {curriculum.lessonCount}
+            </span>
+          </div>
+          <p className="panel-copy" style={{ margin: 0 }}>
+            {curriculum.description}
+          </p>
+          <p className="muted" style={{ margin: 0 }}>
+            Fun angle: {curriculum.funTheme}
+          </p>
+          <div className="premium-checklist">
+            {curriculum.skills.map((skill) => (
+              <span key={skill} className="premium-checkbox-card">
+                {skill}
+              </span>
+            ))}
+          </div>
+        </article>
 
         <div className="cta-row">
           <button
@@ -128,7 +169,7 @@ export function WorksheetGenerator({ students, activeStudentId, recentWorksheets
               });
             }}
           >
-            {isPending ? "Creating..." : "Create Worksheet"}
+            {isPending ? "Building lesson..." : "Generate Next Worksheet"}
           </button>
           {worksheetId ? (
             <a className="button button-ghost" href={`/dashboard/premium/worksheets/${worksheetId}`}>
@@ -144,15 +185,15 @@ export function WorksheetGenerator({ students, activeStudentId, recentWorksheets
       <section className="panel stack">
         <div>
           <p className="eyebrow">Recent worksheets</p>
-          <h3>Saved worksheet pages</h3>
+          <h3>Saved lesson pages</h3>
         </div>
         <div className="stack">
           {recentWorksheets.length ? (
             recentWorksheets.map((item) => (
               <article key={String(item.id)} className="premium-inline-card">
-                <strong>{String(item.subject ?? "Worksheet")}</strong>
-                <span>{String(item.topic ?? "")}</span>
-                <a href={`/dashboard/premium/worksheets/${String(item.id)}`}>Print</a>
+                <strong>{String(item.topic ?? item.subject ?? "Worksheet")}</strong>
+                <span>{String(item.subject ?? "")}</span>
+                <a href={`/dashboard/premium/worksheets/${String(item.id)}`}>Open printable</a>
               </article>
             ))
           ) : (
@@ -167,23 +208,63 @@ export function WorksheetGenerator({ students, activeStudentId, recentWorksheets
         <div className="header-row">
           <div>
             <p className="eyebrow">Worksheet preview</p>
-            <h3>{worksheet?.title ?? "Your printable worksheet will appear here"}</h3>
+            <h3>{worksheet?.title ?? "Your curriculum worksheet will appear here"}</h3>
           </div>
+          {worksheet?.lesson_number && worksheet?.total_lessons ? (
+            <span className="badge">
+              Lesson {worksheet.lesson_number} of {worksheet.total_lessons}
+            </span>
+          ) : null}
         </div>
 
         {worksheet ? (
           <div className="stack">
-            <p className="panel-copy" style={{ margin: 0 }}>{worksheet.instructions}</p>
-            {worksheet.questions.map((question) => (
-              <article key={question.number} className="premium-inline-card">
-                <strong>{question.number}. {question.prompt}</strong>
-                {question.choices?.length ? <span>{question.choices.join(" • ")}</span> : null}
+            <article className="premium-inline-card premium-curriculum-card">
+              <strong>{worksheet.track_title}</strong>
+              {worksheet.learning_objective ? <p className="panel-copy" style={{ margin: 0 }}>Objective: {worksheet.learning_objective}</p> : null}
+              {worksheet.essential_question ? <p className="muted" style={{ margin: 0 }}>Essential question: {worksheet.essential_question}</p> : null}
+            </article>
+
+            {worksheet.sections?.length ? (
+              <div className="premium-subject-grid">
+                {worksheet.sections.map((section) => (
+                  <article key={`${section.kind}-${section.title}`} className="premium-inline-card">
+                    <strong>{section.title}</strong>
+                    <p className="panel-copy" style={{ margin: 0 }}>{section.body}</p>
+                    {section.bullets?.length ? (
+                      <ul className="premium-list">
+                        {section.bullets.map((bullet) => (
+                          <li key={bullet}>{bullet}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </article>
+                ))}
+              </div>
+            ) : null}
+
+            <div className="stack">
+              {worksheet.questions.map((question) => (
+                <article key={question.number} className="premium-inline-card">
+                  <strong>
+                    {question.number}. {question.prompt}
+                  </strong>
+                  {question.choices?.length ? <span>{question.choices.join(" | ")}</span> : null}
+                  {question.hint ? <span className="muted">Hint: {question.hint}</span> : null}
+                </article>
+              ))}
+            </div>
+
+            {worksheet.extension_activity ? (
+              <article className="premium-inline-card">
+                <strong>Extension idea</strong>
+                <p className="panel-copy" style={{ margin: 0 }}>{worksheet.extension_activity}</p>
               </article>
-            ))}
+            ) : null}
           </div>
         ) : (
           <p className="panel-copy" style={{ margin: 0 }}>
-            Generate a worksheet to preview the questions before printing.
+            Choose a student and subject path to preview the next lesson, complete with mini lesson guidance and printable questions.
           </p>
         )}
       </section>
