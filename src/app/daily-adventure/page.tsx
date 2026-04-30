@@ -47,7 +47,7 @@ export default async function DailyAdventurePage({
     ? mapForecastToWeatherCondition(initialWeather.shortForecast, initialWeather.hazards)
     : "clear";
   const today = new Date().toISOString().slice(0, 10);
-  const localEvents = getFamilyOpportunityEventsForDate(
+  const localEvents = await getFamilyOpportunityEventsForDate(
     resolvedLocationPreference.location,
     today,
   );

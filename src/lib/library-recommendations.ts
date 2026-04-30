@@ -901,6 +901,33 @@ function buildSomdCatalogSearchTerms(topic: RecommendationTopic, readingBand: Re
   }
 }
 
+function buildFocusDrivenCatalogSearchTerms(learningFocus: string, readingBand: ReadingBand) {
+  const normalizedFocus = learningFocus
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!normalizedFocus) return [];
+
+  const baseTerms = [
+    normalizedFocus,
+    `${normalizedFocus} kids`,
+    `${normalizedFocus} children`,
+    `${normalizedFocus} juvenile`
+  ];
+
+  if (readingBand === "independent_reader") {
+    baseTerms.push(`${normalizedFocus} field guide`, `${normalizedFocus} nonfiction`);
+  } else if (readingBand === "read_aloud") {
+    baseTerms.push(`${normalizedFocus} picture book`);
+  } else if (readingBand === "early_reader") {
+    baseTerms.push(`${normalizedFocus} reader`);
+  }
+
+  return baseTerms.filter((value, index, items) => items.indexOf(value) === index).slice(0, 5);
+}
+
 function scoreSomdCatalogResult(result: SomdCatalogSearchResult, readingBand: ReadingBand, term: string) {
   const haystack = `${result.title} ${result.description ?? ""} ${result.audienceNote ?? ""}`.toLowerCase();
   let score = 0;
@@ -954,6 +981,26 @@ async function discoverSomdCatalogBook(topic: RecommendationTopic, readingBand: 
 
     for (const result of results.slice(0, 10)) {
       const score = scoreSomdCatalogResult(result, readingBand, term);
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = result;
+      }
+    }
+  }
+
+  return bestMatch;
+}
+
+async function discoverSomdCatalogBookByFocus(learningFocus: string, readingBand: ReadingBand) {
+  const searchTerms = buildFocusDrivenCatalogSearchTerms(learningFocus, readingBand);
+  let bestMatch: SomdCatalogSearchResult | null = null;
+  let bestScore = Number.NEGATIVE_INFINITY;
+
+  for (const term of searchTerms) {
+    const { results } = await fetchSomdCatalogResults(term, "KW");
+
+    for (const result of results.slice(0, 10)) {
+      const score = scoreSomdCatalogResult(result, readingBand, term) + 15;
       if (score > bestScore) {
         bestScore = score;
         bestMatch = result;
@@ -1058,7 +1105,8 @@ async function buildRecommendation({
   const template = buildRecommendationTemplate(themeContext.bucket, readingBand);
   const somdCatalogMatch =
     libraryRecord.supportsCatalogVerification && libraryRecord.catalogBaseUrl === somdCatalogBaseUrl
-      ? await discoverSomdCatalogBook(themeContext.bucket, readingBand)
+      ? (await discoverSomdCatalogBookByFocus(learningFocus, readingBand)) ??
+        (await discoverSomdCatalogBook(themeContext.bucket, readingBand))
       : null;
   const verification = somdCatalogMatch
     ? {

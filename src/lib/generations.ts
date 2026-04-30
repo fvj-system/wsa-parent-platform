@@ -90,13 +90,63 @@ export const weekPlannerInputSchema = z.object({
   interests: z.string().trim().min(2).max(240),
   settingPreference: z.string().trim().min(2).max(80),
   locationLabel: z.string().trim().min(2).max(120).default("Southern Maryland"),
-  homeZipcode: z.string().trim().max(10).optional()
+  homeZipcode: z.string().trim().max(10).optional(),
+  locationLatitude: z.coerce.number().min(-90).max(90).optional(),
+  locationLongitude: z.coerce.number().min(-180).max(180).optional(),
+  searchRadiusMiles: z.coerce.number().int().min(1).max(300).optional()
 });
 
 export const dailyPlanItemSchema = z.object({
   dayLabel: z.string().min(1),
   focus: z.string().min(1),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  miniLesson: z.string().min(1).optional(),
+  coolFact: z.string().min(1).optional(),
+  weatherSummary: z.string().min(1).optional(),
+  weatherMode: z.enum(["indoor", "outdoor", "mixed"]).optional(),
+  familyPrompt: z.string().min(1).optional(),
+  indoorBackup: z.string().min(1).optional(),
+  placeRecommendation: z.lazy(() => plannerDestinationSchema).nullable().optional(),
+  playRecommendation: z.lazy(() => plannerDestinationSchema).nullable().optional(),
+  eventRecommendation: z.lazy(() => plannerEventRecommendationSchema).nullable().optional(),
   activities: z.array(z.string().min(1)).min(2).max(4)
+});
+
+export const plannerDestinationSchema = z.object({
+  name: z.string().min(1),
+  category: z.string().min(1),
+  locationLabel: z.string().min(1),
+  whyItFits: z.string().min(1),
+  href: z.string().url(),
+  distanceMiles: z.number().nullable().optional()
+});
+
+export const plannerForecastDaySchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  dayLabel: z.string().min(1),
+  shortForecast: z.string().min(1),
+  weatherCondition: z.string().min(1),
+  recommendedSetting: z.enum(["indoor", "outdoor", "mixed"]),
+  highTemperature: z.number().nullable(),
+  lowTemperature: z.number().nullable(),
+  precipitationChance: z.number().nullable(),
+  sourceLabel: z.string().min(1)
+});
+
+export const plannerEventRecommendationSchema = z.object({
+  title: z.string().min(1),
+  locationLabel: z.string().min(1),
+  eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  eventTime: z.string().nullable(),
+  sourceLabel: z.string().min(1),
+  href: z.string().url(),
+  note: z.string().min(1)
+});
+
+export const plannerEventSourceSchema = z.object({
+  label: z.string().min(1),
+  href: z.string().url(),
+  note: z.string().min(1)
 });
 
 export const plannerBookRecommendationSchema = z.object({
@@ -122,13 +172,22 @@ export const plannerThemeContextSchema = z.object({
 
 export const weekPlannerOutputSchema = z.object({
   weeklyOverview: z.string().min(1),
+  essentialQuestion: z.string().min(1).optional(),
+  familyChallenge: z.string().min(1).optional(),
+  topicHighlights: z.array(z.string().min(1)).min(0).max(5).default([]),
+  vocabularyWords: z.array(z.string().min(1)).min(0).max(6).default([]),
+  weatherSummary: z.string().min(1).optional(),
+  weeklyForecast: z.array(plannerForecastDaySchema).max(7).default([]),
   dailyPlan: z.array(dailyPlanItemSchema).min(1).max(7),
   suggestedFieldTrips: z.array(z.string().min(1)).min(2).max(5),
   materialsList: z.array(z.string().min(1)).min(3).max(12),
   parentNotes: z.string().min(1),
   printableSummary: z.string().min(1),
   themeContext: plannerThemeContextSchema.nullable().default(null),
-  bookRecommendations: z.array(plannerBookRecommendationSchema).max(3).default([])
+  bookRecommendations: z.array(plannerBookRecommendationSchema).max(3).default([]),
+  regionalEventSources: z.array(plannerEventSourceSchema).max(12).default([]),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  locationSummary: z.string().min(1).optional()
 });
 
 export const dailyAdventureInputSchema = z.object({
@@ -732,6 +791,20 @@ export const weekPlannerOutputJsonSchema = {
   additionalProperties: false,
   properties: {
     weeklyOverview: { type: "string" },
+    essentialQuestion: { type: "string" },
+    familyChallenge: { type: "string" },
+    topicHighlights: {
+      type: "array",
+      items: { type: "string" },
+      minItems: 3,
+      maxItems: 5
+    },
+    vocabularyWords: {
+      type: "array",
+      items: { type: "string" },
+      minItems: 3,
+      maxItems: 6
+    },
     dailyPlan: {
       type: "array",
       minItems: 1,
@@ -742,6 +815,10 @@ export const weekPlannerOutputJsonSchema = {
         properties: {
           dayLabel: { type: "string" },
           focus: { type: "string" },
+          miniLesson: { type: "string" },
+          coolFact: { type: "string" },
+          familyPrompt: { type: "string" },
+          indoorBackup: { type: "string" },
           activities: {
             type: "array",
             items: { type: "string" },
@@ -749,7 +826,7 @@ export const weekPlannerOutputJsonSchema = {
             maxItems: 4
           }
         },
-        required: ["dayLabel", "focus", "activities"]
+        required: ["dayLabel", "focus", "miniLesson", "coolFact", "familyPrompt", "indoorBackup", "activities"]
       }
     },
     suggestedFieldTrips: {
@@ -769,6 +846,10 @@ export const weekPlannerOutputJsonSchema = {
   },
   required: [
     "weeklyOverview",
+    "essentialQuestion",
+    "familyChallenge",
+    "topicHighlights",
+    "vocabularyWords",
     "dailyPlan",
     "suggestedFieldTrips",
     "materialsList",

@@ -3,6 +3,10 @@ import {
   type RecommendedSpot,
   type ResolvedLocationContext,
 } from "@/lib/context/nearby-spots";
+import {
+  getSouthernMarylandEventSources,
+  getSouthernMarylandFamilyEvents,
+} from "@/lib/nearby/live-family-events";
 
 export type FamilyOpportunity = {
   id: string;
@@ -519,6 +523,144 @@ const OPPORTUNITIES: PlannerOpportunityRecord[] = [
     travelFits: ["local", "regional", "far"],
     setting: "outdoor",
   },
+  {
+    id: "john-g-lancaster-park",
+    title: "John G. Lancaster Park",
+    type: "park",
+    locationLabel: "Lexington Park, MD",
+    latitude: 38.2496,
+    longitude: -76.4563,
+    reason:
+      "A dependable local park choice with space for kids to move, climb, and reset when the week needs an easy play-first outing.",
+    href: "https://www.stmaryscountymd.gov/Recreate/Parks/JohnGLancasterPark/",
+    ctaLabel: "Park",
+    familyFit:
+      "Strong for younger kids, sibling play breaks, and afternoons when you need something simple but still worth leaving the house for.",
+    practicalNote:
+      "Best as a low-pressure stop for playground time, scooter energy, or pairing with a short read-aloud picnic.",
+    tags: ["park", "playground", "kids play", "short outing", "family"],
+    weatherFits: ["clear", "mixed"],
+    timeFits: ["30 min", "1-2 hours"],
+    budgetFits: ["free"],
+    energyFits: ["low", "medium", "high"],
+    travelFits: ["backyard", "local", "regional"],
+    setting: "outdoor",
+  },
+  {
+    id: "myrtle-point-park",
+    title: "Myrtle Point Park",
+    type: "park",
+    locationLabel: "California, MD",
+    latitude: 38.3047,
+    longitude: -76.5241,
+    reason:
+      "A strong family shoreline-and-trail option with room for walking, nature observation, and open-ended kid movement in one stop.",
+    href: "https://www.stmaryscountymd.gov/Recreate/Parks/MyrtlePointPark/",
+    ctaLabel: "Park",
+    familyFit:
+      "Helpful when the week needs a real outdoor anchor with trails, water views, and room for mixed ages to spread out.",
+    practicalNote:
+      "Works well for nature scavenger hunts, short boardwalk walks, and picnic-style field-note breaks.",
+    tags: ["park", "shoreline", "nature", "trails", "kids play", "field trip"],
+    weatherFits: ["clear", "mixed", "windy"],
+    timeFits: ["1-2 hours", "half day"],
+    budgetFits: ["free", "low"],
+    energyFits: ["medium", "high"],
+    travelFits: ["local", "regional"],
+    setting: "outdoor",
+  },
+  {
+    id: "leonardtown-wharf-park",
+    title: "Leonardtown Wharf Park",
+    type: "park",
+    locationLabel: "Leonardtown, MD",
+    latitude: 38.2846,
+    longitude: -76.6316,
+    reason:
+      "A practical short-stop choice for water views, walking, snacks, and a calmer kid-friendly change of scene close to town.",
+    href: "https://www.visitleonardtownmd.com/visit/page/leonardtown-wharf-park",
+    ctaLabel: "Wharf",
+    familyFit:
+      "Good for low-energy days, sketching by the water, and pairing a local errand run with a meaningful outdoor moment.",
+    practicalNote:
+      "Easy to keep short if weather shifts or attention spans are low.",
+    tags: ["waterfront", "walking", "short outing", "town stop", "family"],
+    weatherFits: ["clear", "mixed"],
+    timeFits: ["30 min", "1-2 hours"],
+    budgetFits: ["free"],
+    energyFits: ["low", "medium"],
+    travelFits: ["local", "regional"],
+    setting: "outdoor",
+  },
+  {
+    id: "elms-beach-park",
+    title: "Elms Beach Park",
+    type: "park",
+    locationLabel: "Lexington Park, MD",
+    latitude: 38.2101,
+    longitude: -76.4001,
+    reason:
+      "A bigger play-and-water option for warm weeks when the family wants sand, shoreline, and room for sensory outdoor time.",
+    href: "https://www.stmaryscountymd.gov/Recreate/Parks/ElmsBeachPark/",
+    ctaLabel: "Beach",
+    familyFit:
+      "Best for energetic kids who need space to play and families who want a memorable Southern Maryland outing without leaving the county.",
+    practicalNote:
+      "Bring a towel, water shoes, sunscreen, and a backup dry activity for the ride home.",
+    tags: ["beach", "shoreline", "kids play", "water", "sensory", "family"],
+    weatherFits: ["clear", "mixed"],
+    timeFits: ["1-2 hours", "half day", "full day"],
+    budgetFits: ["free", "low"],
+    energyFits: ["medium", "high"],
+    travelFits: ["local", "regional"],
+    setting: "outdoor",
+  },
+  {
+    id: "nicolet-park",
+    title: "Nicolet Park",
+    type: "park",
+    locationLabel: "Hollywood, MD",
+    latitude: 38.3566,
+    longitude: -76.5486,
+    reason:
+      "A straightforward local playground-and-field choice for active kids who need room to run between more focused homeschool blocks.",
+    href: "https://www.stmaryscountymd.gov/Recreate/Parks/NicoletPark/",
+    ctaLabel: "Park",
+    familyFit:
+      "Useful when you need a simple outdoor play stop that still feels intentional and easy to repeat across the week.",
+    practicalNote:
+      "Good for scooter laps, quick gross-motor breaks, and picnic-table snack resets.",
+    tags: ["park", "playground", "sports", "kids play", "quick stop"],
+    weatherFits: ["clear", "mixed"],
+    timeFits: ["30 min", "1-2 hours"],
+    budgetFits: ["free"],
+    energyFits: ["medium", "high"],
+    travelFits: ["backyard", "local", "regional"],
+    setting: "outdoor",
+  },
+  {
+    id: "solomons-boardwalk-cluster",
+    title: "Solomons Boardwalk and Playground Stops",
+    type: "kids_programs",
+    locationLabel: "Solomons, MD",
+    latitude: 38.3215,
+    longitude: -76.4519,
+    reason:
+      "A flexible family outing zone where you can mix waterfront walking, marine museum time, playground energy, and snack breaks.",
+    href: "https://www.calvertmarinemuseum.com/",
+    ctaLabel: "Plan stop",
+    familyFit:
+      "Helpful when different kids need different things and you want one area that supports both structured learning and free play.",
+    practicalNote:
+      "Treat Solomons as a cluster outing rather than a single stop so the day can flex with weather and attention spans.",
+    tags: ["waterfront", "museum", "playground", "walk", "flexible outing", "family"],
+    weatherFits: ["clear", "mixed", "rainy"],
+    timeFits: ["1-2 hours", "half day"],
+    budgetFits: ["free", "low", "medium"],
+    energyFits: ["low", "medium", "high"],
+    travelFits: ["local", "regional"],
+    setting: "mixed",
+  },
 ];
 
 const CURATED_EVENT_OPPORTUNITIES: EventOpportunityRecord[] = [
@@ -993,25 +1135,86 @@ function toEventFamilyOpportunity(
   };
 }
 
-export function getFamilyOpportunityEventsForDate(
+function dedupeFamilyOpportunities(items: FamilyOpportunity[]) {
+  const seen = new Set<string>();
+
+  return items.filter((item) => {
+    const key = `${item.kind}-${item.eventDate ?? "none"}-${item.title.toLowerCase()}-${item.locationLabel.toLowerCase()}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function toLiveEventFamilyOpportunity(
+  item: Awaited<ReturnType<typeof getSouthernMarylandFamilyEvents>>[number],
+  referenceDate: Date,
+): FamilyOpportunity {
+  return {
+    id: item.id,
+    title: item.title,
+    type: "event",
+    kind: "event",
+    locationLabel: item.locationLabel,
+    reason: item.note,
+    distanceMiles: item.distanceMiles,
+    href: item.href,
+    ctaLabel: "Open event",
+    familyFit: item.note,
+    practicalNote: `${item.sourceLabel}. Check the source page for registration or weather changes.`,
+    tags: item.tags,
+    eventDate: item.eventDate,
+    eventTime: item.eventTime,
+    sourceLabel: item.sourceLabel,
+    isThisWeek: isWithinUpcomingWeek(item.eventDate, referenceDate),
+  };
+}
+
+export async function getFamilyOpportunityEventsForDate(
   location: ResolvedLocationContext,
   dateValue: string,
 ) {
   const referenceDate = parseEventDate(dateValue);
-
-  return CURATED_EVENT_OPPORTUNITIES
+  const liveEvents = await getSouthernMarylandFamilyEvents(location, dateValue, 1);
+  const liveEventItems = liveEvents.map((item) => toLiveEventFamilyOpportunity(item, referenceDate));
+  const curatedEventItems = CURATED_EVENT_OPPORTUNITIES
     .filter((item) => item.eventDate === dateValue)
-    .map((item) => toEventFamilyOpportunity(item, location, referenceDate))
+    .map((item) => toEventFamilyOpportunity(item, location, referenceDate));
+
+  return dedupeFamilyOpportunities([...liveEventItems, ...curatedEventItems])
     .filter((item) => isWithinRadius(item.distanceMiles, location.radiusMiles))
     .sort(compareByDistanceThenTitle);
 }
 
-export function getNearbyFamilyOpportunities(location: ResolvedLocationContext) {
+export async function getNearbyFamilyOpportunities(location: ResolvedLocationContext) {
   const today = new Date();
-  const eventItems = CURATED_EVENT_OPPORTUNITIES
+  const todayIso = today.toISOString().slice(0, 10);
+  const liveEvents = await getSouthernMarylandFamilyEvents(location, todayIso, 30);
+  const liveEventItems = liveEvents.map((item) => toLiveEventFamilyOpportunity(item, today));
+  const curatedEventItems = CURATED_EVENT_OPPORTUNITIES
     .filter((item) => isUpcomingEvent(item.eventDate, today))
     .map((item) => toEventFamilyOpportunity(item, location, today))
-    .filter((item) => isWithinRadius(item.distanceMiles, location.radiusMiles))
+    .filter((item) => isWithinRadius(item.distanceMiles, Math.max(location.radiusMiles, 45)));
+  const sourceDirectoryItems = getSouthernMarylandEventSources().slice(0, 4).map<FamilyOpportunity>((source, index) => ({
+    id: `source-directory-${index}-${source.id}`,
+    title: source.label,
+    type: "festival_calendar",
+    kind: "place",
+    locationLabel: "Southern Maryland",
+    reason: source.note,
+    distanceMiles: null,
+    href: source.href,
+    ctaLabel: "Open source",
+    familyFit: source.note,
+    practicalNote: "Use this source page when you want more local event choices for the week.",
+    tags: ["events", "calendar", "family"],
+    eventDate: null,
+    eventTime: null,
+    sourceLabel: null,
+    isThisWeek: false,
+  }));
+
+  const eventItems = dedupeFamilyOpportunities([...liveEventItems, ...curatedEventItems])
     .sort((left, right) => {
       if (left.isThisWeek !== right.isThisWeek) {
         return left.isThisWeek ? -1 : 1;
@@ -1028,7 +1231,7 @@ export function getNearbyFamilyOpportunities(location: ResolvedLocationContext) 
     .sort(compareByDistanceThenTitle)
     .slice(0, 8);
 
-  return [...eventItems, ...placeItems];
+  return [...eventItems, ...placeItems, ...sourceDirectoryItems];
 }
 
 export function getPlannerOpportunityMatches({

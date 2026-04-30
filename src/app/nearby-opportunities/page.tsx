@@ -19,7 +19,7 @@ export default async function NearbyOpportunitiesPage() {
     radiusMiles: resolvedPreference.location.radiusMiles,
     weatherCondition: "clear"
   });
-  const items = getNearbyFamilyOpportunities(environmental.location);
+  const items = await getNearbyFamilyOpportunities(environmental.location);
 
   return (
     <PageShell

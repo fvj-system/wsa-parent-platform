@@ -114,7 +114,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     // Fall back to lightweight local conditions so the dashboard still loads.
   }
 
-  const todayEvents = getFamilyOpportunityEventsForDate(environmental.location, today);
+  const todayEvents = await getFamilyOpportunityEventsForDate(environmental.location, today);
   const tideSummary = getTideSummary(today, environmental.location);
   const historyFact = getHistoryFactForDate(today);
   const natureQuote = getNatureQuoteForDate(today);

@@ -12,6 +12,9 @@ type WeekPlannerGeneratorProps = {
   students: StudentRecord[];
   initialLocationLabel?: string;
   homeZipcode?: string | null;
+  initialLatitude?: number | null;
+  initialLongitude?: number | null;
+  initialRadiusMiles?: number;
 };
 
 type WeekPlannerResponse = {
@@ -33,7 +36,10 @@ export function WeekPlannerGenerator({
   initialHistory,
   students,
   initialLocationLabel = "Southern Maryland",
-  homeZipcode
+  homeZipcode,
+  initialLatitude = null,
+  initialLongitude = null,
+  initialRadiusMiles = 25
 }: WeekPlannerGeneratorProps) {
   const [history, setHistory] = useState(initialHistory);
   const [result, setResult] = useState<WeekPlannerOutput | null>(null);
@@ -45,6 +51,23 @@ export function WeekPlannerGenerator({
 
   const selectedStudents = students.filter((student) => selectedIds.includes(student.id));
   const familyMode = planningMode === "family";
+  const formatForecastMeta = (high: number | null, low: number | null, precipitationChance: number | null) =>
+    [
+      high !== null ? `High ${high} deg` : null,
+      low !== null ? `Low ${low} deg` : null,
+      precipitationChance !== null ? `${precipitationChance}% rain` : null
+    ]
+      .filter(Boolean)
+      .join(" • ");
+  const formatEventMeta = (eventDate: string, eventTime: string | null, locationLabel: string, sourceLabel: string) => {
+    const dateLabel = new Intl.DateTimeFormat("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric"
+    }).format(new Date(`${eventDate}T12:00:00`));
+
+    return [dateLabel, eventTime, locationLabel, sourceLabel].filter(Boolean).join(" • ");
+  };
 
   return (
     <section className="content-grid">
@@ -133,7 +156,10 @@ export function WeekPlannerGenerator({
                   interests,
                   settingPreference,
                   locationLabel,
-                  homeZipcode: homeZipcode ?? undefined
+                  homeZipcode: homeZipcode ?? undefined,
+                  locationLatitude: initialLatitude ?? undefined,
+                  locationLongitude: initialLongitude ?? undefined,
+                  searchRadiusMiles: initialRadiusMiles
                 })
               });
 
@@ -325,6 +351,70 @@ export function WeekPlannerGenerator({
               </section>
 
               <section>
+                <h4>Topic Guide</h4>
+                <div className="stack">
+                  {result.essentialQuestion ? (
+                    <article className="note-card">
+                      <div className="copy">
+                        <h4>Essential question</h4>
+                        <p>{result.essentialQuestion}</p>
+                      </div>
+                    </article>
+                  ) : null}
+                  {result.familyChallenge ? (
+                    <article className="note-card">
+                      <div className="copy">
+                        <h4>Family challenge</h4>
+                        <p>{result.familyChallenge}</p>
+                      </div>
+                    </article>
+                  ) : null}
+                  {result.topicHighlights.length ? (
+                    <article className="note-card">
+                      <div className="copy">
+                        <h4>Cool facts to carry into the week</h4>
+                        <ul className="result-list">
+                          {result.topicHighlights.map((fact) => (
+                            <li key={fact}>{fact}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </article>
+                  ) : null}
+                  {result.vocabularyWords.length ? (
+                    <article className="note-card">
+                      <div className="copy">
+                        <h4>Words worth using</h4>
+                        <p>{result.vocabularyWords.join(", ")}</p>
+                      </div>
+                    </article>
+                  ) : null}
+                </div>
+              </section>
+
+              {result.weatherSummary || result.weeklyForecast.length ? (
+                <section>
+                  <h4>Weather Watch</h4>
+                  {result.weatherSummary ? <p>{result.weatherSummary}</p> : null}
+                  {result.weeklyForecast.length ? (
+                    <div className="stack">
+                      {result.weeklyForecast.map((day) => (
+                        <article className="note-card" key={day.date}>
+                          <div className="copy">
+                            <h4>{day.dayLabel}</h4>
+                            <p>{day.shortForecast}</p>
+                            <p className="muted" style={{ marginBottom: 0 }}>
+                              {formatForecastMeta(day.highTemperature, day.lowTemperature, day.precipitationChance)}. Best fit: {day.recommendedSetting}.
+                            </p>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : null}
+                </section>
+              ) : null}
+
+              <section>
                 <h4>Daily family rhythm</h4>
                 <div className="stack">
                   {result.dailyPlan.map((day) => (
@@ -332,11 +422,65 @@ export function WeekPlannerGenerator({
                       <div className="copy">
                         <h4>{day.dayLabel}</h4>
                         <p className="muted">{day.focus}</p>
+                        {day.weatherSummary ? <p>{day.weatherSummary}</p> : null}
+                        {day.miniLesson ? (
+                          <p>
+                            <strong>Mini lesson:</strong> {day.miniLesson}
+                          </p>
+                        ) : null}
+                        {day.coolFact ? (
+                          <p>
+                            <strong>Cool fact:</strong> {day.coolFact}
+                          </p>
+                        ) : null}
                         <ul className="result-list">
                           {day.activities.map((activity) => (
                             <li key={activity}>{activity}</li>
                           ))}
                         </ul>
+                        {day.placeRecommendation ? (
+                          <p className="muted" style={{ marginBottom: 0 }}>
+                            <strong>Go here:</strong> {day.placeRecommendation.name} in {day.placeRecommendation.locationLabel}. {day.placeRecommendation.whyItFits}
+                          </p>
+                        ) : null}
+                        {day.playRecommendation ? (
+                          <p className="muted" style={{ marginBottom: 0 }}>
+                            <strong>Play spot:</strong> {day.playRecommendation.name} in {day.playRecommendation.locationLabel}. {day.playRecommendation.whyItFits}
+                          </p>
+                        ) : null}
+                        {day.eventRecommendation ? (
+                          <p className="muted" style={{ marginBottom: 0 }}>
+                            <strong>Event match:</strong> {day.eventRecommendation.title}.{" "}
+                            {formatEventMeta(
+                              day.eventRecommendation.eventDate,
+                              day.eventRecommendation.eventTime,
+                              day.eventRecommendation.locationLabel,
+                              day.eventRecommendation.sourceLabel
+                            )}
+                          </p>
+                        ) : null}
+                        {day.familyPrompt ? (
+                          <p className="muted" style={{ marginBottom: 0 }}>
+                            <strong>Talk about:</strong> {day.familyPrompt}
+                          </p>
+                        ) : null}
+                        {day.indoorBackup ? (
+                          <p className="muted" style={{ marginBottom: 0 }}>
+                            <strong>Indoor backup:</strong> {day.indoorBackup}
+                          </p>
+                        ) : null}
+                        <div className="cta-row">
+                          {day.placeRecommendation ? (
+                            <a className="button button-ghost" href={day.placeRecommendation.href} target="_blank" rel="noreferrer">
+                              Open place
+                            </a>
+                          ) : null}
+                          {day.eventRecommendation ? (
+                            <a className="button button-ghost" href={day.eventRecommendation.href} target="_blank" rel="noreferrer">
+                              Open event
+                            </a>
+                          ) : null}
+                        </div>
                       </div>
                     </article>
                   ))}
@@ -351,6 +495,27 @@ export function WeekPlannerGenerator({
                   ))}
                 </ul>
               </section>
+
+              {result.regionalEventSources.length ? (
+                <section>
+                  <h4>Southern Maryland event sources being watched</h4>
+                  <div className="stack">
+                    {result.regionalEventSources.map((source) => (
+                      <article className="note-card" key={source.href}>
+                        <div className="copy">
+                          <h4>{source.label}</h4>
+                          <p>{source.note}</p>
+                          <div className="cta-row">
+                            <a className="button button-ghost" href={source.href} target="_blank" rel="noreferrer">
+                              Open source
+                            </a>
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
 
               {result.bookRecommendations.length ? (
                 <section>
@@ -447,6 +612,38 @@ export function WeekPlannerGenerator({
                 <p>{result.weeklyOverview}</p>
               </section>
 
+              {(result.essentialQuestion || result.familyChallenge || result.topicHighlights.length || result.vocabularyWords.length) ? (
+                <section className="week-planner-print-block">
+                  <h2>Topic guide</h2>
+                  {result.essentialQuestion ? <p><strong>Essential question:</strong> {result.essentialQuestion}</p> : null}
+                  {result.familyChallenge ? <p><strong>Family challenge:</strong> {result.familyChallenge}</p> : null}
+                  {result.topicHighlights.length ? (
+                    <ul>
+                      {result.topicHighlights.map((fact) => (
+                        <li key={fact}>{fact}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {result.vocabularyWords.length ? <p><strong>Words worth using:</strong> {result.vocabularyWords.join(", ")}</p> : null}
+                </section>
+              ) : null}
+
+              {(result.weatherSummary || result.weeklyForecast.length) ? (
+                <section className="week-planner-print-block">
+                  <h2>Weather watch</h2>
+                  {result.weatherSummary ? <p>{result.weatherSummary}</p> : null}
+                  {result.weeklyForecast.length ? (
+                    <ul>
+                      {result.weeklyForecast.map((day) => (
+                        <li key={day.date}>
+                          <strong>{day.dayLabel}:</strong> {day.shortForecast} {formatForecastMeta(day.highTemperature, day.lowTemperature, day.precipitationChance)}. Best fit: {day.recommendedSetting}.
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </section>
+              ) : null}
+
               <section className="week-planner-print-block">
                 <h2>Daily rhythm / plan</h2>
                 <div className="week-planner-print-days">
@@ -454,11 +651,37 @@ export function WeekPlannerGenerator({
                     <article className="week-planner-print-day" key={day.dayLabel}>
                       <h3>{day.dayLabel}</h3>
                       <p className="week-planner-print-focus">{day.focus}</p>
+                      {day.weatherSummary ? <p>{day.weatherSummary}</p> : null}
+                      {day.miniLesson ? <p><strong>Mini lesson:</strong> {day.miniLesson}</p> : null}
+                      {day.coolFact ? <p><strong>Cool fact:</strong> {day.coolFact}</p> : null}
                       <ul>
                         {day.activities.map((activity) => (
                           <li key={activity}>{activity}</li>
                         ))}
                       </ul>
+                      {day.placeRecommendation ? (
+                        <p>
+                          <strong>Go here:</strong> {day.placeRecommendation.name} in {day.placeRecommendation.locationLabel}. {day.placeRecommendation.whyItFits}
+                        </p>
+                      ) : null}
+                      {day.playRecommendation ? (
+                        <p>
+                          <strong>Play spot:</strong> {day.playRecommendation.name} in {day.playRecommendation.locationLabel}. {day.playRecommendation.whyItFits}
+                        </p>
+                      ) : null}
+                      {day.eventRecommendation ? (
+                        <p>
+                          <strong>Event match:</strong> {day.eventRecommendation.title}.{" "}
+                          {formatEventMeta(
+                            day.eventRecommendation.eventDate,
+                            day.eventRecommendation.eventTime,
+                            day.eventRecommendation.locationLabel,
+                            day.eventRecommendation.sourceLabel
+                          )}
+                        </p>
+                      ) : null}
+                      {day.familyPrompt ? <p><strong>Talk about:</strong> {day.familyPrompt}</p> : null}
+                      {day.indoorBackup ? <p><strong>Indoor backup:</strong> {day.indoorBackup}</p> : null}
                     </article>
                   ))}
                 </div>
@@ -472,6 +695,19 @@ export function WeekPlannerGenerator({
                   ))}
                 </ul>
               </section>
+
+              {result.regionalEventSources.length ? (
+                <section className="week-planner-print-block">
+                  <h2>Event sources</h2>
+                  <ul>
+                    {result.regionalEventSources.map((source) => (
+                      <li key={source.href}>
+                        <strong>{source.label}</strong>: {source.note}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
 
               {result.bookRecommendations.length ? (
                 <section className="week-planner-print-block">

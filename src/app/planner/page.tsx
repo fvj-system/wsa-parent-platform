@@ -38,6 +38,9 @@ export default async function PlannerPage() {
         students={(students ?? []) as StudentRecord[]}
         initialLocationLabel={resolvedLocationPreference.location.displayLabel}
         homeZipcode={locationPreferences.homeZipcode}
+        initialLatitude={resolvedLocationPreference.location.latitude}
+        initialLongitude={resolvedLocationPreference.location.longitude}
+        initialRadiusMiles={resolvedLocationPreference.location.radiusMiles}
       />
     </PageShell>
   );

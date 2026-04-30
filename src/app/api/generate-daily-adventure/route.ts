@@ -517,7 +517,7 @@ export async function POST(request: Request) {
       practicalNeeds: parsedInput.data.practicalNeeds,
       extraContext: parsedInput.data.extraContext
     });
-    const localEventsForDate = getFamilyOpportunityEventsForDate(
+    const localEventsForDate = await getFamilyOpportunityEventsForDate(
       location,
       parsedInput.data.requestDate
     );
