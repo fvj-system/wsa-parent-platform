@@ -971,7 +971,11 @@ function scoreSomdCatalogResult(result: SomdCatalogSearchResult, readingBand: Re
   return score;
 }
 
-async function discoverSomdCatalogBook(topic: RecommendationTopic, readingBand: ReadingBand) {
+async function discoverSomdCatalogBook(
+  topic: RecommendationTopic,
+  readingBand: ReadingBand,
+  excludedTitles: Set<string> = new Set()
+) {
   const searchTerms = buildSomdCatalogSearchTerms(topic, readingBand);
   let bestMatch: SomdCatalogSearchResult | null = null;
   let bestScore = Number.NEGATIVE_INFINITY;
@@ -980,6 +984,9 @@ async function discoverSomdCatalogBook(topic: RecommendationTopic, readingBand: 
     const { results } = await fetchSomdCatalogResults(term, "KW");
 
     for (const result of results.slice(0, 10)) {
+      if (excludedTitles.has(result.title.trim().toLowerCase())) {
+        continue;
+      }
       const score = scoreSomdCatalogResult(result, readingBand, term);
       if (score > bestScore) {
         bestScore = score;
@@ -991,7 +998,11 @@ async function discoverSomdCatalogBook(topic: RecommendationTopic, readingBand: 
   return bestMatch;
 }
 
-async function discoverSomdCatalogBookByFocus(learningFocus: string, readingBand: ReadingBand) {
+async function discoverSomdCatalogBookByFocus(
+  learningFocus: string,
+  readingBand: ReadingBand,
+  excludedTitles: Set<string> = new Set()
+) {
   const searchTerms = buildFocusDrivenCatalogSearchTerms(learningFocus, readingBand);
   let bestMatch: SomdCatalogSearchResult | null = null;
   let bestScore = Number.NEGATIVE_INFINITY;
@@ -1000,6 +1011,9 @@ async function discoverSomdCatalogBookByFocus(learningFocus: string, readingBand
     const { results } = await fetchSomdCatalogResults(term, "KW");
 
     for (const result of results.slice(0, 10)) {
+      if (excludedTitles.has(result.title.trim().toLowerCase())) {
+        continue;
+      }
       const score = scoreSomdCatalogResult(result, readingBand, term) + 15;
       if (score > bestScore) {
         bestScore = score;
@@ -1093,20 +1107,22 @@ async function buildRecommendation({
   readingLevel,
   learningFocus,
   libraryRecord,
-  householdLabel
+  householdLabel,
+  excludedTitles = new Set()
 }: {
   themeContext: PlannerThemeContext;
   readingLevel: StudentReadingLevel;
   learningFocus: string;
   libraryRecord: ReturnType<typeof resolveLibrarySystem>;
   householdLabel?: string;
+  excludedTitles?: Set<string>;
 }): Promise<PlannerBookRecommendation> {
   const readingBand = getReadingBand(readingLevel);
   const template = buildRecommendationTemplate(themeContext.bucket, readingBand);
   const somdCatalogMatch =
     libraryRecord.supportsCatalogVerification && libraryRecord.catalogBaseUrl === somdCatalogBaseUrl
-      ? (await discoverSomdCatalogBookByFocus(learningFocus, readingBand)) ??
-        (await discoverSomdCatalogBook(themeContext.bucket, readingBand))
+      ? (await discoverSomdCatalogBookByFocus(learningFocus, readingBand, excludedTitles)) ??
+        (await discoverSomdCatalogBook(themeContext.bucket, readingBand, excludedTitles))
       : null;
   const verification = somdCatalogMatch
     ? {
@@ -1224,27 +1240,28 @@ export async function buildWeeklyPlannerBookRecommendations({
   const uniqueLevels = Array.from(new Set(orderedLevels));
 
   const recommendations: PlannerBookRecommendation[] = [];
+  const usedTitles = new Set<string>();
 
-  recommendations.push(
-    await buildRecommendation({
-      themeContext: resolvedThemeContext,
-      readingLevel: uniqueLevels[0] ?? defaultStudentReadingLevel,
-      learningFocus: topicText,
-      libraryRecord,
-      householdLabel: normalizedLearners.length > 1 ? "Family read-aloud" : undefined
-    })
-  );
+  const firstRecommendation = await buildRecommendation({
+    themeContext: resolvedThemeContext,
+    readingLevel: uniqueLevels[0] ?? defaultStudentReadingLevel,
+    learningFocus: topicText,
+    libraryRecord,
+    householdLabel: normalizedLearners.length > 1 ? "Family read-aloud" : undefined
+  });
+  recommendations.push(firstRecommendation);
+  usedTitles.add(firstRecommendation.label.replace(/^[^:]+:\s*/, "").trim().toLowerCase());
 
   if (normalizedLearners.length > 1 && uniqueLevels.length > 1) {
-    recommendations.push(
-      await buildRecommendation({
-        themeContext: resolvedThemeContext,
-        readingLevel: uniqueLevels[uniqueLevels.length - 1],
-        learningFocus: topicText,
-        libraryRecord,
-        householdLabel: "Independent follow-up"
-      })
-    );
+    const secondRecommendation = await buildRecommendation({
+      themeContext: resolvedThemeContext,
+      readingLevel: uniqueLevels[uniqueLevels.length - 1],
+      learningFocus: topicText,
+      libraryRecord,
+      householdLabel: "Independent follow-up",
+      excludedTitles: usedTitles
+    });
+    recommendations.push(secondRecommendation);
   }
 
   return recommendations.slice(0, 2);

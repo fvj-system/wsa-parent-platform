@@ -82,6 +82,7 @@ export async function POST(request: Request) {
       settingPreference: parsedInput.data.settingPreference,
       baseOutput
     });
+    const weeklyBookFocus = parsedInput.data.focusArea;
     const weeklyBookSignals = [
       parsedInput.data.focusArea,
       baseOutput.weeklyOverview,
@@ -91,7 +92,7 @@ export async function POST(request: Request) {
       ...baseOutput.dailyPlan.flatMap((item) => [item.focus, item.miniLesson, item.coolFact, ...item.activities])
     ];
     const weeklyBookTopicText = weeklyBookSignals.filter(Boolean).join(". ");
-    const themeContext = buildPlannerThemeContext(parsedInput.data.focusArea, weeklyBookSignals);
+    const themeContext = buildPlannerThemeContext(weeklyBookFocus, [weeklyBookFocus]);
 
     const output = weekPlannerOutputSchema.parse({
       ...baseOutput,
@@ -106,7 +107,7 @@ export async function POST(request: Request) {
       bookRecommendations: await buildWeeklyPlannerBookRecommendations({
         locationLabel: parsedInput.data.locationLabel,
         homeZipcode: parsedInput.data.homeZipcode,
-        topicText: weeklyBookTopicText,
+        topicText: weeklyBookFocus,
         topicSignals: weeklyBookSignals,
         themeContext,
         learners: parsedInput.data.selectedStudentNames.map((name, index) => ({
