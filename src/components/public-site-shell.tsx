@@ -23,6 +23,9 @@ export function PublicSiteShell({ children, userEmail }: PublicSiteShellProps) {
           <Link className="button nav-pill nav-pill-secondary nav-pill-idle" href="/classes">
             Classes
           </Link>
+          <Link className="button nav-pill nav-pill-secondary nav-pill-idle" href="/parents">
+            Parent FAQ
+          </Link>
           {userEmail ? (
             <Link className="button nav-pill nav-pill-primary-link" href="/dashboard">
               Dashboard

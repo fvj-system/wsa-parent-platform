@@ -108,6 +108,9 @@ export function PublicHomePage({ userEmail, featuredClasses }: PublicHomePagePro
             <li>Family-controlled student records</li>
             <li>No public child profile pages</li>
           </ul>
+          <Link className="button button-ghost" href="/parents">
+            Read parent FAQ
+          </Link>
         </article>
         <article className="panel stack">
           <p className="eyebrow">Premium homeschool tools</p>

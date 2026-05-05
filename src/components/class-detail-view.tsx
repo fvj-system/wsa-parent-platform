@@ -162,6 +162,11 @@ export function ClassDetailView({ classItem, isAuthenticated = false }: ClassDet
           <p className="panel-copy" style={{ margin: 0 }}>
             WSA is built for homeschool families who want clear expectations, practical safety notes, and parent control over each child&apos;s learning records.
           </p>
+          <div className="cta-row" style={{ justifyContent: "flex-start" }}>
+            <Link className="button button-ghost" href="/parents">
+              Read parent FAQ
+            </Link>
+          </div>
         </section>
 
         <section className="trail-note trail-note-framed stack">
