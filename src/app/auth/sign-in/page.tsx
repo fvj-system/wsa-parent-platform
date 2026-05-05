@@ -1,5 +1,11 @@
 import { redirect } from "next/navigation";
+import { AuthLoginPoster } from "@/components/auth-login-poster";
 import { createClient } from "@/lib/supabase/server";
+
+function getSafeNextPath(value: string | string[] | undefined) {
+  if (typeof value !== "string") return "";
+  return value.startsWith("/") && !value.startsWith("//") ? value : "";
+}
 
 export default async function SignInPage({
   searchParams,
@@ -10,19 +16,12 @@ export default async function SignInPage({
   const {
     data: { user }
   } = await supabase.auth.getUser();
+  const params = await searchParams;
+  const nextPath = getSafeNextPath(params.next);
 
   if (user) {
-    redirect("/dashboard");
+    redirect(nextPath || "/dashboard");
   }
 
-  const params = await searchParams;
-  const query = new URLSearchParams();
-
-  for (const [key, value] of Object.entries(params)) {
-    if (typeof value === "string" && value.length > 0) {
-      query.set(key, value);
-    }
-  }
-
-  redirect(query.toString() ? `/?${query.toString()}` : "/");
+  return <AuthLoginPoster />;
 }

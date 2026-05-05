@@ -9,12 +9,18 @@ const PUBLIC_ROUTES = [
   "/auth/sign-in",
   "/auth/sign-up",
   "/auth/forgot-password",
+  "/classes",
 ];
 
 function isPublicRoute(pathname: string) {
   return PUBLIC_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
+}
+
+function getSafeNextPath(value: string | null) {
+  if (!value) return "";
+  return value.startsWith("/") && !value.startsWith("//") ? value : "";
 }
 
 export async function middleware(request: NextRequest) {
@@ -79,9 +85,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && (pathname === "/" || pathname === "/auth/sign-in")) {
+  if (user && pathname === "/auth/sign-in") {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = getSafeNextPath(request.nextUrl.searchParams.get("next")) || "/dashboard";
+    url.search = "";
     return NextResponse.redirect(url);
   }
 

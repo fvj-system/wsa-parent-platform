@@ -236,8 +236,8 @@ export function ClassesHub({
             <strong>{reusableWaiver ? "Ready" : "Needed"}</strong>
             <p className="panel-copy" style={{ marginBottom: 0 }}>
               {reusableWaiver
-                ? `Saved waiver from ${new Date(reusableWaiver.accepted_at).toLocaleDateString()}.`
-                : "A required class waiver can be signed during checkout."}
+                ? `Saved waiver from ${new Date(reusableWaiver.accepted_at).toLocaleDateString()}. Parents can choose whether to reuse it during checkout.`
+                : "A parent or guardian signs the required class waiver before payment."}
             </p>
           </article>
         </div>
@@ -423,7 +423,7 @@ export function ClassesHub({
                         <p className="eyebrow">Register this family</p>
                         <h4>Select one or more children</h4>
                         <p className="panel-copy" style={{ marginBottom: 0 }}>
-                          Paid registrations are saved on the family record and also attached to each selected student profile.
+                          Paid registrations are saved on the family record and attached to each selected student profile. Family/student details stay private to this signed-in household.
                         </p>
                       </div>
 
@@ -486,7 +486,7 @@ export function ClassesHub({
                         <section className="stack">
                           <div>
                             <p className="eyebrow">Waiver</p>
-                            <h4>Class waiver before payment</h4>
+                            <h4>Parent-signed class waiver before payment</h4>
                           </div>
 
                           {reusableWaiver ? (
@@ -535,7 +535,7 @@ export function ClassesHub({
                                   checked={acceptWaiver}
                                   onChange={(event) => setAcceptWaiver(event.target.checked)}
                                 />
-                                <span>I agree to the standard WSA class waiver for the selected children.</span>
+                                <span>I am the parent or guardian for the selected children, I understand this is an outdoor activity with normal outdoor risks, and I agree to the WSA class waiver before payment.</span>
                               </label>
                               <label className="classes-waiver-toggle">
                                 <input
@@ -543,12 +543,12 @@ export function ClassesHub({
                                   checked={saveWaiverOnFile}
                                   onChange={(event) => setSaveWaiverOnFile(event.target.checked)}
                                 />
-                                <span>Save this waiver on file for future class registrations.</span>
+                                <span>Save this waiver on file so this household can reuse it for future class registrations.</span>
                               </label>
                             </div>
                           ) : (
                             <p className="panel-copy" style={{ margin: 0 }}>
-                              This registration will reuse the household waiver already saved on file.
+                              This registration will reuse the household waiver already saved on file. Uncheck the saved-waiver option if you need to enter updated emergency or medical notes.
                             </p>
                           )}
                         </section>

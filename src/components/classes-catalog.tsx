@@ -12,6 +12,7 @@ import {
 type ClassesCatalogProps = {
   upcomingClasses: ClassRecord[];
   pastClasses: ClassRecord[];
+  isPublicView?: boolean;
 };
 
 function formatClassDate(value: string | null) {
@@ -43,16 +44,16 @@ function getClassHref(classItem: ClassRecord) {
   return `/classes/${classItem.slug || classItem.id}`;
 }
 
-export function ClassesCatalog({ upcomingClasses, pastClasses }: ClassesCatalogProps) {
+export function ClassesCatalog({ upcomingClasses, pastClasses, isPublicView = false }: ClassesCatalogProps) {
   return (
     <section className="stack">
       <section className="panel stack">
         <div className="field-section-header">
           <div>
             <p className="eyebrow">Upcoming classes</p>
-            <h3>Choose a class in WSA, then finish registration in Jotform</h3>
+            <h3>Choose the outdoor learning day that fits your family</h3>
             <p className="panel-copy" style={{ marginBottom: 0 }}>
-              This page is the family-friendly class list. The register buttons open the live Jotform flow for waiver and Stripe payment.
+              Browse dates, age ranges, locations, prices, and spots before creating an account or using the live registration link.
             </p>
           </div>
         </div>
@@ -116,6 +117,10 @@ export function ClassesCatalog({ upcomingClasses, pastClasses }: ClassesCatalogP
                       >
                         Quick register
                       </a>
+                    ) : isPublicView ? (
+                      <Link className="button button-ghost" href={`/auth/sign-up?next=${encodeURIComponent(getClassHref(classItem))}`}>
+                        Create account
+                      </Link>
                     ) : null}
                   </div>
                 </article>
@@ -127,7 +132,7 @@ export function ClassesCatalog({ upcomingClasses, pastClasses }: ClassesCatalogP
             <div className="copy">
               <h4>No upcoming classes yet</h4>
               <p className="panel-copy" style={{ marginBottom: 0 }}>
-                As soon as the next classes are published, families will be able to open them here and register from the live Jotform links.
+                As soon as the next classes are published, families will be able to open them here and choose the right registration path.
               </p>
             </div>
           </div>

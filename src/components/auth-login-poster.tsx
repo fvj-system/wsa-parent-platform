@@ -33,6 +33,8 @@ export function AuthLoginPoster({ mode = "root" }: AuthLoginPosterProps) {
       ? "Email confirmed. You can sign in now."
       : "";
   const inviteToken = searchParams.get("invite") ?? "";
+  const rawNextPath = searchParams.get("next") ?? "";
+  const nextPath = rawNextPath.startsWith("/") && !rawNextPath.startsWith("//") ? rawNextPath : "";
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -162,7 +164,7 @@ export function AuthLoginPoster({ mode = "root" }: AuthLoginPosterProps) {
                     }
                   }
 
-                  router.push(inviteToken ? `/household?invite=${encodeURIComponent(inviteToken)}` : "/dashboard");
+                  router.push(inviteToken ? `/household?invite=${encodeURIComponent(inviteToken)}` : nextPath || "/dashboard");
                   router.refresh();
                 });
               }}
@@ -258,7 +260,15 @@ export function AuthLoginPoster({ mode = "root" }: AuthLoginPosterProps) {
             {authMode === "family" ? (
               <div className={styles.links}>
                 <Link href="/auth/forgot-password">Forgot password?</Link>
-                <Link href={inviteToken ? `/auth/sign-up?invite=${encodeURIComponent(inviteToken)}` : "/auth/sign-up"}>
+                <Link
+                  href={
+                    inviteToken
+                      ? `/auth/sign-up?invite=${encodeURIComponent(inviteToken)}${nextPath ? `&next=${encodeURIComponent(nextPath)}` : ""}`
+                      : nextPath
+                        ? `/auth/sign-up?next=${encodeURIComponent(nextPath)}`
+                        : "/auth/sign-up"
+                  }
+                >
                   Create family account
                 </Link>
               </div>

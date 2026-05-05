@@ -7,9 +7,10 @@ import { createClient } from "@/lib/supabase/client";
 
 type SignUpFormProps = {
   inviteToken?: string;
+  nextPath?: string;
 };
 
-export function SignUpForm({ inviteToken = "" }: SignUpFormProps) {
+export function SignUpForm({ inviteToken = "", nextPath = "" }: SignUpFormProps) {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -26,6 +27,10 @@ export function SignUpForm({ inviteToken = "" }: SignUpFormProps) {
         {inviteToken ? (
           <p className="success" style={{ marginTop: 0 }}>
             This signup was opened from a co-parent invite. After your account is ready, you will land on the household invite screen.
+          </p>
+        ) : nextPath ? (
+          <p className="success" style={{ marginTop: 0 }}>
+            After your account is ready, you will return to the WSA page you were viewing.
           </p>
         ) : null}
 
@@ -55,9 +60,9 @@ export function SignUpForm({ inviteToken = "" }: SignUpFormProps) {
                 email,
                 password,
                 options: {
-                  emailRedirectTo: `${window.location.origin}/?confirmed=1${
+                  emailRedirectTo: `${window.location.origin}/auth/sign-in?confirmed=1${
                     inviteToken ? `&invite=${encodeURIComponent(inviteToken)}` : ""
-                  }`,
+                  }${nextPath ? `&next=${encodeURIComponent(nextPath)}` : ""}`,
                   data: {
                     full_name: fullName,
                     household_name: householdName,
@@ -74,7 +79,7 @@ export function SignUpForm({ inviteToken = "" }: SignUpFormProps) {
                 setMessage("Account created. Taking you to your dashboard now.");
                 form.reset();
                 router.replace(
-                  inviteToken ? `/household?invite=${encodeURIComponent(inviteToken)}` : "/dashboard",
+                  inviteToken ? `/household?invite=${encodeURIComponent(inviteToken)}` : nextPath || "/dashboard",
                 );
                 router.refresh();
                 return;
@@ -116,7 +121,15 @@ export function SignUpForm({ inviteToken = "" }: SignUpFormProps) {
 
         <p className="muted">
           Already have an account?{" "}
-          <Link href={inviteToken ? `/?invite=${encodeURIComponent(inviteToken)}` : "/"}>
+          <Link
+            href={
+              inviteToken
+                ? `/auth/sign-in?invite=${encodeURIComponent(inviteToken)}${nextPath ? `&next=${encodeURIComponent(nextPath)}` : ""}`
+                : nextPath
+                  ? `/auth/sign-in?next=${encodeURIComponent(nextPath)}`
+                  : "/auth/sign-in"
+            }
+          >
             Sign in
           </Link>
         </p>
