@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { calculateClassRegistrationPrice, CLASS_PRICING, formatPrice } from "@/lib/class-pricing";
@@ -33,6 +34,13 @@ type RegistrationGroup = {
   pricingMode: "per_child" | "family";
   waiverId: string | null;
 };
+
+const parentChecklistItems = [
+  "I reviewed weather, trail, and gear expectations for this outdoor class.",
+  "Emergency contact, medical, allergy, and mobility notes are current for the selected children.",
+  "I understand waiver, photo/media, refund/transfer, cancellation, and AI/student-data guidance is summarized in the Parent FAQ.",
+  "I am the parent/guardian or responsible adult completing this registration."
+];
 
 function formatClassDate(classItem: ClassRecord | null) {
   const dateValue = classItem ? getClassDateValue(classItem) : null;
@@ -88,6 +96,7 @@ export function ClassesHub({
   const [medicalNotes, setMedicalNotes] = useState(reusableWaiver?.medical_notes ?? "");
   const [acceptWaiver, setAcceptWaiver] = useState(false);
   const [saveWaiverOnFile, setSaveWaiverOnFile] = useState(Boolean(reusableWaiver?.save_on_file));
+  const [parentChecklistAccepted, setParentChecklistAccepted] = useState(false);
   const [formError, setFormError] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -193,6 +202,7 @@ export function ClassesHub({
     setSignatureName(reusableWaiver?.signature_name ?? "");
     setAcceptWaiver(false);
     setSaveWaiverOnFile(Boolean(reusableWaiver?.save_on_file));
+    setParentChecklistAccepted(false);
     setFormError("");
   }, [openClassId, reusableWaiver]);
 
@@ -482,6 +492,30 @@ export function ClassesHub({
                         </p>
                       </section>
 
+                      <section className="trail-note trail-note-framed stack">
+                        <div>
+                          <p className="eyebrow">Before checkout</p>
+                          <h4 style={{ marginTop: 4 }}>Parent registration checklist</h4>
+                          <p className="panel-copy" style={{ marginBottom: 0 }}>
+                            Quick confirmation before Stripe opens. Full parent guidance is available in the{" "}
+                            <Link href="/parents">Parent FAQ and policies</Link>.
+                          </p>
+                        </div>
+                        <ul className="check-list" style={{ margin: 0 }}>
+                          {parentChecklistItems.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                        <label className="classes-waiver-toggle">
+                          <input
+                            type="checkbox"
+                            checked={parentChecklistAccepted}
+                            onChange={(event) => setParentChecklistAccepted(event.target.checked)}
+                          />
+                          <span>I reviewed this parent checklist and am ready to continue to secure checkout.</span>
+                        </label>
+                      </section>
+
                       {classItem.waiver_required ? (
                         <section className="stack">
                           <div>
@@ -560,9 +594,20 @@ export function ClassesHub({
                         <button
                           type="button"
                           className="button button-primary"
-                          disabled={!students.length || !selectedStudentIds.length || isPending || classItem.status === "full"}
+                          disabled={
+                            !students.length ||
+                            !selectedStudentIds.length ||
+                            !parentChecklistAccepted ||
+                            isPending ||
+                            classItem.status === "full"
+                          }
                           onClick={() => {
                             setFormError("");
+
+                            if (!parentChecklistAccepted) {
+                              setFormError("Review and confirm the parent registration checklist before checkout.");
+                              return;
+                            }
 
                             startTransition(async () => {
                               const response = await fetch("/api/classes/checkout", {

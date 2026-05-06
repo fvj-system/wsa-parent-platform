@@ -723,6 +723,17 @@ select {
   margin-top: 3px;
 }
 
+.check-list {
+  display: grid;
+  gap: 8px;
+  padding-left: 20px;
+}
+
+.check-list li {
+  color: var(--muted-strong);
+  line-height: 1.55;
+}
+
 .classes-catalog-grid {
   display: grid;
   gap: 14px;
