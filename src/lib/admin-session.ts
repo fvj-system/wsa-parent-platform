@@ -9,13 +9,37 @@ type AdminSessionPayload = {
   exp: number;
 };
 
+const MIN_ADMIN_SECRET_LENGTH = 32;
+
+function requireAdminEnv(name: string) {
+  const value = process.env[name]?.trim();
+
+  if (!value) {
+    throw new Error(`Admin access is not configured. Set ${name} before using the WSA admin portal.`);
+  }
+
+  return value;
+}
+
 export function getAdminCredentialConfig() {
+  const username = requireAdminEnv("WSA_ADMIN_USERNAME");
+  const password = requireAdminEnv("WSA_ADMIN_PASSWORD");
+  const sessionSecret = requireAdminEnv("WSA_ADMIN_SESSION_SECRET");
+
+  if (sessionSecret.length < MIN_ADMIN_SECRET_LENGTH) {
+    throw new Error(`Admin access is not configured. WSA_ADMIN_SESSION_SECRET must be at least ${MIN_ADMIN_SECRET_LENGTH} characters.`);
+  }
+
+  const parsedSessionHours = Number.parseInt(process.env.WSA_ADMIN_SESSION_HOURS || "12", 10);
+  const sessionHours = Number.isFinite(parsedSessionHours)
+    ? Math.min(Math.max(parsedSessionHours, 1), 24)
+    : 12;
+
   return {
-    username: process.env.WSA_ADMIN_USERNAME || "Admin",
-    password: process.env.WSA_ADMIN_PASSWORD || "WSAAdmin01",
-    sessionSecret:
-      process.env.WSA_ADMIN_SESSION_SECRET || "wsa-beta-admin-session-change-me",
-    sessionHours: Number.parseInt(process.env.WSA_ADMIN_SESSION_HOURS || "12", 10) || 12,
+    username,
+    password,
+    sessionSecret,
+    sessionHours,
   };
 }
 
@@ -71,12 +95,12 @@ export function verifyAdminSessionToken(token: string | undefined | null) {
   const [encodedPayload, signature] = token.split(".");
   if (!encodedPayload || !signature) return null;
 
-  const expectedSignature = signValue(encodedPayload);
-  if (!safeCompare(signature, expectedSignature)) {
-    return null;
-  }
-
   try {
+    const expectedSignature = signValue(encodedPayload);
+    if (!safeCompare(signature, expectedSignature)) {
+      return null;
+    }
+
     const payload = JSON.parse(fromBase64Url(encodedPayload)) as AdminSessionPayload;
     if (!payload.username || !payload.exp || payload.exp <= Date.now()) {
       return null;

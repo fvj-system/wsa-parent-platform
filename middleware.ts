@@ -10,6 +10,7 @@ const PUBLIC_ROUTES = [
   "/auth/sign-up",
   "/auth/forgot-password",
   "/classes",
+  "/parents",
 ];
 
 function isPublicRoute(pathname: string) {
