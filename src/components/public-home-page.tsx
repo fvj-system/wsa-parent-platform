@@ -5,12 +5,44 @@ import type { ClassRecord } from "@/lib/classes";
 
 type PublicHomePageProps = {
   userEmail?: string | null;
+  inviteToken?: string;
   featuredClasses: ClassRecord[];
 };
 
-export function PublicHomePage({ userEmail, featuredClasses }: PublicHomePageProps) {
+export function PublicHomePage({
+  userEmail,
+  inviteToken = "",
+  featuredClasses,
+}: PublicHomePageProps) {
   return (
-    <PublicSiteShell userEmail={userEmail}>
+    <PublicSiteShell userEmail={userEmail} inviteToken={inviteToken}>
+      {inviteToken && !userEmail ? (
+        <section className="panel stack">
+          <div>
+            <p className="eyebrow">Household invite</p>
+            <h3>You were invited to join a shared WSA household.</h3>
+            <p className="panel-copy" style={{ marginBottom: 0 }}>
+              Sign in or create your own login and the app will take you straight
+              to the household sharing screen to accept the invite.
+            </p>
+          </div>
+          <div className="cta-row" style={{ justifyContent: "flex-start" }}>
+            <Link
+              className="button button-primary"
+              href={`/auth/sign-in?invite=${encodeURIComponent(inviteToken)}`}
+            >
+              Sign in to accept invite
+            </Link>
+            <Link
+              className="button button-ghost"
+              href={`/auth/sign-up?invite=${encodeURIComponent(inviteToken)}`}
+            >
+              Create account first
+            </Link>
+          </div>
+        </section>
+      ) : null}
+
       <section className="hero">
         <div className="stack">
           <p className="eyebrow">Wild Stallion Academy</p>
@@ -27,7 +59,14 @@ export function PublicHomePage({ userEmail, featuredClasses }: PublicHomePagePro
                 Open family dashboard
               </Link>
             ) : (
-              <Link className="button button-ghost" href="/auth/sign-up">
+              <Link
+                className="button button-ghost"
+                href={
+                  inviteToken
+                    ? `/auth/sign-up?invite=${encodeURIComponent(inviteToken)}`
+                    : "/auth/sign-up"
+                }
+              >
                 Create family account
               </Link>
             )}

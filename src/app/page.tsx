@@ -1,4 +1,5 @@
 import { PublicHomePage } from "@/components/public-home-page";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { ClassRecord } from "@/lib/classes";
 
@@ -14,11 +15,23 @@ function sortClasses(items: ClassRecord[]) {
   });
 }
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ invite?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const inviteToken =
+    typeof resolvedSearchParams.invite === "string" ? resolvedSearchParams.invite : "";
+
+  if (user && inviteToken) {
+    redirect(`/household?invite=${encodeURIComponent(inviteToken)}`);
+  }
+
   const today = new Date().toISOString().slice(0, 10);
 
   const { data: featuredClasses } = await supabase
@@ -33,6 +46,7 @@ export default async function HomePage() {
   return (
     <PublicHomePage
       userEmail={user?.email ?? null}
+      inviteToken={inviteToken}
       featuredClasses={sortClasses((featuredClasses ?? []) as ClassRecord[])}
     />
   );

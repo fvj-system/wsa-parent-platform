@@ -2,6 +2,7 @@ import { BadgeProgressWidget } from "@/components/badge-progress-widget";
 import { ClientSafeBoundary } from "@/components/client-safe-boundary";
 import { DashboardDailyConditions } from "@/components/dashboard-daily-conditions";
 import { DashboardDailyBriefing } from "@/components/dashboard-daily-briefing";
+import { DashboardNearbyGeocaches } from "@/components/dashboard-nearby-geocaches";
 import { DashboardTodayNextStep } from "@/components/dashboard-today-next-step";
 import { AppShell } from "@/components/app-shell";
 import { requireUser } from "@/lib/auth";
@@ -14,6 +15,12 @@ import { getNatureQuoteForDate } from "@/lib/daily-brief/nature-quote";
 import { ensureHouseholdBriefing } from "@/lib/daily-briefing";
 import type { GenerationRecord } from "@/lib/generations";
 import { getHouseholdContext } from "@/lib/households";
+import {
+  getNearbyGeocaches,
+  listVisibleGeocaches,
+  resolveCountyContextFromLocation,
+  type NearbyGeocacheRecord,
+} from "@/lib/geocaches";
 import { getUserLocationPreferences, resolveUserLocationPreference } from "@/lib/location-preferences";
 import { getFamilyOpportunityEventsForDate } from "@/lib/nearby/family-opportunities";
 import { rankLevels, type StudentRecord } from "@/lib/students";
@@ -115,6 +122,27 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   }
 
   const todayEvents = await getFamilyOpportunityEventsForDate(environmental.location, today);
+  let nearbyGeocaches: NearbyGeocacheRecord[] = [];
+  let geocacheCountyLabel: string | null = null;
+
+  if (!resolvedLocationPreference.needsSetup) {
+    try {
+      const [visibleGeocaches, countyContext] = await Promise.all([
+        listVisibleGeocaches(supabase, 40),
+        resolveCountyContextFromLocation(resolvedLocationPreference.location),
+      ]);
+      nearbyGeocaches = getNearbyGeocaches(
+        visibleGeocaches.filter((item) => item.status === "active"),
+        resolvedLocationPreference.location,
+        countyContext,
+        4,
+      );
+      geocacheCountyLabel = countyContext?.label ?? null;
+    } catch {
+      // Leave geocache card empty instead of risking the dashboard.
+    }
+  }
+
   const tideSummary = getTideSummary(today, environmental.location);
   const historyFact = getHistoryFactForDate(today);
   const natureQuote = getNatureQuoteForDate(today);
@@ -190,6 +218,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         startAdventureHref={startAdventureHref}
         startAdventureLabel={startAdventureLabel}
         householdName={household.householdName}
+      />
+
+      <DashboardNearbyGeocaches
+        items={nearbyGeocaches}
+        countyLabel={geocacheCountyLabel}
+        needsSetup={resolvedLocationPreference.needsSetup}
       />
 
       {studentRows.length === 0 ? (

@@ -3,9 +3,21 @@ import Link from "next/link";
 type PublicSiteShellProps = {
   children: React.ReactNode;
   userEmail?: string | null;
+  inviteToken?: string;
 };
 
-export function PublicSiteShell({ children, userEmail }: PublicSiteShellProps) {
+export function PublicSiteShell({
+  children,
+  userEmail,
+  inviteToken = "",
+}: PublicSiteShellProps) {
+  const signInHref = inviteToken
+    ? `/auth/sign-in?invite=${encodeURIComponent(inviteToken)}`
+    : "/auth/sign-in";
+  const signUpHref = inviteToken
+    ? `/auth/sign-up?invite=${encodeURIComponent(inviteToken)}`
+    : "/auth/sign-up";
+
   return (
     <main className="shell layout-grid">
       <section className="top-nav top-nav-shell">
@@ -32,10 +44,10 @@ export function PublicSiteShell({ children, userEmail }: PublicSiteShellProps) {
             </Link>
           ) : (
             <>
-              <Link className="button nav-pill nav-pill-secondary nav-pill-idle" href="/auth/sign-in">
+              <Link className="button nav-pill nav-pill-secondary nav-pill-idle" href={signInHref}>
                 Family login
               </Link>
-              <Link className="button nav-pill nav-pill-primary-link" href="/auth/sign-up">
+              <Link className="button nav-pill nav-pill-primary-link" href={signUpHref}>
                 Create account
               </Link>
             </>

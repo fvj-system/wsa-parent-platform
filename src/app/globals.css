@@ -5051,3 +5051,7 @@ select {
     grid-template-columns: 1fr;
   }
 }
+
+.geocache-clue-copy {
+  white-space: pre-wrap;
+}
