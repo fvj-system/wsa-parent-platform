@@ -13,7 +13,8 @@ export const completionActivityTypes = [
   "week_planner",
   "lesson_generator",
   "nature_discovery",
-  "in_person_class"
+  "in_person_class",
+  "field_quest"
 ] as const;
 
 export type CompletionActivityType = (typeof completionActivityTypes)[number];

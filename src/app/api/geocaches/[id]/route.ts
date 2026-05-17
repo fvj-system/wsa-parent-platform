@@ -43,7 +43,7 @@ export async function PATCH(
     if (error) {
       if (/relation .*geocaches.* does not exist/i.test(error.message)) {
         return NextResponse.json(
-          { error: "The geocache trail is not live in the database yet. Apply migration 0031 first." },
+          { error: "The community clue trail is not live in the database yet. Apply migrations 0031 and 0032 first." },
           { status: 500 },
         );
       }

@@ -110,6 +110,8 @@ export function getCompletionLabel(activityType: ActivityCompletionRecord["activ
       return "Lesson";
     case "in_person_class":
       return "In-Person Class";
+    case "field_quest":
+      return "Field Quest";
     default:
       return activityType;
   }

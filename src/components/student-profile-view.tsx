@@ -36,6 +36,8 @@ function getCompletionBadge(completion: ActivityCompletionRecord) {
       return "Week Planner";
     case "in_person_class":
       return "Class";
+    case "field_quest":
+      return "Field Quest";
   }
 }
 

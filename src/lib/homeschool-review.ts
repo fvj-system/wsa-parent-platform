@@ -17,6 +17,7 @@ export const marylandSubjectLabels = [
 export type MarylandSubjectLabel = (typeof marylandSubjectLabels)[number];
 
 export const portfolioEvidenceTypeOptions = [
+  { value: "field_quest", label: "Field Quest" },
   { value: "field_identification", label: "Species Discovery" },
   { value: "diy_project", label: "DIY Project" },
   { value: "worksheet", label: "Worksheet" },
@@ -170,6 +171,7 @@ const subjectKeywords: Record<MarylandSubjectLabel, string[]> = {
 };
 
 const baseSubjectsByType: Record<string, MarylandSubjectLabel[]> = {
+  field_quest: ["Science", "Physical Education"],
   field_identification: ["Science"],
   diy_project: ["Science", "Art"],
   worksheet: ["English (Reading/Language Arts)"],
@@ -269,6 +271,7 @@ export function inferSubjectsForCompletionEvidence(input: {
     week_planner: ["English (Reading/Language Arts)"],
     lesson_generator: ["English (Reading/Language Arts)"],
     in_person_class: ["Science"],
+    field_quest: ["Science", "Physical Education"],
   };
 
   return inferSubjectsForText(

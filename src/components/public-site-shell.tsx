@@ -32,6 +32,9 @@ export function PublicSiteShell({
         </div>
 
         <div className="nav-actions nav-actions-shell">
+          <Link className="button nav-pill nav-pill-secondary nav-pill-idle" href="/field-quests">
+            Field Quests
+          </Link>
           <Link className="button nav-pill nav-pill-secondary nav-pill-idle" href="/classes">
             Classes
           </Link>

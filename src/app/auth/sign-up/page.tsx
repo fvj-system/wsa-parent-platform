@@ -8,13 +8,14 @@ function getSafeNextPath(value: string | undefined) {
 export default async function SignUpPage({
   searchParams,
 }: {
-  searchParams: Promise<{ invite?: string; next?: string }>;
+  searchParams: Promise<{ invite?: string; next?: string; quest?: string }>;
 }) {
   const params = await searchParams;
   return (
     <SignUpForm
       inviteToken={typeof params.invite === "string" ? params.invite : ""}
       nextPath={getSafeNextPath(params.next)}
+      questSlug={typeof params.quest === "string" ? params.quest : ""}
     />
   );
 }

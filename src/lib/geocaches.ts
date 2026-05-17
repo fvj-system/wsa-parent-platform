@@ -4,6 +4,8 @@ import {
   type ResolvedLocationContext,
 } from "@/lib/context/nearby-spots";
 
+import { WSA_FACEBOOK_URL } from "@/lib/social";
+
 export const geocacheStateOptions = [
   { code: "MD", name: "Maryland" },
   { code: "VA", name: "Virginia" },
@@ -33,10 +35,13 @@ export type GeocacheRecord = {
   county_name: string;
   location_hint: string;
   clue: string;
+  vague_map_hint: string | null;
   treasure_note: string | null;
   family_friendly: boolean;
   latitude: number | null;
   longitude: number | null;
+  image_path: string | null;
+  image_url: string | null;
   status: GeocacheStatus;
   created_at: string;
   updated_at: string;
@@ -63,6 +68,26 @@ export function getGeocacheStateName(stateCode: GeocacheStateCode) {
 
 export function getGeocacheTypeLabel(cacheType: GeocacheType) {
   return geocacheTypeOptions.find((option) => option.value === cacheType)?.label ?? cacheType;
+}
+
+export function buildGeocacheFacebookCaption(cache: Pick<
+  GeocacheRecord,
+  "title" | "cache_type" | "county_name" | "state_code" | "location_hint" | "clue" | "treasure_note"
+>) {
+  const typeLabel = getGeocacheTypeLabel(cache.cache_type);
+  const locationLabel = `${cache.county_name} County, ${cache.state_code}`;
+  const treasureLine = cache.treasure_note?.trim()
+    ? `Hidden item: ${cache.treasure_note.trim()}`
+    : "Hidden item: a simple mystery surprise for another family to find.";
+
+  return [
+    `We just posted a Wild Stallion Academy Field Quest community clue in ${locationLabel}.`,
+    `Area hint: ${cache.location_hint}`,
+    `Clue: ${cache.clue}`,
+    treasureLine,
+    "Come join the WSA Field Quests trail and see if your family can solve it.",
+    `Share it with Wild Stallion Academy here: ${WSA_FACEBOOK_URL}`
+  ].join("\n");
 }
 
 export function normalizeCountyName(input: string) {
@@ -187,7 +212,7 @@ export async function listVisibleGeocaches(
   const { data, error } = await supabase
     .from("geocaches")
     .select(
-      "id, user_id, household_id, title, cache_type, state_code, county_name, location_hint, clue, treasure_note, family_friendly, latitude, longitude, status, created_at, updated_at",
+      "id, user_id, household_id, title, cache_type, state_code, county_name, location_hint, clue, vague_map_hint, treasure_note, family_friendly, latitude, longitude, image_path, image_url, status, created_at, updated_at",
     )
     .in("status", ["active", "found"])
     .order("created_at", { ascending: false })
@@ -211,7 +236,7 @@ export async function listHouseholdGeocaches(
   const { data, error } = await supabase
     .from("geocaches")
     .select(
-      "id, user_id, household_id, title, cache_type, state_code, county_name, location_hint, clue, treasure_note, family_friendly, latitude, longitude, status, created_at, updated_at",
+      "id, user_id, household_id, title, cache_type, state_code, county_name, location_hint, clue, vague_map_hint, treasure_note, family_friendly, latitude, longitude, image_path, image_url, status, created_at, updated_at",
     )
     .eq("household_id", householdId)
     .order("created_at", { ascending: false })

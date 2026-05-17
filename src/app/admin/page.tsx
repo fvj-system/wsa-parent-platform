@@ -77,6 +77,7 @@ export default async function AdminHomePage({
           </div>
           <div className="cta-row">
             <Link className="button button-primary" href="/admin/classes">Manage classes</Link>
+            <Link className="button button-ghost" href="/admin/field-quests">Manage Field Quests</Link>
             <Link className="button button-ghost" href="/admin/attendees">Open attendee list</Link>
             <Link className="button button-ghost" href="/admin/engagement">View engagement</Link>
           </div>

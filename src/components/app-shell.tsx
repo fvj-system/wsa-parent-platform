@@ -27,7 +27,7 @@ const familyUtilityNavItems = [
   { href: "/students", label: "Student Profiles" },
   { href: "/household", label: "Household Sharing" },
   { href: "/nearby-opportunities", label: "Nearby Opportunities" },
-  { href: "/geocache", label: "Geocache Trail" },
+  { href: "/field-quests", label: "Field Quests" },
   { href: "/discover/catalog", label: "Creature Log" },
   { href: "/portfolio", label: "Homeschool Review" },
   { href: "/donate", label: "Donate" },
@@ -122,6 +122,7 @@ export function AppShell({ userLabel: _userLabel, children }: AppShellProps) {
     ? [
         { href: "/admin", label: "Overview" },
         { href: "/admin/classes", label: "Classes" },
+        { href: "/admin/field-quests", label: "Field Quests" },
         { href: "/admin/families", label: "Families" },
         { href: "/admin/attendees", label: "Attendees" },
         { href: "/admin/analytics", label: "Analytics" },

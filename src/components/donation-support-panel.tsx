@@ -120,7 +120,7 @@ export function DonationSupportPanel({
         <ul className="chip-list">
           <li>Outdoor class planning and updates</li>
           <li>Family dashboard and planner tools</li>
-          <li>Regional geocache trail growth</li>
+          <li>Regional Field Quests growth</li>
           <li>Homeschool documentation features</li>
         </ul>
         <p className="muted" style={{ margin: 0 }}>

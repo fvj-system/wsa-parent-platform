@@ -2,7 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { GeocacheFacebookShareButton } from "@/components/geocache-facebook-share-button";
 import {
+  buildGeocacheFacebookCaption,
   geocacheStateOptions,
   geocacheTypeOptions,
   getGeocacheTypeLabel,
@@ -35,6 +37,7 @@ export function GeocacheBoard({
   const [isPending, startTransition] = useTransition();
   const [countyName, setCountyName] = useState(defaultCountyName);
   const [stateCode, setStateCode] = useState(defaultStateCode);
+  const [selectedPhotoName, setSelectedPhotoName] = useState("");
 
   function updateCacheStatus(id: string, status: "active" | "found" | "archived") {
     setError("");
@@ -54,16 +57,16 @@ export function GeocacheBoard({
       };
 
       if (!response.ok) {
-        setError(payload.error || "Could not update the trail cache.");
+        setError(payload.error || "Could not update the community clue.");
         return;
       }
 
       setSuccess(
         status === "found"
-          ? "Trail cache marked as found."
+          ? "Community clue marked as found."
           : status === "archived"
-            ? "Trail cache archived."
-            : "Trail cache reopened.",
+            ? "Community clue archived."
+            : "Community clue reopened.",
       );
       router.refresh();
     });
@@ -74,11 +77,10 @@ export function GeocacheBoard({
       <section className="panel stack">
         <div className="header-row">
           <div>
-            <p className="eyebrow">Hide a trail cache</p>
+            <p className="eyebrow">Community clue trail</p>
             <h3>Leave a clue, note, or treasure for another family.</h3>
             <p className="panel-copy" style={{ marginBottom: 0 }}>
-              Keep it simple: choose the county, name the area, drop a clue, and
-              make it feel like a tiny adventure.
+              This is the original family-made clue system now living inside Field Quests. Choose the county, name the area, drop a clue, and make it feel like a tiny adventure.
             </p>
           </div>
           <p className="muted" style={{ margin: 0 }}>
@@ -93,23 +95,32 @@ export function GeocacheBoard({
             setError("");
             setSuccess("");
             const formData = new FormData(event.currentTarget);
+            const requestBody = new FormData();
 
             startTransition(async () => {
-              const response = await fetch("/api/geocaches", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
+              requestBody.append(
+                "payload",
+                JSON.stringify({
                   title: String(formData.get("title") || ""),
                   cacheType: String(formData.get("cacheType") || "message"),
                   stateCode: String(formData.get("stateCode") || defaultStateCode),
                   countyName: String(formData.get("countyName") || ""),
                   locationHint: String(formData.get("locationHint") || ""),
                   clue: String(formData.get("clue") || ""),
+                  vagueMapHint: String(formData.get("vagueMapHint") || ""),
                   treasureNote: String(formData.get("treasureNote") || ""),
                   familyFriendly: formData.get("familyFriendly") === "on",
                 }),
+              );
+
+              const image = formData.get("image");
+              if (image instanceof File && image.size > 0) {
+                requestBody.append("image", image);
+              }
+
+              const response = await fetch("/api/geocaches", {
+                method: "POST",
+                body: requestBody,
               });
 
               const payload = (await response.json().catch(() => ({}))) as {
@@ -117,21 +128,22 @@ export function GeocacheBoard({
               };
 
               if (!response.ok) {
-                setError(payload.error || "Could not hide this trail cache yet.");
+                setError(payload.error || "Could not hide this community clue yet.");
                 return;
               }
 
-              setSuccess("Trail cache saved. Nearby families can now see the clue.");
+              setSuccess("Community clue saved. Nearby families can now see it.");
               event.currentTarget.reset();
               setCountyName(defaultCountyName);
               setStateCode(defaultStateCode);
+              setSelectedPhotoName("");
               router.refresh();
             });
           }}
         >
           <div className="split-grid">
             <label>
-              Cache title
+              Clue title
               <input
                 name="title"
                 maxLength={120}
@@ -141,7 +153,7 @@ export function GeocacheBoard({
             </label>
 
             <label>
-              Cache type
+              Clue type
               <select name="cacheType" defaultValue="message">
                 {geocacheTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -203,6 +215,16 @@ export function GeocacheBoard({
           </label>
 
           <label>
+            Vague map
+            <textarea
+              name="vagueMapHint"
+              rows={3}
+              maxLength={500}
+              placeholder="From the trail sign, head toward the creek, pass the split fence, and look near the third big pine on the left."
+            />
+          </label>
+
+          <label>
             What is hidden there?
             <textarea
               name="treasureNote"
@@ -212,6 +234,23 @@ export function GeocacheBoard({
             />
           </label>
 
+          <label>
+            Hiding spot photo
+            <input
+              name="image"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={(event) =>
+                setSelectedPhotoName(event.target.files?.[0]?.name ?? "")
+              }
+            />
+          </label>
+          {selectedPhotoName ? (
+            <p className="muted" style={{ margin: 0 }}>
+              Photo ready: {selectedPhotoName}
+            </p>
+          ) : null}
+
           <label className="classes-waiver-toggle">
             <input name="familyFriendly" type="checkbox" defaultChecked />
             <span>Keep this family-friendly and easy enough for kids to enjoy.</span>
@@ -219,7 +258,7 @@ export function GeocacheBoard({
 
           <div className="cta-row">
             <button type="submit" className="button button-primary" disabled={isPending}>
-              {isPending ? "Saving..." : "Hide trail cache"}
+              {isPending ? "Saving..." : "Hide community clue"}
             </button>
           </div>
 
@@ -235,14 +274,14 @@ export function GeocacheBoard({
             <h3>
               {nearbyCaches.length
                 ? countyLabel
-                  ? `Caches around ${countyLabel}`
-                  : "Caches near your saved location"
-                : "No nearby trail caches yet"}
+                  ? `Community clues around ${countyLabel}`
+                  : "Community clues near your saved location"
+                : "No nearby community clues yet"}
             </h3>
             <p className="panel-copy" style={{ marginBottom: 0 }}>
               {nearbyCaches.length
-                ? "These are the closest active clues for your family right now."
-                : "Hide the first one in your county or set your ZIP code so nearby cache alerts can light up your dashboard."}
+                ? "These are the closest active family-made clues for your household right now."
+                : "Hide the first one in your county or set your ZIP code so nearby clue alerts can light up your dashboard."}
             </p>
           </div>
 
@@ -263,7 +302,19 @@ export function GeocacheBoard({
                 <p className="dashboard-opportunity-description">
                   {getGeocacheTypeLabel(item.cache_type)} · {item.location_hint}
                 </p>
+                {item.image_url ? (
+                  <img
+                    src={item.image_url}
+                    alt={`${item.title} hiding spot`}
+                    className="classes-card-image"
+                  />
+                ) : null}
                 <p className="panel-copy geocache-clue-copy">{item.clue}</p>
+                {item.vague_map_hint ? (
+                  <p className="muted" style={{ margin: 0 }}>
+                    Vague map: {item.vague_map_hint}
+                  </p>
+                ) : null}
                 {item.treasure_note ? (
                   <p className="muted" style={{ margin: 0 }}>
                     Hidden there: {item.treasure_note}
@@ -276,10 +327,10 @@ export function GeocacheBoard({
 
         <article className="panel stack">
           <div>
-            <p className="eyebrow">Your household caches</p>
+            <p className="eyebrow">Your household clues</p>
             <h3>{ownCaches.length ? "Manage your active clues" : "Your household has not hidden one yet"}</h3>
             <p className="panel-copy" style={{ marginBottom: 0 }}>
-              Mark caches found, reopen them, or archive them once the trail run is over.
+              Mark clues found, reopen them, or archive them once the trail run is over.
             </p>
           </div>
 
@@ -298,7 +349,22 @@ export function GeocacheBoard({
                 <p className="dashboard-opportunity-description">
                   {getGeocacheTypeLabel(item.cache_type)} · {item.location_hint}
                 </p>
+                {item.image_url ? (
+                  <img
+                    src={item.image_url}
+                    alt={`${item.title} hiding spot`}
+                    className="classes-card-image"
+                  />
+                ) : null}
+                {item.vague_map_hint ? (
+                  <p className="muted" style={{ margin: 0 }}>
+                    Vague map: {item.vague_map_hint}
+                  </p>
+                ) : null}
                 <div className="cta-row">
+                  <GeocacheFacebookShareButton
+                    caption={buildGeocacheFacebookCaption(item)}
+                  />
                   {item.status !== "found" ? (
                     <button
                       type="button"
@@ -338,7 +404,7 @@ export function GeocacheBoard({
       <section className="panel stack">
         <div>
           <p className="eyebrow">Regional feed</p>
-          <h3>Active trail caches across Maryland, Virginia, West Virginia, Delaware, and Pennsylvania</h3>
+          <h3>Active community clues across Maryland, Virginia, West Virginia, Delaware, and Pennsylvania</h3>
           <p className="panel-copy" style={{ marginBottom: 0 }}>
             This keeps the feature adventurous even when your own county feed is still quiet.
           </p>
@@ -361,7 +427,19 @@ export function GeocacheBoard({
               <p className="dashboard-opportunity-description">
                 {getGeocacheTypeLabel(item.cache_type)} · {item.location_hint}
               </p>
+              {item.image_url ? (
+                <img
+                  src={item.image_url}
+                  alt={`${item.title} hiding spot`}
+                  className="classes-card-image"
+                />
+              ) : null}
               <p className="panel-copy geocache-clue-copy">{item.clue}</p>
+              {item.vague_map_hint ? (
+                <p className="muted" style={{ margin: 0 }}>
+                  Vague map: {item.vague_map_hint}
+                </p>
+              ) : null}
             </article>
           ))}
         </div>

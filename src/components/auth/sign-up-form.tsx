@@ -8,9 +8,10 @@ import { createClient } from "@/lib/supabase/client";
 type SignUpFormProps = {
   inviteToken?: string;
   nextPath?: string;
+  questSlug?: string;
 };
 
-export function SignUpForm({ inviteToken = "", nextPath = "" }: SignUpFormProps) {
+export function SignUpForm({ inviteToken = "", nextPath = "", questSlug = "" }: SignUpFormProps) {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -76,6 +77,18 @@ export function SignUpForm({ inviteToken = "", nextPath = "" }: SignUpFormProps)
               }
 
               if (data.session) {
+                if (questSlug) {
+                  await fetch("/api/field-quests/events", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      questSlug,
+                      eventType: "signup_completed",
+                      metadata: { source: "sign_up_form" },
+                    }),
+                  }).catch(() => undefined);
+                }
+
                 setMessage("Account created. Taking you to your dashboard now.");
                 form.reset();
                 router.replace(
