@@ -54,8 +54,9 @@ export default async function FieldQuestsPage({
     .eq("status", "published")
     .order("title", { ascending: true });
 
+  const questLoadError = questError?.message ?? "";
   if (questError) {
-    throw new Error(questError.message);
+    console.error("[field-quests] Could not load public quests.", questError);
   }
 
   const baseQuests = (questRows ?? []) as unknown as FieldQuestRecord[];
@@ -65,95 +66,102 @@ export default async function FieldQuestsPage({
   }));
 
   let communitySection: React.ReactNode = null;
+  let communitySectionError = "";
 
   if (user) {
-    const household = await getHouseholdContext(supabase, user.id);
-    const preferences = await getUserLocationPreferences(supabase, user.id);
-    const resolvedLocation = resolveUserLocationPreference(preferences);
+    try {
+      const household = await getHouseholdContext(supabase, user.id);
+      const preferences = await getUserLocationPreferences(supabase, user.id);
+      const resolvedLocation = resolveUserLocationPreference(preferences);
 
-    questsWithDistance = attachFieldQuestDistances(baseQuests, resolvedLocation.location);
+      questsWithDistance = attachFieldQuestDistances(baseQuests, resolvedLocation.location);
 
-    const [visibleGeocaches, ownGeocaches] = await Promise.all([
-      listVisibleGeocaches(supabase, 80),
-      listHouseholdGeocaches(supabase, household.householdId, 20),
-    ]);
-
-    let countyContext = null;
-    if (!resolvedLocation.needsSetup) {
-      try {
-        countyContext = await resolveCountyContextFromLocation(resolvedLocation.location);
-      } catch {
-        countyContext = null;
-      }
-    }
-
-    const nearbyGeocaches = getNearbyGeocaches(
-      visibleGeocaches.filter((item) => item.status === "active"),
-      resolvedLocation.location,
-      countyContext,
-      8,
-    );
-    const nearbyIds = new Set(nearbyGeocaches.map((item) => item.id));
-    const regionalGeocaches = visibleGeocaches
-      .filter((item) => item.status === "active" && !nearbyIds.has(item.id))
-      .slice(0, 12);
-
-    const [hydratedNearbyGeocaches, hydratedRegionalGeocaches, hydratedOwnGeocaches] =
-      await Promise.all([
-        Promise.all(
-          nearbyGeocaches.map(async (item) => ({
-            ...item,
-            image_url:
-              item.image_path
-                ? (await createSignedStorageUrl(supabase, "leaf-photos", item.image_path)) ??
-                  item.image_url
-                : item.image_url,
-          })),
-        ),
-        Promise.all(
-          regionalGeocaches.map(async (item) => ({
-            ...item,
-            image_url:
-              item.image_path
-                ? (await createSignedStorageUrl(supabase, "leaf-photos", item.image_path)) ??
-                  item.image_url
-                : item.image_url,
-          })),
-        ),
-        Promise.all(
-          ownGeocaches.map(async (item) => ({
-            ...item,
-            image_url:
-              item.image_path
-                ? (await createSignedStorageUrl(supabase, "leaf-photos", item.image_path)) ??
-                  item.image_url
-                : item.image_url,
-          })),
-        ),
+      const [visibleGeocaches, ownGeocaches] = await Promise.all([
+        listVisibleGeocaches(supabase, 80),
+        listHouseholdGeocaches(supabase, household.householdId, 20),
       ]);
 
-    communitySection = (
-      <section className="stack" id="community-trail">
-        <section className="panel stack">
-          <div>
-            <p className="eyebrow">Community clue trail</p>
-            <h2 style={{ marginBottom: 10 }}>Family-made hidden clues and tiny treasures</h2>
-            <p className="panel-copy" style={{ marginBottom: 0 }}>
-              This keeps the original geocache-style magic alive inside Field Quests. Families can still hide clues for one another while the new curated quest system handles badges, student records, and homeschool review exports.
-            </p>
-          </div>
+      let countyContext = null;
+      if (!resolvedLocation.needsSetup) {
+        try {
+          countyContext = await resolveCountyContextFromLocation(resolvedLocation.location);
+        } catch {
+          countyContext = null;
+        }
+      }
+
+      const nearbyGeocaches = getNearbyGeocaches(
+        visibleGeocaches.filter((item) => item.status === "active"),
+        resolvedLocation.location,
+        countyContext,
+        8,
+      );
+      const nearbyIds = new Set(nearbyGeocaches.map((item) => item.id));
+      const regionalGeocaches = visibleGeocaches
+        .filter((item) => item.status === "active" && !nearbyIds.has(item.id))
+        .slice(0, 12);
+
+      const [hydratedNearbyGeocaches, hydratedRegionalGeocaches, hydratedOwnGeocaches] =
+        await Promise.all([
+          Promise.all(
+            nearbyGeocaches.map(async (item) => ({
+              ...item,
+              image_url:
+                item.image_path
+                  ? (await createSignedStorageUrl(supabase, "leaf-photos", item.image_path)) ??
+                    item.image_url
+                  : item.image_url,
+            })),
+          ),
+          Promise.all(
+            regionalGeocaches.map(async (item) => ({
+              ...item,
+              image_url:
+                item.image_path
+                  ? (await createSignedStorageUrl(supabase, "leaf-photos", item.image_path)) ??
+                    item.image_url
+                  : item.image_url,
+            })),
+          ),
+          Promise.all(
+            ownGeocaches.map(async (item) => ({
+              ...item,
+              image_url:
+                item.image_path
+                  ? (await createSignedStorageUrl(supabase, "leaf-photos", item.image_path)) ??
+                    item.image_url
+                  : item.image_url,
+            })),
+          ),
+        ]);
+
+      communitySection = (
+        <section className="stack" id="community-trail">
+          <section className="panel stack">
+            <div>
+              <p className="eyebrow">Community clue trail</p>
+              <h2 style={{ marginBottom: 10 }}>Family-made hidden clues and tiny treasures</h2>
+              <p className="panel-copy" style={{ marginBottom: 0 }}>
+                This keeps the original geocache-style magic alive inside Field Quests. Families can still hide clues for one another while the new curated quest system handles badges, student records, and homeschool review exports.
+              </p>
+            </div>
+          </section>
+          <GeocacheBoard
+            countyLabel={countyContext?.label ?? null}
+            defaultCountyName={countyContext?.countyName ?? ""}
+            defaultStateCode={countyContext?.stateCode ?? "MD"}
+            nearbyCaches={hydratedNearbyGeocaches}
+            regionalCaches={hydratedRegionalGeocaches}
+            ownCaches={hydratedOwnGeocaches}
+            locationStatusLabel={resolvedLocation.statusLabel}
+          />
         </section>
-        <GeocacheBoard
-          countyLabel={countyContext?.label ?? null}
-          defaultCountyName={countyContext?.countyName ?? ""}
-          defaultStateCode={countyContext?.stateCode ?? "MD"}
-          nearbyCaches={hydratedNearbyGeocaches}
-          regionalCaches={hydratedRegionalGeocaches}
-          ownCaches={hydratedOwnGeocaches}
-          locationStatusLabel={resolvedLocation.statusLabel}
-        />
-      </section>
-    );
+      );
+    } catch (error) {
+      communitySectionError =
+        error instanceof Error ? error.message : "Community clue trail is not ready yet.";
+      console.error("[field-quests] Could not load community clue trail.", error);
+    }
   }
 
   return (
@@ -173,6 +181,26 @@ export default async function FieldQuestsPage({
         defaultFilter={getSafeFilter(params.filter)}
         showCommunityAnchor={Boolean(user)}
       />
+
+      {questLoadError ? (
+        <section className="panel stack">
+          <p className="eyebrow">Field Quests setup</p>
+          <h3>Field Quests are still being connected</h3>
+          <p className="panel-copy" style={{ marginBottom: 0 }}>
+            The public quest pages are live in the app code, but the production database is not ready yet. Once the Field Quests migration is applied, this page will start showing the quest list normally.
+          </p>
+        </section>
+      ) : null}
+
+      {communitySectionError ? (
+        <section className="panel stack">
+          <p className="eyebrow">Community clue trail</p>
+          <h3>This part is still warming up</h3>
+          <p className="panel-copy" style={{ marginBottom: 0 }}>
+            The main Field Quests directory is available, but the signed-in community clue section still needs one more live database check. Nothing is lost; this just prevents the page from crashing while production catches up.
+          </p>
+        </section>
+      ) : null}
 
       {communitySection}
     </PublicSiteShell>

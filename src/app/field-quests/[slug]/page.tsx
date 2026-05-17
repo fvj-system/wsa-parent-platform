@@ -28,7 +28,18 @@ export default async function FieldQuestDetailPage({
     .maybeSingle();
 
   if (questError) {
-    throw new Error(questError.message);
+    console.error("[field-quests] Could not load public quest detail.", questError);
+    return (
+      <PublicSiteShell userEmail={user?.email ?? null}>
+        <section className="panel stack">
+          <p className="eyebrow">Field Quests setup</p>
+          <h1 className="page-title">This quest page is still being connected</h1>
+          <p className="panel-copy" style={{ marginBottom: 0 }}>
+            The public Field Quests route is deployed, but production still needs the matching database migration before this quest can load normally.
+          </p>
+        </section>
+      </PublicSiteShell>
+    );
   }
 
   if (!quest) {
@@ -40,29 +51,33 @@ export default async function FieldQuestDetailPage({
   let completionNames: string[] = [];
 
   if (user) {
-    const household = await getHouseholdContext(supabase, user.id);
+    try {
+      const household = await getHouseholdContext(supabase, user.id);
 
-    const [{ data: studentRows }, { data: completionRows }] = await Promise.all([
-      supabase
-        .from("students")
-        .select("id, name")
-        .eq("household_id", household.householdId)
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("field_quest_completions")
-        .select("student_id, students:students(name)")
-        .eq("household_id", household.householdId)
-        .eq("quest_id", questRecord.id),
-    ]);
+      const [{ data: studentRows }, { data: completionRows }] = await Promise.all([
+        supabase
+          .from("students")
+          .select("id, name")
+          .eq("household_id", household.householdId)
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("field_quest_completions")
+          .select("student_id, students:students(name)")
+          .eq("household_id", household.householdId)
+          .eq("quest_id", questRecord.id),
+      ]);
 
-    students = ((studentRows ?? []) as Array<{ id: string; name: string }>).slice(0, 10);
-    completionNames = (completionRows ?? [])
-      .map((item) => {
-        const row = item as { students?: { name?: string } | Array<{ name?: string }> | null };
-        const student = Array.isArray(row.students) ? row.students[0] : row.students;
-        return student?.name?.trim() ?? "";
-      })
-      .filter(Boolean);
+      students = ((studentRows ?? []) as Array<{ id: string; name: string }>).slice(0, 10);
+      completionNames = (completionRows ?? [])
+        .map((item) => {
+          const row = item as { students?: { name?: string } | Array<{ name?: string }> | null };
+          const student = Array.isArray(row.students) ? row.students[0] : row.students;
+          return student?.name?.trim() ?? "";
+        })
+        .filter(Boolean);
+    } catch (error) {
+      console.error("[field-quests] Could not load signed-in quest detail extras.", error);
+    }
   }
 
   const linkedClass = questRecord.linked_class_id
@@ -71,7 +86,13 @@ export default async function FieldQuestDetailPage({
         .select("id, title")
         .eq("id", questRecord.linked_class_id)
         .maybeSingle()
-        .then((result) => (result.error ? null : result.data))
+        .then((result) => {
+          if (result.error) {
+            console.error("[field-quests] Could not load linked class for quest.", result.error);
+            return null;
+          }
+          return result.data;
+        })
     : null;
 
   const signInHref = `/auth/sign-in?next=${encodeNextPath(slug)}`;
